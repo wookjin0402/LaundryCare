@@ -4,6 +4,9 @@
 - email: 타입(String), 사용자 이메일 주소
 - nickname: 타입(String), 사용자 닉네임
 - createdAt: 타입(Timestamp), 계정 생성 일시
+- UID: 타입(String), 사용자 고유 ID
+- location: 타입(String), 날씨 API 호출용 주소
+- preferredCity: 타입(String), 필요 시 짧은 도시 이름
 
 ### 2. Clothes (의류 및 스캔 정보)
 - clothesId: 타입(String), 의류 고유 번호
@@ -17,6 +20,7 @@
 - lifeScore: 타입(Number), 의류 상태 점수 (0~100)
 - lastWashedAt: 타입(Timestrap), 최종 세탁 완료 일시
 - status: 타입(String), 정상, 세탁필요, 관리주의
+- createdAt: 타입(Timestamp), 옷 생성 일자
 
 ### 3. LaundryGuide (의류 관리법 사전 가이드)
 - name: 타입(String), 기호 명칭 (예: 손세탁)
