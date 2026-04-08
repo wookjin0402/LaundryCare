@@ -130,7 +130,7 @@ app.post('/api/clothes/analyze', upload.single('image'), async (req, res) => {
 
     // [2단계] 오토바이(axios) 태워서 AI 서버(8000번)로 배달!
     console.log("🤖 AI 서버에 분석을 요청합니다...");
-    const aiResponse = await axios.post('http://localhost:8000/analyze', formData, {
+    const aiResponse = await axios.post('http://ai-server:8000/analyze', formData, {
       headers: { ...formData.getHeaders() }
     });
 

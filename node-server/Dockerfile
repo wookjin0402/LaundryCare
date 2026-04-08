@@ -1,5 +1,5 @@
 # 1. Node.js 환경 가져오기 (주석 앞에 # 필수!)
-FROM node:22
+FROM node:22-alpine
 
 # 2. 서버 코드를 넣을 폴더 만들기
 WORKDIR /app
