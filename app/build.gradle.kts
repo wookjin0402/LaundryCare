@@ -1,19 +1,32 @@
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.example.laundrycare_android"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.laundrycare_android"
         minSdk = 34
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // 👇 11로 덮어씌우던 범인을 지우고, 17 버전을 하나로 깔끔하게 통합했습니다!
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    kotlin {
+        jvmToolchain(17)
     }
 
     buildTypes {
@@ -25,10 +38,6 @@ android {
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
 }
 
 dependencies {
@@ -37,6 +46,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation(libs.androidx.activity)
 
     // [1] 카메라 및 AI 전처리 관련 (CameraX)
     val camerax_version = "1.3.0"
@@ -56,7 +66,7 @@ dependencies {
     implementation("androidx.room:room-ktx:${room_version}")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
-    // 기본 안드로이드 UI 라이브러리들 (libs 에러를 막기 위해 수동으로 주소 입력)
+    // 기본 안드로이드 UI 라이브러리들
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")

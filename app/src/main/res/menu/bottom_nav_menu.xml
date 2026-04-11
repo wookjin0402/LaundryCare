@@ -2,18 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_home"
-        android:icon="@android:drawable/ic_menu_myplaces"
+        android:icon="@android:drawable/ic_menu_today"
         android:title="홈" />
     <item
-        android:id="@+id/nav_scan"
-        android:icon="@android:drawable/ic_menu_camera"
-        android:title="스캔" />
+        android:id="@+id/nav_stain"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="얼룩" />
     <item
-        android:id="@+id/nav_wardrobe"
+        android:id="@+id/nav_closet"
         android:icon="@android:drawable/ic_menu_gallery"
         android:title="옷장" />
     <item
-        android:id="@+id/nav_settings"
-        android:icon="@android:drawable/ic_menu_preferences"
-        android:title="설정" />
+        android:id="@+id/nav_care"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="의류관리" />
+    <item
+        android:id="@+id/nav_laundry"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:title="세탁" />
 </menu>
