@@ -39,6 +39,7 @@
         <View android:layout_width="0dp" android:layout_height="0dp" android:background="#99000000" app:layout_constraintTop_toTopOf="@id/vGuideCenter" app:layout_constraintBottom_toBottomOf="@id/vGuideCenter" app:layout_constraintStart_toEndOf="@id/vGuideCenter" app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
+            android:id="@+id/tvGuideMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="세탁물을 [   ] 칸 안에 맞춰주세요"

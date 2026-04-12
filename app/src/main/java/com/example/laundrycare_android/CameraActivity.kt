@@ -1,11 +1,13 @@
 package com.example.laundrycare_android
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -57,7 +59,14 @@ class CameraActivity : AppCompatActivity() {
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
         btnRetry = findViewById(R.id.btnRetry)
         btnStartAnalysis = findViewById(R.id.btnStartAnalysis)
+        val scanType = intent.getStringExtra("scanType")
+        val tvGuide = findViewById<TextView>(R.id.tvGuideMessage) // XML에서 달아준 이름표
 
+        if (scanType == "MACHINE") {
+            tvGuide.text = "세탁기 외관이나 모델명이 보이게 촬영해주세요"
+        } else {
+            tvGuide.text = "세탁물을 [   ] 칸 안에 맞춰주세요"
+        }
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -69,6 +78,17 @@ class CameraActivity : AppCompatActivity() {
         btnSelectPhoto.setOnClickListener { getContent.launch("image/*") }
         btnTakePhoto.setOnClickListener { takePhoto() }
         btnRetry.setOnClickListener { resetToCameraState() }
+
+        // 🌟 [여기에 추가!] 분석 시작 버튼 누르면 ResultActivity로 택배 싸서 보내기! 🌟
+        btnStartAnalysis.setOnClickListener {
+            val intent = Intent(this, ResultActivity::class.java)
+
+            // 메인에서 받은 택배(의류/세탁기)를 결과 화면으로 다시 토스!
+            val currentScanType = getIntent().getStringExtra("scanType")
+            intent.putExtra("scanType", currentScanType)
+
+            startActivity(intent)
+        }
     }
 
     private fun startCamera() {

@@ -1,10 +1,12 @@
 package com.example.laundrycare_android
 
-import android.content.Intent // 👈 팝업 띄우려면 승차권(Intent)이 필요해서 추가했습니다!
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,17 +26,12 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_home -> {
                     replaceFragment(HomeFragment())
-                    true // 탭 선택됨(색칠) 허용
+                    true
                 }
 
-                // 🌟 [우리가 수술한 스캔 버튼!] 🌟
+                // 🌟 [수정된 부분] 스캔 버튼 클릭 시 바로 카메라로 안 가고 선택창(다이얼로그) 띄우기! 🌟
                 R.id.nav_scan -> {
-                    // 조각(Fragment) 교체 대신, 영롱님의 카메라 창(Activity)을 확 띄웁니다!
-                    val intent = Intent(this, CameraActivity::class.java)
-                    startActivity(intent)
-
-                    // 핵심 디테일: 카메라 창을 띄운 뒤, 하단 탭의 색칠된 표시는
-                    // 원래 머물던 탭(예: 홈)에 그대로 유지하도록 false를 줍니다!
+                    showScanOptionDialog() // 👈 여기서 방금 만든 함수를 부릅니다!
                     false
                 }
 
@@ -56,5 +53,34 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.frame_layout, fragment)
             .commit()
+    }
+
+    // 🌟 [수정된 부분] MainActivity(Activity)에 맞춰서 requireContext() -> this 로 전부 변경! 🌟
+    private fun showScanOptionDialog() {
+        // 1. 밑에서 올라오는 다이얼로그 객체 생성 (this 사용)
+        val bottomSheet = BottomSheetDialog(this)
+
+        val view = layoutInflater.inflate(R.layout.dialog_scan_option, null)
+
+        // 2. [의류 스캔] 버튼 클릭 시
+        view.findViewById<Button>(R.id.btnClothScan).setOnClickListener {
+            val intent = Intent(this, CameraActivity::class.java)
+            // 📦 데이터 택배 싸기: "이건 CLOTH(의류) 모드야!"
+            intent.putExtra("scanType", "CLOTH")
+            startActivity(intent)
+            bottomSheet.dismiss() // 창 닫기
+        }
+
+        // 3. [세탁기 스캔] 버튼 클릭 시
+        view.findViewById<Button>(R.id.btnMachineScan).setOnClickListener {
+            val intent = Intent(this, CameraActivity::class.java)
+            // 📦 데이터 택배 싸기: "이건 MACHINE(세탁기) 모드야!"
+            intent.putExtra("scanType", "MACHINE")
+            startActivity(intent)
+            bottomSheet.dismiss() // 창 닫기
+        }
+
+        bottomSheet.setContentView(view)
+        bottomSheet.show()
     }
 }
