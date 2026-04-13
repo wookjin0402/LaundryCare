@@ -8,8 +8,6 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -20,7 +18,9 @@ class ProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
-        auth = Firebase.auth
+        // 🌟 [수정 핵심] 에러를 유발하는 KTX 확장 기능 대신,
+        // 절대 튕기지 않는 파이어베이스 정석 초기화 방식으로 변경했습니다! 🌟
+        auth = FirebaseAuth.getInstance()
 
         val etEmail = findViewById<EditText>(R.id.etEmail)
         val etPassword = findViewById<EditText>(R.id.etPassword)
@@ -29,11 +29,16 @@ class ProfileActivity : AppCompatActivity() {
         val btnGoResetPassword = findViewById<Button>(R.id.btnGoResetPassword)
         val btnGoSignUp = findViewById<Button>(R.id.btnGoSignUp)
 
-        // 비밀번호 표시/숨김
+        // 비밀번호 표시/숨김 (문법 충돌 방지를 위해 명확하게 분리)
         btnToggleVisibility.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
-            etPassword.inputType = if (isPasswordVisible) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            btnToggleVisibility.text = if (isPasswordVisible) "숨김" else "표시"
+            if (isPasswordVisible) {
+                etPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                btnToggleVisibility.text = "숨김"
+            } else {
+                etPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                btnToggleVisibility.text = "표시"
+            }
             etPassword.setSelection(etPassword.text.length)
         }
 
@@ -42,29 +47,23 @@ class ProfileActivity : AppCompatActivity() {
             val email = etEmail.text.toString().trim()
             val pass = etPassword.text.toString().trim()
 
-            // 팝업 조건 1: 이메일 빈칸
             if (email.isEmpty()) {
                 Toast.makeText(this, "이메일을 입력해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 팝업 조건 2: 비밀번호 빈칸
             if (pass.isEmpty()) {
                 Toast.makeText(this, "비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 파이어베이스 로그인 시도 (이메일 인증 확인 조건 제거 완료)
             auth.signInWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Toast.makeText(this, "로그인 성공!", Toast.LENGTH_SHORT).show()
-
-                    // 로그인 성공 시 메인 화면(MainActivity)을 확실하게 다시 열고 현재 화면 종료
                     val intent = Intent(this, MainActivity::class.java)
                     startActivity(intent)
                     finish()
                 } else {
-                    // 팝업 조건 3: 정보 틀림
                     Toast.makeText(this, "이메일이나 비밀번호가 맞지 않아요.\n다시 입력해주세요.", Toast.LENGTH_LONG).show()
                 }
             }
@@ -77,7 +76,7 @@ class ProfileActivity : AppCompatActivity() {
 
         // 3. 회원가입 화면으로 이동
         btnGoSignUp.setOnClickListener {
-            startActivity(Intent(this, SignUpActivity::class.java))
+            startActivity(Intent(this, SignupActivity::class.java)) // 👈 대문자 U를 소문자 u로 변경!
         }
     }
 }

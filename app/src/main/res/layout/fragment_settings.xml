@@ -1,18 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SettingsFragment">
-
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-<<<<<<< HEAD
-        android:text="@string/hello_blank_fragment" />
-=======
-        android:text="설정 화면" />
->>>>>>> 03eac8c735e46d8330f1d2193191c985dbc56276
+    android:background="#FFFFFF">
 
 </FrameLayout>

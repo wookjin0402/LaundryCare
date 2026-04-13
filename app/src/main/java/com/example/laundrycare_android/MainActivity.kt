@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        // 로그인 안 된 유저는 로그인 화면으로 보내기
+        // 로그인 안 된 유저는 프로필(로그인) 화면으로 보내기
         val currentUser = auth.currentUser
         if (currentUser == null) {
             startActivity(Intent(this, ProfileActivity::class.java))
@@ -34,17 +34,17 @@ class MainActivity : AppCompatActivity() {
         val btnCategoryMenu = findViewById<TextView>(R.id.btnCategoryMenu)
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottomNavigationView)
 
-        // 1. 거대 SCAN 버튼 클릭 시 -> 팀원의 카메라 다이얼로그 띄우기!
+        // 거대 SCAN 버튼 클릭 시 -> 다이얼로그 띄우기
         btnScan.setOnClickListener {
             showScanOptionDialog()
         }
 
-        // 2. 우측 상단 햄버거 메뉴 클릭 시 -> 마이페이지로 이동
+        // 우측 상단 햄버거 메뉴 클릭 시 -> 마이페이지로 이동
         btnCategoryMenu.setOnClickListener {
             startActivity(Intent(this, MyPageActivity::class.java))
         }
 
-        // 3. 하단바 5개 버튼 클릭 시 각각의 화면으로 이동
+        // 하단바 5개 버튼 클릭 시 이동 (nav_scan 삭제 완료!)
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> Toast.makeText(this, "현재 홈 화면입니다.", Toast.LENGTH_SHORT).show()
@@ -52,23 +52,15 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_closet -> startActivity(Intent(this, ClosetActivity::class.java))
                 R.id.nav_care -> startActivity(Intent(this, CareActivity::class.java))
                 R.id.nav_laundry -> startActivity(Intent(this, LaundryActivity::class.java))
-
-                // (만약 팀원이 하단바에 스캔 메뉴를 넣었다면 그것도 대응)
-                R.id.nav_scan -> {
-                    showScanOptionDialog()
-                    true
-                }
             }
             true
         }
     }
 
-    // 🌟 [팀원(lee)의 기능 통합] 밑에서 올라오는 스캔 옵션 다이얼로그 🌟
     private fun showScanOptionDialog() {
         val bottomSheet = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_scan_option, null)
 
-        // [의류 스캔] 버튼 클릭 시
         view.findViewById<Button>(R.id.btnClothScan).setOnClickListener {
             val intent = Intent(this, CameraActivity::class.java)
             intent.putExtra("scanType", "CLOTH")
@@ -76,7 +68,6 @@ class MainActivity : AppCompatActivity() {
             bottomSheet.dismiss()
         }
 
-        // [세탁기 스캔] 버튼 클릭 시
         view.findViewById<Button>(R.id.btnMachineScan).setOnClickListener {
             val intent = Intent(this, CameraActivity::class.java)
             intent.putExtra("scanType", "MACHINE")
