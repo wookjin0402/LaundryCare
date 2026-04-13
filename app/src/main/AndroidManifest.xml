@@ -13,30 +13,27 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.LaundryCare_Android">
-        <activity
-            android:name=".StainActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MyPageActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ResetPasswordActivity"
-            android:exported="false" />
-        <activity
-            android:name=".SignUpActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ProfileActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+
+        <activity android:name=".ChangeEmailActivity" android:exported="false" />
+        <activity android:name=".ChangePasswordActivity" android:exported="false" />
+        <activity android:name=".StainResultActivity" android:exported="false" />
+        <activity android:name=".SettingsActivity" android:exported="false" />
+        <activity android:name=".NotificationsActivity" android:exported="false" />
+        <activity android:name=".EditInfoActivity" android:exported="false" />
+        <activity android:name=".LaundryActivity" android:exported="false" />
+        <activity android:name=".ClosetActivity" android:exported="false" />
+        <activity android:name=".CareActivity" android:exported="false" />
+        <activity android:name=".ScanActivity" android:exported="false" />
+        <activity android:name=".StainActivity" android:exported="false" />
+        <activity android:name=".MyPageActivity" android:exported="false" />
+        <activity android:name=".ResetPasswordActivity" android:exported="false" />
+        <activity android:name=".SignUpActivity" android:exported="false" />
+        <activity android:name=".ProfileActivity" android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
-
 </manifest>

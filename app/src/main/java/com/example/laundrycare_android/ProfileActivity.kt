@@ -54,23 +54,18 @@ class ProfileActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // 파이어베이스 로그인 시도
+            // 파이어베이스 로그인 시도 (이메일 인증 확인 조건 제거 완료)
             auth.signInWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    // (옵션) 가입 시 이메일 인증을 필수로 했으므로 여기서도 확인
-                    if (user != null && user.isEmailVerified) {
-                        Toast.makeText(this, "로그인 성공", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "로그인 성공!", Toast.LENGTH_SHORT).show()
 
-                        // 로그인 성공 시 메인 화면으로 이동 (MainActivity가 메인화면이라고 가정)
-                        finish() // 뒤로가기 했을 때 로그인 화면이 다시 안 나오게 종료
-                    } else {
-                        Toast.makeText(this, "이메일 인증을 완료해주세요.", Toast.LENGTH_SHORT).show()
-                        auth.signOut()
-                    }
+                    // 로그인 성공 시 메인 화면(MainActivity)을 확실하게 다시 열고 현재 화면 종료
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
                 } else {
                     // 팝업 조건 3: 정보 틀림
-                    Toast.makeText(this, "이메일이나 비밀번호가 맞지 않아요 .\n다시 입력해주세요.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "이메일이나 비밀번호가 맞지 않아요.\n다시 입력해주세요.", Toast.LENGTH_LONG).show()
                 }
             }
         }

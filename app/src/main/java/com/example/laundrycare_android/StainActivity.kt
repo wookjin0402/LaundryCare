@@ -1,8 +1,9 @@
 package com.example.laundrycare_android
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.Toast
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 
 class StainActivity : AppCompatActivity() {
@@ -10,27 +11,26 @@ class StainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stain)
 
-        // [기본 베이스] 뒤로 가기 버튼 로직
         val btnBack = findViewById<Button>(R.id.btnBack)
+        val btnScanStain = findViewById<Button>(R.id.btnScanStain)
+        val btnShowResult = findViewById<Button>(R.id.btnShowResult)
+        val etStainInfo = findViewById<EditText>(R.id.etStainInfo)
+
         btnBack.setOnClickListener {
-            finish() // 현재 화면을 닫고 이전 화면(메인 홈)으로 돌아감
+            finish()
         }
 
-        // 얼룩 화면의 3가지 버튼들
-        val btnStainGuide = findViewById<Button>(R.id.btnStainGuide)
-        val btnStainScan = findViewById<Button>(R.id.btnStainScan)
-        val btnStainCategory = findViewById<Button>(R.id.btnStainCategory)
-
-        btnStainGuide.setOnClickListener {
-            Toast.makeText(this, "얼룩 관리 가이드 화면으로 이동합니다.", Toast.LENGTH_SHORT).show()
+        // 스캔 버튼 클릭 시 (팀원이 만드는 스캔 화면으로 연결)
+        btnScanStain.setOnClickListener {
+            startActivity(Intent(this, ScanActivity::class.java))
         }
 
-        btnStainScan.setOnClickListener {
-            Toast.makeText(this, "비전 AI 얼룩 스캔 카메라를 켭니다.", Toast.LENGTH_SHORT).show()
-        }
-
-        btnStainCategory.setOnClickListener {
-            Toast.makeText(this, "얼룩 카테고리 목록을 엽니다.", Toast.LENGTH_SHORT).show()
+        // 결과 확인 버튼 클릭 시 (분석 결과 화면으로 이동)
+        btnShowResult.setOnClickListener {
+            val intent = Intent(this, StainResultActivity::class.java)
+            // 입력한 정보를 결과 페이지로 전달해봅니다.
+            intent.putExtra("additionalInfo", etStainInfo.text.toString())
+            startActivity(intent)
         }
     }
 }

@@ -17,46 +17,80 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <LinearLayout
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="얼룩 분석 요청"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        app:layout_constraintTop_toTopOf="@id/btnBack"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:orientation="vertical"
+        android:layout_marginTop="20dp"
         android:padding="20dp"
         app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="얼룩 관리"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="30dp"/>
+            android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btnStainGuide"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:text="얼룩 관리 가이드"
-            android:textSize="18sp"
-            android:layout_marginBottom="15dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1. 얼룩을 스캔해주세요"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
 
-        <Button
-            android:id="@+id/btnStainScan"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:text="얼룩 스캔 (카메라)"
-            android:textSize="18sp"
-            android:layout_marginBottom="15dp"
-            android:backgroundTint="#4CAF50"/>
+            <Button
+                android:id="@+id/btnScanStain"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:text="📷\n얼룩 스캔하기"
+                android:textSize="18sp"
+                android:backgroundTint="#FFFFFF"
+                android:textColor="#1976D2"
+                android:layout_marginBottom="30dp"
+                app:strokeColor="#1976D2"
+                app:strokeWidth="1dp"/>
 
-        <Button
-            android:id="@+id/btnStainCategory"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:text="얼룩 종류별 카테고리"
-            android:textSize="18sp"
-            android:backgroundTint="#FF9800"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2. 추가 정보를 적어주세요 (선택)"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
 
-    </LinearLayout>
+            <EditText
+                android:id="@+id/etStainInfo"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:hint="예: 커피를 흘린 지 1시간 정도 되었고, 따뜻한 물로 살짝 닦아냈어요."
+                android:gravity="top"
+                android:padding="15dp"
+                android:background="@android:drawable/edit_text"
+                android:textSize="14sp"
+                android:layout_marginBottom="40dp"/>
+
+            <Button
+                android:id="@+id/btnShowResult"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="AI 분석 결과 확인하기"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:backgroundTint="#1976D2"
+                android:textColor="#FFFFFF"/>
+
+        </LinearLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
