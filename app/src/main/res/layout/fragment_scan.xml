@@ -9,6 +9,10 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+<<<<<<< HEAD
         android:text="@string/hello_blank_fragment" />
+=======
+        android:text="스캔 화면" />
+>>>>>>> 03eac8c735e46d8330f1d2193191c985dbc56276
 
 </FrameLayout>

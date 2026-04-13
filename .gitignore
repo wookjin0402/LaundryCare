@@ -13,6 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+<<<<<<< HEAD
 # Firebase secret key
 google-services.json
 serviceAccountKey.json
+=======
+>>>>>>> 03eac8c735e46d8330f1d2193191c985dbc56276

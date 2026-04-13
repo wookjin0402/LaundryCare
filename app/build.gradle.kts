@@ -6,27 +6,15 @@ plugins {
 
 android {
     namespace = "com.example.laundrycare_android"
-    compileSdk = 36
+    compileSdk = 34 // 안정성을 위해 34버전으로 통일
 
     defaultConfig {
         applicationId = "com.example.laundrycare_android"
         minSdk = 34
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    // 👇 11로 덮어씌우던 범인을 지우고, 17 버전을 하나로 깔끔하게 통합했습니다!
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-    kotlin {
-        jvmToolchain(17)
     }
 
     buildTypes {
@@ -38,17 +26,31 @@ android {
             )
         }
     }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
 
 dependencies {
-    // 파이어베이스 관련
+    // [기본 UI 라이브러리]
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.activity:activity-ktx:1.9.0")
+
+    // [Firebase 라이브러리 (안정적인 BOM 방식 채택)]
     implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation(libs.androidx.activity)
 
-    // [1] 카메라 및 AI 전처리 관련 (CameraX)
+    // [1] 팀원의 카메라 및 AI 전처리 관련 (CameraX)
     val camerax_version = "1.3.0"
     implementation("androidx.camera:camera-core:${camerax_version}")
     implementation("androidx.camera:camera-camera2:${camerax_version}")
@@ -60,15 +62,14 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
-    // [3] 데이터 저장 및 그래프 시각화 관련 (Room, Chart)
+    // [3] 데이터 저장 및 그래프 시각화 관련
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:${room_version}")
     implementation("androidx.room:room-ktx:${room_version}")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
-    // 기본 안드로이드 UI 라이브러리들
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    // [테스트 도구]
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }

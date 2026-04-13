@@ -1,9 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
+<<<<<<< HEAD
     <style name="Base.Theme.LaundryCare_Android" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+=======
+    <style name="Base.Theme.LaundryCare_" parent="Theme.Material3.DayNight.NoActionBar">
+>>>>>>> 03eac8c735e46d8330f1d2193191c985dbc56276
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
+<<<<<<< HEAD
     <style name="Theme.LaundryCare_Android" parent="Base.Theme.LaundryCare_Android" />
+=======
+    <style name="Theme.LaundryCare_" parent="Base.Theme.LaundryCare_" />
+>>>>>>> 03eac8c735e46d8330f1d2193191c985dbc56276
 </resources>
