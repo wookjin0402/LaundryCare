@@ -1,12 +1,10 @@
 package com.example.laundrycare_android
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.fragment.app.Fragment
 
 class WardrobeFragment : Fragment() {
 
@@ -18,7 +16,7 @@ class WardrobeFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_wardrobe, container, false)
     }
 
-    // WardrobeFragment.kt
+    // 2. 화면이 다 그려진 후 로직 처리
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -30,10 +28,10 @@ class WardrobeFragment : Fragment() {
 
         if (isSaved) {
             // 쪽지가 왔다면 바지를 보여줍니다!
-            layoutMockItem.visibility = View.VISIBLE
+            layoutMockItem?.visibility = View.VISIBLE
         } else {
             // 평소엔 안 보입니다.
-            layoutMockItem.visibility = View.GONE
+            layoutMockItem?.visibility = View.GONE
         }
     }
 }

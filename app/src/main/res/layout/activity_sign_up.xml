@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="30dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="새 계정 만들기"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="30dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="10dp">
+
+        <EditText
+            android:id="@+id/etSignUpEmail"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="이메일 주소"
+            android:inputType="textEmailAddress" />
+
+        <Button
+            android:id="@+id/btnSendVerification"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="인증" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="10dp">
+
+        <EditText
+            android:id="@+id/etSignUpPassword"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="비밀번호 (8~20자, 영문/숫자/특수문자)"
+            android:inputType="textPassword" />
+
+        <Button
+            android:id="@+id/btnTogglePass"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="표시"
+            style="?android:attr/borderlessButtonStyle"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="30dp">
+
+        <EditText
+            android:id="@+id/etSignUpPasswordConfirm"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="비밀번호 확인"
+            android:inputType="textPassword" />
+
+        <Button
+            android:id="@+id/btnTogglePassConfirm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="표시"
+            style="?android:attr/borderlessButtonStyle"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnCompleteSignUp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="확인 (회원가입 완료)" />
+
+</LinearLayout>
