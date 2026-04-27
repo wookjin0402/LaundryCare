@@ -18,21 +18,22 @@ class WardrobeFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_wardrobe, container, false)
     }
 
-    // 🌟 2. [우리가 추가한 핵심 코드!] 도화지가 깔린 직후에 진열대를 세팅하는 함수 🌟
+    // WardrobeFragment.kt
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 화면(XML)에서 진열대(RecyclerView) 찾아오기
-        val recyclerView = view.findViewById<RecyclerView>(R.id.rvWardrobe)
+        // XML에서 만든 이름표로 레이아웃 찾기
+        val layoutMockItem = view.findViewById<View>(R.id.layoutMockItem)
 
-        // 리스트를 위아래(세로)로 스크롤되게 방향 설정
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        // 쪽지(Intent)를 확인해서 "IS_SAVED"가 true인지 체크
+        val isSaved = activity?.intent?.getBooleanExtra("IS_SAVED", false) ?: false
 
-        // 아까 고용한 직원(Adapter) 부르기! (창고 데이터도 같이 넘겨줌)
-        val adapter = ClothingAdapter(ClothingRepository.itemList)
-        recyclerView.adapter = adapter
-
-        // 옷장 탭을 누르고 들어올 때마다 최신 상태로 싹 새로고침
-        adapter.notifyDataSetChanged()
+        if (isSaved) {
+            // 쪽지가 왔다면 바지를 보여줍니다!
+            layoutMockItem.visibility = View.VISIBLE
+        } else {
+            // 평소엔 안 보입니다.
+            layoutMockItem.visibility = View.GONE
+        }
     }
 }
