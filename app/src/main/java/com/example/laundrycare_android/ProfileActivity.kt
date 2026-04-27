@@ -74,9 +74,9 @@ class ProfileActivity : AppCompatActivity() {
             startActivity(Intent(this, ResetPasswordActivity::class.java))
         }
 
-        // 3. 회원가입 화면으로 이동
+        // 3. 회원가입 화면으로 이동 (에러 수정 완료)
         btnGoSignUp.setOnClickListener {
-            startActivity(Intent(this, SignupActivity::class.java)) // 👈 대문자 U를 소문자 u로 변경!
+            startActivity(Intent(this, SignUpActivity::class.java))
         }
     }
 }

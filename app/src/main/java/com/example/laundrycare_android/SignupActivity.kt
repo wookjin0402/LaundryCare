@@ -1,69 +1,129 @@
 package com.example.laundrycare_android
 
 import android.os.Bundle
+import android.text.InputType
+import android.util.Patterns // 이메일 형식 검사 도구 추가
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
-class SignupActivity : AppCompatActivity() {
+class SignUpActivity : AppCompatActivity() {
+
+    private lateinit var auth: FirebaseAuth
+    private var isPassVisible = false
+    private var isPassConfirmVisible = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_signup)
-        // 1. 파이어베이스 인증 객체 가져오기 (빨간줄 뜨면 Alt+Enter!)
-        val auth = com.google.firebase.ktx.Firebase.auth
+        setContentView(R.layout.activity_sign_up)
 
-        /// 2. 화면 부품들 가져오기 (XML ID와 꼭 대조하세요!)
-        val etName = findViewById<EditText>(R.id.etName)
-        val etEmail = findViewById<EditText>(R.id.etEmail)
-        val etPassword = findViewById<EditText>(R.id.etPassword)
-        val btnSendVerify = findViewById<Button>(R.id.btnSendVerify) // 👈 새로 만든 '인증 발송' 버튼
-        val btnSignup = findViewById<Button>(R.id.btnSignup) // 👈 최종 '회원가입 완료' 버튼
+        auth = Firebase.auth
 
-        // 3. [인증 발송] 버튼 클릭 시 로직
-        btnSendVerify.setOnClickListener {
-            val email = etEmail.text.toString()
-            val password = etPassword.text.toString()
+        val etEmail = findViewById<EditText>(R.id.etSignUpEmail)
+        val etPass = findViewById<EditText>(R.id.etSignUpPassword)
+        val etPassConfirm = findViewById<EditText>(R.id.etSignUpPasswordConfirm)
 
-            if (email.isNotEmpty() && password.isNotEmpty()) {
-                // 이메일 확인을 위해 먼저 계정을 임시 생성합니다.
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this) { task ->
-                        if (task.isSuccessful) {
-                            // 생성 성공하면 바로 인증 메일 발송! 🚀
-                            auth.currentUser?.sendEmailVerification()?.addOnCompleteListener { verifyTask ->
-                                if (verifyTask.isSuccessful) {
-                                    Toast.makeText(this, "인증 메일이 발송되었습니다! 네이버 메일을 확인하세요.", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        } else {
-                            Toast.makeText(this, "발송 실패: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-            } else {
-                Toast.makeText(this, "이메일과 비밀번호를 먼저 입력해주세요.", Toast.LENGTH_SHORT).show()
-            }
+        val btnVerify = findViewById<Button>(R.id.btnSendVerification)
+        val btnComplete = findViewById<Button>(R.id.btnCompleteSignUp)
+        val btnTogglePass = findViewById<Button>(R.id.btnTogglePass)
+        val btnTogglePassConfirm = findViewById<Button>(R.id.btnTogglePassConfirm)
+
+        // 비밀번호 표시/숨김 버튼
+        btnTogglePass.setOnClickListener {
+            isPassVisible = !isPassVisible
+            etPass.inputType = if (isPassVisible) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            btnTogglePass.text = if (isPassVisible) "숨김" else "표시"
+            etPass.setSelection(etPass.text.length)
         }
 
-        // 4. [회원가입 완료] 버튼 클릭 시 로직
-        btnSignup.setOnClickListener {
-            // 서버에 "이 사람 진짜 인증했나요?"라고 다시 물어봅니다. (중요!) 🔄
-            auth.currentUser?.reload()?.addOnCompleteListener {
-                if (auth.currentUser?.isEmailVerified == true) {
-                    // ✅ 인증 성공!
-                    Toast.makeText(this, "인증 확인 완료! 회원가입이 성공적으로 끝났습니다.", Toast.LENGTH_SHORT).show()
-                    finish() // 로그인 화면으로 이동
+        // 비밀번호 확인 표시/숨김 버튼
+        btnTogglePassConfirm.setOnClickListener {
+            isPassConfirmVisible = !isPassConfirmVisible
+            etPassConfirm.inputType = if (isPassConfirmVisible) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            btnTogglePassConfirm.text = if (isPassConfirmVisible) "숨김" else "표시"
+            etPassConfirm.setSelection(etPassConfirm.text.length)
+        }
+
+        // 1. [인증] 버튼 로직
+        btnVerify.setOnClickListener {
+            val email = etEmail.text.toString().trim()
+            val pass = etPass.text.toString().trim()
+
+            // 1) 이메일 빈칸 및 형식 검사
+            if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(this, "이메일 형식에 맞게 입력해주십시오.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 2) 파이어베이스 계정 생성 필수 조건인 비밀번호 검사
+            val checkResult = checkPasswordValid(pass)
+            if (checkResult != "통과") {
+                Toast.makeText(this, checkResult, Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            // 3) 파이어베이스에 계정 생성 및 메일 발송
+            auth.createUserWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    auth.currentUser?.sendEmailVerification()?.addOnCompleteListener { emailTask ->
+                        if (emailTask.isSuccessful) {
+                            // 요청하신 팝업 문구
+                            Toast.makeText(this, "인증메일이 오는데 1~2분 정도 소요될 수 있습니다.", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 } else {
-                    // ❌ 인증 안 됨
-                    Toast.makeText(this, "아직 이메일 인증이 되지 않았습니다. 메일함의 링크를 클릭해주세요!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "이미 가입된 이메일이거나 오류입니다.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
+
+        // 2. 최종 [확인] 버튼 로직
+        btnComplete.setOnClickListener {
+            val pass = etPass.text.toString().trim()
+            val passConfirm = etPassConfirm.text.toString().trim()
+
+            // 1) 비밀번호 형식 최종 재검사 (인증 후 지웠거나 수정했을 경우 대비)
+            val checkResult = checkPasswordValid(pass)
+            if (checkResult != "통과") {
+                Toast.makeText(this, checkResult, Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            // 2) 비밀번호 일치 확인
+            if (pass != passConfirm) {
+                Toast.makeText(this, "비밀번호가 서로 일치하지 않습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 3) 이메일 인증 여부 확인
+            val user = auth.currentUser
+            if (user != null) {
+                user.reload().addOnCompleteListener {
+                    if (user.isEmailVerified) {
+                        // 요청하신 팝업 문구
+                        Toast.makeText(this, "인증이 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                        finish()
+                    } else {
+                        // 요청하신 팝업 문구
+                        Toast.makeText(this, "이메일 인증을 하지 않으면 계정을 생성할 수 없습니다.", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } else {
+                Toast.makeText(this, "이메일 인증을 먼저 진행해 주십시오.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun checkPasswordValid(password: String): String {
+        if (password.length !in 8..20) return "비밀번호는 8자 이상, 20자 이하로 설정해 주세요."
+        if (!password.any { it.isLetter() }) return "비밀번호에는 영문자가 꼭 포함되어야 합니다."
+        if (!password.any { it.isDigit() }) return "비밀번호에는 숫자가 꼭 포함되어야 합니다."
+        val specialCharRegex = "[!@#\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]+".toRegex()
+        if (!password.contains(specialCharRegex)) return "비밀번호에는 특수문자가 꼭 포함되어야 합니다."
+        return "통과"
     }
 }

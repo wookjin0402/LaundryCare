@@ -62,7 +62,7 @@ class LoginActivity : AppCompatActivity() {
 
         // 3. [회원가입 버튼] 눌렀을 때의 동작
         btnGoToSignup.setOnClickListener {
-            val intent = Intent(this, SignupActivity::class.java)
+            val intent = Intent(this, SignUpActivity::class.java)
             startActivity(intent)
         }
     }
