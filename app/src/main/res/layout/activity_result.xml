@@ -20,22 +20,20 @@
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:background="#EEEEEE"
-        android:src="@drawable/ic_launcher_foreground"
+        android:src="@drawable/test_label"
         android:scaleType="centerCrop"
         android:layout_marginBottom="20dp" />
-
     <TextView
         android:id="@+id/tvMockResult"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="데이터 분석 중..."
+        android:text="- 표백 금지 (정확도 96%)\n- 중간 온도 다림질 (정확도 91%)\n- 30도 물세탁 (정확도 38%)"
         android:textSize="16sp"
         android:textColor="#333333"
         android:lineSpacingExtra="8dp"
         android:background="#F5F5F5"
         android:padding="16dp"
         android:layout_marginBottom="20dp" />
-
     <Button
         android:id="@+id/btnEdit"
         android:layout_width="match_parent"

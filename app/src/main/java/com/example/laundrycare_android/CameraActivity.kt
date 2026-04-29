@@ -79,15 +79,36 @@ class CameraActivity : AppCompatActivity() {
         btnTakePhoto.setOnClickListener { takePhoto() }
         btnRetry.setOnClickListener { resetToCameraState() }
 
-        // 🌟 [여기에 추가!] 분석 시작 버튼 누르면 ResultActivity로 택배 싸서 보내기! 🌟
         btnStartAnalysis.setOnClickListener {
-            val intent = Intent(this, ResultActivity::class.java)
 
-            // 메인에서 받은 택배(의류/세탁기)를 결과 화면으로 다시 토스!
-            val currentScanType = getIntent().getStringExtra("scanType")
-            intent.putExtra("scanType", currentScanType)
+            // 1. 로딩 시작
+            pbScanning.visibility = View.VISIBLE
+            btnStartAnalysis.isEnabled = false
+            btnRetry.isEnabled = false
 
-            startActivity(intent)
+            // (선택사항) 가이드 메시지가 있다면 "서버에 사진을 전송 중입니다..." 라고 바꿔주면 금상첨화!
+            // tvGuideMessage.text = "서버로 이미지를 전송하고 있습니다..."
+
+            // 2. [1단계 대기 - 3초 뒤 문구 변경]
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                // 문구를 "AI 모델이 기호를 분석 중입니다..." 로 슬쩍 바꿔주기 (진짜 서버 작업처럼 보임)
+                // tvGuideMessage.text = "AI 모델이 세탁 기호를 정밀 분석 중입니다..."
+            }, 3000)
+
+            // 3. [최종 대기 - 7초(7000ms) 뒤 결과 화면 이동]
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+
+                val intent = Intent(this, ResultActivity::class.java)
+                val currentScanType = getIntent().getStringExtra("scanType")
+                intent.putExtra("scanType", currentScanType)
+                startActivity(intent)
+
+                // 원상복구
+                pbScanning.visibility = View.GONE
+                btnStartAnalysis.isEnabled = true
+                btnRetry.isEnabled = true
+
+            }, 7000) // 7초로 늘렸습니다. '진지한 분석'이 느껴지는 시간입니다.
         }
     }
 
