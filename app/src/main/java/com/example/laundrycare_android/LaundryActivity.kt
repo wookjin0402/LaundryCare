@@ -10,8 +10,17 @@ class LaundryActivity : AppCompatActivity() {
         setContentView(R.layout.activity_laundry)
 
         val btnBack = findViewById<Button>(R.id.btnBack)
+
+        // 화면 안의 ◀ 버튼 클릭 시 뒤로가기
         btnBack.setOnClickListener {
             finish()
         }
+    }
+
+    // 스마트폰 기기의 물리적 뒤로가기 버튼을 눌렀을 때 강제 종료 및 이전 화면(홈) 이동
+    @Suppress("DEPRECATION")
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish()
     }
 }

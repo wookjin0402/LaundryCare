@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
+    <!-- ◀ 뒤로가기 버튼 -->
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
@@ -18,10 +19,9 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/tvClosetTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="나의 디지털 옷장"
+        android:text="내 옷장"
         android:textSize="22sp"
         android:textStyle="bold"
         android:textColor="#333333"
@@ -33,57 +33,91 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvClosetTitle"
+        android:padding="20dp"
+        app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <GridLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:columnCount="2"
-            android:alignmentMode="alignMargins"
-            android:columnOrderPreserved="false">
+            android:orientation="vertical">
 
-            <Button
-                android:layout_width="0dp"
-                android:layout_height="150dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                android:text="👕\n기본 흰 티셔츠\n(면 100%)"
-                android:textSize="16sp"
-                android:backgroundTint="#FFFFFF"
-                android:textColor="#333333" />
+            <!-- 1. 상의 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="상의"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1976D2"
+                android:layout_marginBottom="10dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="20dp">
+                <Button android:id="@+id/btnTopShort" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="반팔" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp" android:layout_marginEnd="5dp"/>
+                <Button android:id="@+id/btnTopLong" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="긴팔" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp" android:layout_marginEnd="5dp"/>
+                <Button android:id="@+id/btnTopOuter" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="아우터" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp"/>
+            </LinearLayout>
 
-            <Button
-                android:layout_width="0dp"
-                android:layout_height="150dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                android:text="👖\n와이드 데님 팬츠\n(드라이클리닝)"
-                android:textSize="16sp"
-                android:backgroundTint="#E3F2FD"
-                android:textColor="#333333" />
+            <!-- 2. 하의 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="하의"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1976D2"
+                android:layout_marginBottom="10dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="20dp">
+                <Button android:id="@+id/btnBottomShort" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="반바지" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp" android:layout_marginEnd="5dp"/>
+                <Button android:id="@+id/btnBottomLong" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="긴바지" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp" android:layout_marginEnd="5dp"/>
+                <Button android:id="@+id/btnBottomSkirt" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="치마" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp"/>
+            </LinearLayout>
 
-            <Button
-                android:layout_width="0dp"
-                android:layout_height="150dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                android:text="🧥\n네이비 겨울 코트\n(울 80%)"
-                android:textSize="16sp"
-                android:backgroundTint="#ECEFF1"
-                android:textColor="#333333" />
+            <!-- 3. 고급 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="고급"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1976D2"
+                android:layout_marginBottom="10dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="20dp">
+                <Button android:id="@+id/btnLuxuryPremium" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="명품" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp" android:layout_marginEnd="5dp"/>
+                <Button android:id="@+id/btnLuxuryFunctional" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="기능성" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp" android:layout_marginEnd="5dp"/>
+                <View android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/> <!-- 빈 공간 맞추기용 -->
+            </LinearLayout>
 
-            <Button
-                android:layout_width="0dp"
-                android:layout_height="150dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                android:text="➕\n새 의류 등록"
-                android:textSize="16sp"
-                android:backgroundTint="#FFF3E0"
-                android:textColor="#FF9800" />
+            <!-- 4. 기타 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="기타"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1976D2"
+                android:layout_marginBottom="10dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="40dp">
+                <Button android:id="@+id/btnEtcSocks" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="양말" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp" android:layout_marginEnd="5dp"/>
+                <Button android:id="@+id/btnEtcUnderwear" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="속옷" android:backgroundTint="#FFFFFF" android:textColor="#333333" app:strokeColor="#DDDDDD" app:strokeWidth="1dp" android:layout_marginEnd="5dp"/>
+                <View android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/> <!-- 빈 공간 맞추기용 -->
+            </LinearLayout>
 
-        </GridLayout>
+        </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

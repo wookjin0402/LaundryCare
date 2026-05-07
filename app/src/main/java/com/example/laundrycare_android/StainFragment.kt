@@ -10,13 +10,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class ScanFragment : Fragment() {
+class StainFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // 🌟 방금 수정한 리스트+버튼 도화지를 불러옵니다
+        // 🌟 에러의 원인이었던 부분을 fragment_scan으로 확실하게 수정했습니다.
         return inflater.inflate(R.layout.fragment_scan, container, false)
     }
 
@@ -26,12 +26,12 @@ class ScanFragment : Fragment() {
         // 1. 우측 하단 + 버튼 설정
         val fabAddStain = view.findViewById<FloatingActionButton>(R.id.fabAddStain)
         fabAddStain.setOnClickListener {
-            // + 버튼을 누르면 왕만두님이 아까 보내주신 그 완벽한 '얼룩 스캔' 화면으로 넘어갑니다!
+            // + 버튼을 누르면 기존 '얼룩 스캔 및 정보 입력' 화면(StainActivity)으로 넘어갑니다.
             val intent = Intent(requireContext(), StainActivity::class.java)
             startActivity(intent)
         }
 
-        // 2. 얼룩 리스트 뼈대 설정 (나중에 데이터 연결할 곳)
+        // 2. 얼룩 리스트(RecyclerView) 기본 틀 설정
         val rvStainList = view.findViewById<RecyclerView>(R.id.rvStainList)
         rvStainList.layoutManager = LinearLayoutManager(requireContext())
     }

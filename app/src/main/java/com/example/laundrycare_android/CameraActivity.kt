@@ -189,4 +189,10 @@ class CameraActivity : AppCompatActivity() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
+    // 🌟 스마트폰 물리적 뒤로가기 버튼을 눌렀을 때 무조건 창을 닫는 강제 코드
+    @Suppress("DEPRECATION")
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish() // 현재 떠 있는 화면을 강제로 끄고 이전 화면(홈)으로 돌아감
+    }
 }
