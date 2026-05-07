@@ -21,9 +21,10 @@ class StainActivity : AppCompatActivity() {
             finish()
         }
 
-        // 스캔 버튼 클릭 시 (팀원이 만드는 스캔 화면으로 연결)
+        // 스캔 버튼 클릭 시
         btnScanStain.setOnClickListener {
-            startActivity(Intent(this, ScanActivity::class.java))
+            // 이제 옛날 화면(ScanActivity) 말고, 방금 만든 새 화면으로 이동!
+            startActivity(Intent(this, StainCameraActivity::class.java))
         }
 
         // 결과 확인 버튼 클릭 시 (분석 결과 화면으로 이동)
