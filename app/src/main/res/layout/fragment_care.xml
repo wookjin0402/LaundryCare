@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F8F9FA"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="세탁 관리"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:layout_marginBottom="20dp"/>
+
+    <Button
+        android:id="@+id/btnSeasonalStorage"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:text="📦 계절별 의류 보관 관리\n당장 안 입는 옷, 안전하게 보관하세요"
+        android:textSize="16sp"
+        android:backgroundTint="#1976D2"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="15dp" />
+
+</LinearLayout>

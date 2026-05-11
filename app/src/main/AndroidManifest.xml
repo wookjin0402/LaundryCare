@@ -45,6 +45,10 @@
         <activity android:name=".CameraActivity" android:exported="false" />
         <activity android:name=".StainCameraActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".StainDetailActivity" android:exported="false" />
+        <activity android:name=".ClothDetailActivity" android:exported="false" />
+
+        <activity android:name=".SeasonalStorageActivity" android:exported="false" />
 
         <activity android:name=".LoginActivity" android:exported="true">
             <intent-filter>
@@ -52,9 +56,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".StainDetailActivity" android:exported="false" />
-        <activity android:name=".ClothDetailActivity" android:exported="false" />
 
     </application>
 </manifest>

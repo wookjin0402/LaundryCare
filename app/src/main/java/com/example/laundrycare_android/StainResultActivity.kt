@@ -28,7 +28,6 @@ class StainResultActivity : AppCompatActivity() {
 
         btnBack.setOnClickListener { finish() }
 
-        // 1. 이전 화면에서 넘어온 팀원의 완벽한 JSON 데이터 받기
         val jsonString = intent.getStringExtra("ai_json_data") ?: ""
 
         if (jsonString.isNotEmpty()) {
@@ -37,13 +36,11 @@ class StainResultActivity : AppCompatActivity() {
                 val guide = jsonObject.optJSONObject("guide")
 
                 if (guide != null) {
-                    // 타이틀 & 요약
                     parsedTitle = guide.optString("title", "분석 결과")
                     parsedSummary = guide.optString("summary", "분석 요약입니다.")
                     tvGuideTitle.text = parsedTitle
                     tvSummary.text = parsedSummary
 
-                    // 🌟 해시태그 파싱
                     val tagsArray = guide.optJSONArray("raw_tags")
                     var tagsText = ""
                     if (tagsArray != null) {
@@ -53,7 +50,6 @@ class StainResultActivity : AppCompatActivity() {
                     }
                     tvRawTags.text = tagsText
 
-                    // 🌟 경고(Warnings) 파싱 & 빨간색 하이라이트 처리
                     val warningsArray = guide.optJSONArray("warnings")
                     var warningsText = ""
                     var hasCritical = false
@@ -73,12 +69,10 @@ class StainResultActivity : AppCompatActivity() {
                         }
                     }
                     tvWarnings.text = warningsText
-                    // 치명적 에러가 없으면 기본 회색 톤으로, 있으면 빨간색 유지
                     if (!hasCritical) {
                         tvWarnings.setTextColor(android.graphics.Color.parseColor("#666666"))
                     }
 
-                    // 🌟 케어 스텝 파싱
                     val stepsArray = guide.optJSONArray("careSteps")
                     var stepsText = ""
                     if (stepsArray != null) {
@@ -97,25 +91,36 @@ class StainResultActivity : AppCompatActivity() {
             }
         }
 
-        // 2. 저장 버튼 클릭 시 파이어베이스에 저장하고 메인으로 돌아가기
         btnFinish.setOnClickListener {
             val db = FirebaseFirestore.getInstance()
-            val savedData = hashMapOf(
-                "title" to parsedTitle,
-                "summary" to parsedSummary,
-                "timestamp" to System.currentTimeMillis()
-            )
 
-            // 분석 결과를 얼룩(stains) 컬렉션에 임시로 저장합니다.
-            db.collection("stains").add(savedData).addOnSuccessListener {
-                Toast.makeText(this, "결과가 저장되었습니다!", Toast.LENGTH_SHORT).show()
+            db.collection("stains").get().addOnSuccessListener { snapshot ->
+                if (snapshot.size() >= 10) {
+                    Toast.makeText(this, "얼룩 기록은 최대 10개까지만 저장할 수 있습니다.", Toast.LENGTH_LONG).show()
+                } else {
+                    val savedData = hashMapOf(
+                        "season" to "여름",
+                        "mainCategory" to "상의",
+                        "subCategory" to "반팔",
+                        "stainType" to parsedTitle,
+                        "solution" to parsedSummary,
+                        "timestamp" to System.currentTimeMillis()
+                    )
 
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    startActivity(intent)
-                    finish()
-                }, 500)
+                    db.collection("stains").add(savedData).addOnSuccessListener {
+                        Toast.makeText(this, "결과가 저장되었습니다!", Toast.LENGTH_SHORT).show()
+
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            val intent = Intent(this, MainActivity::class.java)
+                            intent.putExtra("navigate_to", "stain")
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            startActivity(intent)
+                            finish()
+                        }, 500)
+                    }
+                }
+            }.addOnFailureListener {
+                Toast.makeText(this, "데이터 확인에 실패했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }

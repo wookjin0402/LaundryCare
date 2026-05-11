@@ -5,12 +5,14 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
 import com.google.firebase.firestore.FirebaseFirestore
 import org.json.JSONObject
+import java.io.File
 
 class ResultActivity : AppCompatActivity() {
 
-    private var parsedLaundryTip = "" // AI가 내려준 summary 저장용
+    private var parsedLaundryTip = ""
     private var currentImageUrl = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,6 +21,7 @@ class ResultActivity : AppCompatActivity() {
 
         val btnBack = findViewById<Button>(R.id.btnBack)
         val btnSave = findViewById<Button>(R.id.btnSave)
+        val ivResultPhoto = findViewById<ImageView>(R.id.ivResultPhoto)
 
         val tvGuideTitle = findViewById<TextView>(R.id.tvGuideTitle)
         val tvRawTags = findViewById<TextView>(R.id.tvRawTags)
@@ -32,7 +35,15 @@ class ResultActivity : AppCompatActivity() {
 
         btnBack.setOnClickListener { finish() }
 
-        // 🌟 1. AI JSON 파싱 후 화면에 그리기
+        val clothImagePath = intent.getStringExtra("cloth_image_path")
+        if (!clothImagePath.isNullOrEmpty()) {
+            val imgFile = File(clothImagePath)
+            if (imgFile.exists()) {
+                Glide.with(this).load(imgFile).centerCrop().into(ivResultPhoto)
+                currentImageUrl = clothImagePath
+            }
+        }
+
         val jsonString = intent.getStringExtra("ai_json_data") ?: ""
         if (jsonString.isNotEmpty()) {
             try {
@@ -83,7 +94,6 @@ class ResultActivity : AppCompatActivity() {
             }
         }
 
-        // 🌟 2. 옷장 카테고리 스피너 3단계 설정
         val subCategoryMap = mapOf(
             "상의" to arrayOf("반팔", "긴팔", "아우터"),
             "하의" to arrayOf("반바지", "긴바지", "치마"),
@@ -102,29 +112,37 @@ class ResultActivity : AppCompatActivity() {
             override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
-        // 🌟 3. 파이어베이스 [옷장(clothes) 컬렉션]에 완벽하게 저장
         btnSave.setOnClickListener {
             val db = FirebaseFirestore.getInstance()
 
-            val clothData = hashMapOf(
-                "season" to spinnerSeason.selectedItem.toString(),
-                "mainCategory" to spinnerMain.selectedItem.toString(),
-                "subCategory" to spinnerSub.selectedItem.toString(),
-                "material" to etMaterial.text.toString(),
-                "laundryTip" to parsedLaundryTip, // 화면에 뜬 요약본을 세탁 팁으로 저장
-                "imageUrl" to currentImageUrl, // 차후 이미지 스토리지 연동 시 사용
-                "timestamp" to System.currentTimeMillis()
-            )
+            db.collection("clothes").get().addOnSuccessListener { snapshot ->
+                if (snapshot.size() >= 100) {
+                    Toast.makeText(this, "옷장은 최대 100장까지만 저장할 수 있습니다.", Toast.LENGTH_LONG).show()
+                } else {
+                    val clothData = hashMapOf(
+                        "season" to spinnerSeason.selectedItem.toString(),
+                        "mainCategory" to spinnerMain.selectedItem.toString(),
+                        "subCategory" to spinnerSub.selectedItem.toString(),
+                        "material" to etMaterial.text.toString(),
+                        "laundryTip" to parsedLaundryTip,
+                        "imageUrl" to currentImageUrl,
+                        "timestamp" to System.currentTimeMillis()
+                    )
 
-            db.collection("clothes").add(clothData).addOnSuccessListener {
-                Toast.makeText(this, "옷장에 완벽하게 저장되었습니다!", Toast.LENGTH_SHORT).show()
-
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    startActivity(intent)
-                    finish()
-                }, 500)
+                    db.collection("clothes").add(clothData).addOnSuccessListener {
+                        Toast.makeText(this, "옷장에 완벽하게 저장되었습니다!", Toast.LENGTH_SHORT).show()
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            val intent = Intent(this, MainActivity::class.java)
+                            // 🌟 "옷장 탭으로 돌아가라"는 신호 탑재 완료
+                            intent.putExtra("navigate_to", "closet")
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            startActivity(intent)
+                            finish()
+                        }, 500)
+                    }
+                }
+            }.addOnFailureListener {
+                Toast.makeText(this, "데이터 확인에 실패했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }

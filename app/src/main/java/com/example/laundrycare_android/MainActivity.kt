@@ -19,13 +19,40 @@ class MainActivity : AppCompatActivity() {
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
 
-        // 앱을 처음 켰을 때: 홈 화면 띄우고 기억 바구니에 '홈' 메뉴 저장
-        if (savedInstanceState == null) {
-            replaceFragment(HomeFragment())
-            tabHistory.push(R.id.nav_home)
+        // 하단바 메뉴를 눌렀을 때의 동작 (🌟 리스너를 먼저 세팅해야 이동 신호를 받을 수 있습니다)
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            // 화면 교체
+            when (item.itemId) {
+                R.id.nav_home -> replaceFragment(HomeFragment())
+                R.id.nav_stain -> replaceFragment(StainFragment())
+                R.id.nav_closet -> replaceFragment(WardrobeFragment())
+                R.id.nav_care -> replaceFragment(CareFragment())
+                R.id.nav_laundry -> replaceFragment(LaundryFragment())
+                else -> return@setOnItemSelectedListener false
+            }
+
+            // 내가 직접 터치해서 이동했을 때만 바구니에 이동한 메뉴를 추가합니다.
+            // (뒤로가기 버튼을 눌러서 자동으로 이동했을 때는 중복으로 쌓이지 않게 막아줍니다.)
+            if (tabHistory.isEmpty() || tabHistory.peek() != item.itemId) {
+                tabHistory.push(item.itemId)
+            }
+
+            true
         }
 
-        // 🌟 [스마트폰 뒤로가기 버튼 강제 제어]
+        // 🌟 앱을 처음 켰을 때 or 저장하고 돌아왔을 때의 처리
+        if (savedInstanceState == null) {
+            val navigateTo = intent.getStringExtra("navigate_to")
+            val targetId = when (navigateTo) {
+                "closet" -> R.id.nav_closet
+                "stain" -> R.id.nav_stain
+                else -> R.id.nav_home
+            }
+            // 강제로 해당 탭 선택 (이때 위의 리스너가 발동해서 화면이 알아서 바뀜)
+            bottomNavigationView.selectedItemId = targetId
+        }
+
+        // [스마트폰 뒤로가기 버튼 강제 제어]
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 // 바구니에 현재 화면과 이전 화면(총 2개 이상)이 들어있다면?
@@ -41,33 +68,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
-
-        // 하단바 메뉴를 눌렀을 때의 동작
-        bottomNavigationView.setOnItemSelectedListener { item ->
-            // 화면 교체
-            when (item.itemId) {
-                R.id.nav_home -> replaceFragment(HomeFragment())
-                R.id.nav_stain -> replaceFragment(StainFragment())
-                R.id.nav_closet -> replaceFragment(WardrobeFragment())
-                R.id.nav_care -> replaceFragment(CareFragment())
-                R.id.nav_laundry -> replaceFragment(LaundryFragment())
-                else -> return@setOnItemSelectedListener false
-            }
-
-            // 🌟 내가 직접 터치해서 이동했을 때만 바구니에 이동한 메뉴를 추가합니다.
-            // (뒤로가기 버튼을 눌러서 자동으로 이동했을 때는 중복으로 쌓이지 않게 막아줍니다.)
-            if (tabHistory.isEmpty() || tabHistory.peek() != item.itemId) {
-                tabHistory.push(item.itemId)
-            }
-
-            true
-        }
     }
 
     // 안드로이드의 골치 아픈 화면 기억 기능(BackStack)은 빼버리고, 순수하게 화면만 갈아 끼웁니다.
     private fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
-            // 🌟 안드로이드 기본(android.R.anim...) 대신 우리가 만든 빠른 파일(R.anim...)로 변경!
+            // 안드로이드 기본(android.R.anim...) 대신 우리가 만든 빠른 파일(R.anim...)로 변경!
             .setCustomAnimations(R.anim.fade_in_fast, R.anim.fade_out_fast)
             .replace(R.id.fragment_container, fragment)
             .commit()
