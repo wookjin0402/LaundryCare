@@ -5,37 +5,26 @@
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
-    <Button
-        android:id="@+id/btnBack"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="◀"
-        android:textSize="20sp"
-        android:textColor="#000000"
-        android:padding="16dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <TextView
+        android:id="@+id/tvStainTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="20dp"
         android:text="얼룩 관리"
         android:textSize="22sp"
         android:textStyle="bold"
         android:textColor="#333333"
-        app:layout_constraintTop_toTopOf="@id/btnBack"
-        app:layout_constraintBottom_toBottomOf="@id/btnBack"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvStains"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="15dp"
         android:padding="10dp"
-        app:layout_constraintTop_toBottomOf="@id/btnBack"
+        app:layout_constraintTop_toBottomOf="@id/tvStainTitle"
         app:layout_constraintBottom_toBottomOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

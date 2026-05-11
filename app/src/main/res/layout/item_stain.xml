@@ -7,36 +7,27 @@
     android:background="#FFFFFF"
     android:elevation="2dp">
 
-    <ImageView
-        android:id="@+id/ivClothPhoto"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:scaleType="centerCrop"
-        android:background="#E0E0E0" />
-
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_toEndOf="@id/ivClothPhoto"
-        android:layout_toStartOf="@id/btnItemOptions"
-        android:layout_marginStart="15dp"
-        android:layout_centerVertical="true">
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@id/btnItemOptions">
 
         <TextView
-            android:id="@+id/tvCategory"
+            android:id="@+id/tvStainType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="카테고리"
+            android:text="커피 자국"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#333333" />
+            android:textColor="#1976D2" />
 
         <TextView
-            android:id="@+id/tvMaterial"
+            android:id="@+id/tvStainInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="소재"
+            android:text="옷 종류: 반팔 / 소재: 면"
             android:layout_marginTop="5dp"
             android:textSize="14sp"
             android:textColor="#666666" />

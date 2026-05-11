@@ -57,10 +57,14 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:${camerax_version}")
     implementation("androidx.camera:camera-view:${camerax_version}")
 
-    // [2] 서버 통신 관련 (Retrofit2)
+    // [2] 서버 통신 관련 (Retrofit2 & OkHttp)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    // 🌟 AI 서버 통신을 위해 새롭게 추가된 부분입니다.
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // [3] 데이터 저장 및 그래프 시각화 관련
     val room_version = "2.6.1"

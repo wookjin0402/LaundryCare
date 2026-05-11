@@ -1,15 +1,11 @@
 package com.example.laundrycare_android
 
-import java.io.Serializable
-
 data class ClothingItem(
-    val imageUrl: String = "",
-    val category: String = "",
-    val material: String = "",
-    val laundryTip: String = ""
-) : Serializable
-
-// 🌟 파이어베이스 연동 전까지 모든 옷 데이터를 쥐고 있을 임시 창고입니다!
-object TempWardrobeDB {
-    val myClothes = mutableListOf<ClothingItem>()
-}
+    val id: String,
+    val imageUrl: String,
+    val season: String,        // 계절 (봄, 여름, 가을, 겨울)
+    val mainCategory: String,  // 대분류 (상의, 하의, 고급, 기타)
+    val subCategory: String,   // 소분류 (반팔, 긴팔, 아우터 등)
+    val material: String,
+    val laundryTip: String
+)

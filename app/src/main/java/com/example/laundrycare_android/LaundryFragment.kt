@@ -4,27 +4,27 @@ import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 
-// 🌟 조원분이 설정한 깔끔한 프래그먼트 틀을 유지합니다.
 class LaundryFragment : Fragment(R.layout.fragment_laundry) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 🌟 1. 왕만두님이 만드신 뒤로가기 버튼 로직 (살림)
+        // 뒤로가기는 원래 버튼이 맞으니 그대로 둡니다.
         val btnBack = view.findViewById<Button>(R.id.btnBack)
         btnBack?.setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
-        // 🌟 2. 조원분이 만드신 3가지 세탁 추천 버튼 로직 (살림)
-        val btnLaundryBatch = view.findViewById<Button>(R.id.btnLaundryBatch)
-        val btnTimeRecommend = view.findViewById<Button>(R.id.btnTimeRecommend)
-        val btnCourseGuide = view.findViewById<Button>(R.id.btnCourseGuide)
+        // 🌟 에러의 원인 해결! Button -> LinearLayout으로 정확하게 바꿔서 연결했습니다.
+        val btnLaundryBatch = view.findViewById<LinearLayout>(R.id.btnLaundryBatch)
+        val btnTimeRecommend = view.findViewById<LinearLayout>(R.id.btnTimeRecommend)
+        val btnCourseGuide = view.findViewById<LinearLayout>(R.id.btnCourseGuide)
 
-        // 1. 세탁 묶음 자동 분류 (옷장 전체가 아니라 '오늘 빨 옷'을 고르게 함)
+        // 1. 세탁 묶음 자동 분류
         btnLaundryBatch.setOnClickListener {
             val clothesList = arrayOf("흰색 면 티셔츠", "검은색 데님 바지", "빨간색 수건", "울 니트")
             val checkedItems = booleanArrayOf(false, false, false, false)
@@ -35,7 +35,6 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
                     checkedItems[which] = isChecked
                 }
                 .setPositiveButton("분류 시작") { _, _ ->
-                    // 가짜(더미) 결과 보여주기
                     AlertDialog.Builder(requireContext())
                         .setTitle("분류 결과")
                         .setMessage("✅ 그룹 1 (일반): 흰색 면 티셔츠\n" +
@@ -48,7 +47,7 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
                 .show()
         }
 
-        // 2. 세탁 및 건조 시점 추천 (오염도를 입력받아서 세탁/환기/부분세척 결정)
+        // 2. 세탁 및 건조 시점 추천
         btnTimeRecommend.setOnClickListener {
             val conditionList = arrayOf("땀을 많이 흘렸어요", "커피/음식물 얼룩이 묻었어요", "잠깐 입어서 깨끗해요")
 
@@ -63,7 +62,6 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
                     }
                     dialog.dismiss()
 
-                    // 결과 팝업 띄우기
                     AlertDialog.Builder(requireContext())
                         .setTitle("AI 맞춤 추천")
                         .setMessage(resultMessage)
@@ -74,7 +72,7 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
                 .show()
         }
 
-        // 3. 세탁 코스 가이드 (세탁기 모델을 가짜 데이터로 한정지음)
+        // 3. 세탁 코스 가이드
         btnCourseGuide.setOnClickListener {
             val machineList = arrayOf("등록된 기기: LG 트롬 F21VDD", "등록된 기기: 삼성 비스포크 그랑데")
 

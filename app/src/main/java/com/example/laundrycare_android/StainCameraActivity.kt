@@ -3,11 +3,12 @@ package com.example.laundrycare_android
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.TextView
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -18,6 +19,11 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -49,7 +55,6 @@ class StainCameraActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 🌟 아까 영롱이가 만든 얼룩용 디자인(XML) 연결!
         setContentView(R.layout.activity_stain_camera)
 
         viewFinder = findViewById(R.id.viewFinder)
@@ -73,20 +78,15 @@ class StainCameraActivity : AppCompatActivity() {
         btnTakePhoto.setOnClickListener { takePhoto() }
         btnRetry.setOnClickListener { resetToCameraState() }
 
-        // 🌟 분석 버튼 누르면 얼룩 결과 화면으로 가기!
-        btnStartAnalysis.setOnClickListener {
-            val intent = Intent(this, StainResultActivity::class.java)
-            startActivity(intent)
-        }
+        // 분석 시작
+        btnStartAnalysis.setOnClickListener { sendImageToAI() }
     }
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(viewFinder.surfaceProvider)
-            }
+            val preview = Preview.Builder().build().also { it.setSurfaceProvider(viewFinder.surfaceProvider) }
             imageCapture = ImageCapture.Builder().build()
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
@@ -101,7 +101,6 @@ class StainCameraActivity : AppCompatActivity() {
 
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
-
         layoutGuide.visibility = View.INVISIBLE
         btnTakePhoto.isEnabled = false
         pbScanning.visibility = View.VISIBLE
@@ -134,7 +133,6 @@ class StainCameraActivity : AppCompatActivity() {
         viewFinder.visibility = View.INVISIBLE
         ivCapturedImage.visibility = View.VISIBLE
         layoutGuide.visibility = View.INVISIBLE
-
         btnTakePhoto.visibility = View.GONE
         btnSelectPhoto.visibility = View.GONE
         btnRetry.visibility = View.VISIBLE
@@ -145,11 +143,78 @@ class StainCameraActivity : AppCompatActivity() {
         viewFinder.visibility = View.VISIBLE
         ivCapturedImage.visibility = View.GONE
         layoutGuide.visibility = View.VISIBLE
-
         btnTakePhoto.visibility = View.VISIBLE
         btnSelectPhoto.visibility = View.VISIBLE
         btnRetry.visibility = View.GONE
         btnStartAnalysis.visibility = View.GONE
+    }
+
+    private fun sendImageToAI() {
+        val drawable = ivCapturedImage.drawable
+        val bitmap = (drawable as? BitmapDrawable)?.bitmap
+
+        if (bitmap == null) {
+            Toast.makeText(this, "이미지를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        pbScanning.visibility = View.VISIBLE
+        btnStartAnalysis.isEnabled = false
+        btnStartAnalysis.text = "AI 분석 중..."
+
+        val file = File(cacheDir, "temp_image.jpg")
+        try {
+            val fos = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+            fos.flush()
+            fos.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return
+        }
+
+        val client = OkHttpClient()
+
+        // 🌟 팀원분이 요청한 대로 키값을 "image"로 정확히 맞췄습니다.
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("image", "cloth_image.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), file))
+            .build()
+
+        val request = Request.Builder()
+            .url("http://34.64.101.110:3000/api/clothes/analyze")
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    pbScanning.visibility = View.GONE
+                    btnStartAnalysis.isEnabled = true
+                    btnStartAnalysis.text = "AI 분석 결과 확인하기"
+                    Toast.makeText(this@StainCameraActivity, "서버 연결 실패", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body?.string()
+                runOnUiThread {
+                    pbScanning.visibility = View.GONE
+                    btnStartAnalysis.isEnabled = true
+                    btnStartAnalysis.text = "AI 분석 결과 확인하기"
+
+                    if (response.isSuccessful && responseData != null) {
+                        // 🌟 서버에서 온 JSON 데이터를 통째로 결과 화면에 넘겨줍니다.
+                        val intent = Intent(this@StainCameraActivity, StainResultActivity::class.java)
+                        intent.putExtra("ai_json_data", responseData)
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        Toast.makeText(this@StainCameraActivity, "서버 에러: ${response.code}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        })
     }
 
     override fun onDestroy() {

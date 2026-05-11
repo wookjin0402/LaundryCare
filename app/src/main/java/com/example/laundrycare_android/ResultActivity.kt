@@ -2,111 +2,130 @@ package com.example.laundrycare_android
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import android.view.View
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
+import com.google.firebase.firestore.FirebaseFirestore
+import org.json.JSONObject
 
 class ResultActivity : AppCompatActivity() {
 
-    // 사용자가 수정할 수 있도록 var(변수)로 선언합니다.
-    private var currentCategory = "반팔"
-    private var currentMaterial = "정보 없음"
-    private var currentLaundryTip = "세탁 주의사항 없음"
+    private var parsedLaundryTip = "" // AI가 내려준 summary 저장용
     private var currentImageUrl = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
 
-        val ivResultPhoto = findViewById<ImageView>(R.id.ivResultPhoto)
-        val tvMockResult = findViewById<TextView>(R.id.tvMockResult)
+        val btnBack = findViewById<Button>(R.id.btnBack)
         val btnSave = findViewById<Button>(R.id.btnSave)
-        val btnEdit = findViewById<Button>(R.id.btnEdit)
 
-        // 이전 화면에서 넘어온 데이터 받기 (처음 한 번만)
-        currentCategory = intent.getStringExtra("category") ?: "반팔"
-        currentMaterial = intent.getStringExtra("material") ?: "정보 없음"
-        currentLaundryTip = intent.getStringExtra("laundryTip") ?: "세탁 주의사항 없음"
-        currentImageUrl = intent.getStringExtra("imageUrl") ?: ""
-        val scanType = intent.getStringExtra("scanType") ?: ""
+        val tvGuideTitle = findViewById<TextView>(R.id.tvGuideTitle)
+        val tvRawTags = findViewById<TextView>(R.id.tvRawTags)
+        val tvWarnings = findViewById<TextView>(R.id.tvWarnings)
+        val tvCareSteps = findViewById<TextView>(R.id.tvCareSteps)
 
-        // 화면에 글자를 띄워주는 기능 (수정 후에도 다시 불려야 해서 함수로 뺐습니다)
-        fun updateResultText() {
-            if (scanType == "MACHINE") {
-                tvMockResult.text =
-                    "[ 🧺 세탁기 스캔 결과 ]\n\n• 기기 종류: 드럼 세탁기\n• 브랜드: LG 트롬\n• 추천 코스: 울/섬세 코스 (찬물)"
-            } else {
-                tvMockResult.text = "카테고리: $currentCategory\n소재: $currentMaterial\n\n[세탁 팁]\n$currentLaundryTip"
+        val spinnerSeason = findViewById<Spinner>(R.id.spinnerSeason)
+        val spinnerMain = findViewById<Spinner>(R.id.spinnerMain)
+        val spinnerSub = findViewById<Spinner>(R.id.spinnerSub)
+        val etMaterial = findViewById<EditText>(R.id.etMaterial)
+
+        btnBack.setOnClickListener { finish() }
+
+        // 🌟 1. AI JSON 파싱 후 화면에 그리기
+        val jsonString = intent.getStringExtra("ai_json_data") ?: ""
+        if (jsonString.isNotEmpty()) {
+            try {
+                val jsonObject = JSONObject(jsonString)
+                val guide = jsonObject.optJSONObject("guide")
+
+                if (guide != null) {
+                    tvGuideTitle.text = guide.optString("title", "의류 분석 결과")
+                    parsedLaundryTip = guide.optString("summary", "세탁 가이드 요약")
+
+                    val tagsArray = guide.optJSONArray("raw_tags")
+                    var tagsText = ""
+                    if (tagsArray != null) {
+                        for (i in 0 until tagsArray.length()) tagsText += "#${tagsArray.getString(i)}  "
+                    }
+                    tvRawTags.text = tagsText
+
+                    val warningsArray = guide.optJSONArray("warnings")
+                    var warningsText = ""
+                    var hasCritical = false
+                    if (warningsArray != null) {
+                        for (i in 0 until warningsArray.length()) {
+                            val warnObj = warningsArray.getJSONObject(i)
+                            if (warnObj.optBoolean("is_critical", false)) {
+                                hasCritical = true
+                                warningsText += "🚨 [치명적 주의] ${warnObj.optString("icon_name")}\n${warnObj.optString("desc")}\n\n"
+                            } else {
+                                warningsText += "⚠️ ${warnObj.optString("icon_name")}\n${warnObj.optString("desc")}\n\n"
+                            }
+                        }
+                    }
+                    tvWarnings.text = warningsText
+                    if (!hasCritical) tvWarnings.setTextColor(android.graphics.Color.parseColor("#666666"))
+
+                    val stepsArray = guide.optJSONArray("careSteps")
+                    var stepsText = ""
+                    if (stepsArray != null) {
+                        for (i in 0 until stepsArray.length()) {
+                            val stepObj = stepsArray.getJSONObject(i)
+                            stepsText += "✅ ${stepObj.optString("step")}\n${stepObj.optString("desc")}\n\n"
+                        }
+                    }
+                    tvCareSteps.text = stepsText
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this, "결과 파싱 오류", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // 처음에 화면 세팅하기
-        updateResultText()
-        if (currentImageUrl.isNotEmpty()) {
-            Glide.with(this).load(currentImageUrl).into(ivResultPhoto)
+        // 🌟 2. 옷장 카테고리 스피너 3단계 설정
+        val subCategoryMap = mapOf(
+            "상의" to arrayOf("반팔", "긴팔", "아우터"),
+            "하의" to arrayOf("반바지", "긴바지", "치마"),
+            "고급" to arrayOf("명품", "기능성"),
+            "기타" to arrayOf("양말", "속옷")
+        )
+
+        spinnerSeason.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayOf("봄", "여름", "가을", "겨울"))
+        spinnerMain.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, subCategoryMap.keys.toTypedArray())
+
+        spinnerMain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                val selectedMain = spinnerMain.selectedItem.toString()
+                spinnerSub.adapter = ArrayAdapter(this@ResultActivity, android.R.layout.simple_spinner_dropdown_item, subCategoryMap[selectedMain]!!)
+            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
-        // 🌟 수정 버튼: 팝업창을 띄워서 카테고리와 소재를 고칠 수 있게 합니다!
-        btnEdit.setOnClickListener {
-            // 팝업창 안에 들어갈 입력칸(EditText) 만들기
-            val layout = LinearLayout(this)
-            layout.orientation = LinearLayout.VERTICAL
-            layout.setPadding(50, 40, 50, 10)
-
-            val etCategory = EditText(this)
-            etCategory.hint = "카테고리 (예: 반팔, 긴바지, 명품)"
-            etCategory.setText(currentCategory)
-
-            val etMaterial = EditText(this)
-            etMaterial.hint = "소재 (예: 면, 폴리에스터)"
-            etMaterial.setText(currentMaterial)
-
-            layout.addView(etCategory)
-            layout.addView(etMaterial)
-
-            // 팝업창 띄우기
-            AlertDialog.Builder(this)
-                .setTitle("스캔 결과 수정")
-                .setView(layout)
-                .setPositiveButton("수정 완료") { _, _ ->
-                    // 사용자가 입력한 값으로 데이터 교체!
-                    currentCategory = etCategory.text.toString()
-                    currentMaterial = etMaterial.text.toString()
-
-                    // 화면 글자 새로고침
-                    updateResultText()
-                    Toast.makeText(this, "수정되었습니다. 이제 저장해보세요!", Toast.LENGTH_SHORT).show()
-                }
-                .setNegativeButton("취소", null)
-                .show()
-        }
-
-        // 🌟 저장 버튼: 수정된 최신 데이터를 창고에 넣기!
+        // 🌟 3. 파이어베이스 [옷장(clothes) 컬렉션]에 완벽하게 저장
         btnSave.setOnClickListener {
-            val newItem = ClothingItem(
-                imageUrl = currentImageUrl,
-                category = currentCategory, // 수정한 카테고리가 들어갑니다!
-                material = currentMaterial,
-                laundryTip = currentLaundryTip
+            val db = FirebaseFirestore.getInstance()
+
+            val clothData = hashMapOf(
+                "season" to spinnerSeason.selectedItem.toString(),
+                "mainCategory" to spinnerMain.selectedItem.toString(),
+                "subCategory" to spinnerSub.selectedItem.toString(),
+                "material" to etMaterial.text.toString(),
+                "laundryTip" to parsedLaundryTip, // 화면에 뜬 요약본을 세탁 팁으로 저장
+                "imageUrl" to currentImageUrl, // 차후 이미지 스토리지 연동 시 사용
+                "timestamp" to System.currentTimeMillis()
             )
 
-            TempWardrobeDB.myClothes.add(newItem)
+            db.collection("clothes").add(clothData).addOnSuccessListener {
+                Toast.makeText(this, "옷장에 완벽하게 저장되었습니다!", Toast.LENGTH_SHORT).show()
 
-            Toast.makeText(this, "내 옷장($currentCategory)에 성공적으로 저장되었습니다.", Toast.LENGTH_SHORT).show()
-
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                val intent = Intent(this, MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                intent.putExtra("IS_SAVED", true)
-                startActivity(intent)
-                finish()
-            }, 500)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    startActivity(intent)
+                    finish()
+                }, 500)
+            }
         }
     }
 }

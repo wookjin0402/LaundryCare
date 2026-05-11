@@ -2,44 +2,57 @@ package com.example.laundrycare_android
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
-import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 class StainActivity : AppCompatActivity() {
+
+    private lateinit var rvStains: RecyclerView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stain)
 
         val btnBack = findViewById<Button>(R.id.btnBack)
-        val btnScanStain = findViewById<Button>(R.id.btnScanStain)
-        val btnShowResult = findViewById<Button>(R.id.btnShowResult)
-        val etStainInfo = findViewById<EditText>(R.id.etStainInfo)
 
-        // 🌟 이미 완벽하게 들어가 있는 뒤로가기 기능! (현재 화면을 닫고 이전 리스트 화면으로 돌아갑니다)
+        // 🌟 XML에 만든 [+] 버튼 가져오기
+        val btnScanStain = findViewById<View>(R.id.btnScanStain)
+
         btnBack.setOnClickListener {
             finish()
         }
 
-        // 스캔 버튼 클릭 시
+        // 🌟 [+] 버튼 누르면 묻지도 따지지도 않고 바로 스캔 화면으로 이동!
         btnScanStain.setOnClickListener {
-            // 이제 옛날 화면(ScanActivity) 말고, 방금 만든 새 화면으로 이동!
-            startActivity(Intent(this, StainCameraActivity::class.java))
-        }
-
-        // 결과 확인 버튼 클릭 시 (분석 결과 화면으로 이동)
-        btnShowResult.setOnClickListener {
-            // 💡 참고: 여기서 이동하는 곳은 'StainResultActivity' 입니다.
-            // 아까 우리가 '수정 팝업 띄우고 옷장에 저장'하는 기능을 만든 곳은 'ResultActivity'이니,
-            // 만약 여기서도 그 옷장 저장 기능을 쓰고 싶으시다면 이 부분을 ResultActivity::class.java 로 바꿔주시면 됩니다!
-            val intent = Intent(this, StainResultActivity::class.java)
-            // 입력한 정보를 결과 페이지로 전달해봅니다.
-            intent.putExtra("additionalInfo", etStainInfo.text.toString())
+            val intent = Intent(this, StainCameraActivity::class.java)
             startActivity(intent)
         }
+
+        // 화면에 띄울 리스트(RecyclerView) 뼈대 세팅
+        rvStains = findViewById(R.id.rvStains)
+        rvStains.layoutManager = LinearLayoutManager(this)
+
+        loadStainData()
     }
 
-    // 스마트폰 기기 자체의 물리적/제스처 뒤로가기를 했을 때도 똑같이 작동하도록 처리
+    private fun loadStainData() {
+        val db = FirebaseFirestore.getInstance()
+
+        // 파이어베이스 'stains' 컬렉션에서 데이터 가져오기 대기
+        db.collection("stains")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null || snapshots == null) return@addSnapshotListener
+
+                // 나중에 여기에 리스트에 데이터를 넣는 로직이 들어갑니다.
+            }
+    }
+
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
         super.onBackPressed()

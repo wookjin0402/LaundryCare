@@ -3,51 +3,126 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:background="#FFFFFF">
+    android:background="#F8F9FA">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="AI 분석 결과"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:layout_marginBottom="20dp" />
-
-    <ImageView
-        android:id="@+id/ivResultPhoto"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:background="#EEEEEE"
-        android:src="@drawable/test_label"
-        android:scaleType="centerCrop"
-        android:layout_marginBottom="20dp" />
-    <TextView
-        android:id="@+id/tvMockResult"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="- 표백 금지 (정확도 96%)\n- 중간 온도 다림질 (정확도 91%)\n- 30도 물세탁 (정확도 38%)"
-        android:textSize="16sp"
-        android:textColor="#333333"
-        android:lineSpacingExtra="8dp"
-        android:background="#F5F5F5"
-        android:padding="16dp"
-        android:layout_marginBottom="20dp" />
-    <Button
-        android:id="@+id/btnEdit"
+        android:padding="20dp"
+        android:background="#FFFFFF"
+        android:elevation="4dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="◀"
+            android:background="@android:color/transparent"
+            android:textColor="#000000"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="의류 스캔 결과"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_centerInParent="true"
+            android:textColor="#333333" />
+    </RelativeLayout>
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:text="카테고리 및 정보 수정하기"
-        android:backgroundTint="#888888"
-        android:layout_marginBottom="12dp" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvGuideTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="분석 중..."
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#1976D2"
+                android:layout_marginBottom="5dp"/>
+
+            <TextView
+                android:id="@+id/tvRawTags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="#태그"
+                android:textSize="14sp"
+                android:textColor="#6C757D"
+                android:layout_marginBottom="15dp"/>
+
+            <TextView
+                android:id="@+id/tvWarnings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#FF3B30"
+                android:textStyle="bold"
+                android:lineSpacingExtra="6dp"
+                android:layout_marginBottom="15dp"/>
+
+            <TextView
+                android:id="@+id/tvCareSteps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:lineSpacingExtra="8dp"
+                android:layout_marginBottom="25dp"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E0E0E0"
+                android:layout_marginBottom="25dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="옷장에 저장할 카테고리 설정"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="15dp"/>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="계절" />
+            <Spinner android:id="@+id/spinnerSeason" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="15dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="대분류" />
+            <Spinner android:id="@+id/spinnerMain" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="15dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="소분류" />
+            <Spinner android:id="@+id/spinnerSub" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="15dp" />
+
+            <EditText
+                android:id="@+id/etMaterial"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="소재 (직접 입력)"
+                android:layout_marginBottom="20dp"/>
+
+        </LinearLayout>
+    </ScrollView>
 
     <Button
         android:id="@+id/btnSave"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:text="이대로 저장하기 (완료)"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:layout_margin="20dp"
+        android:text="이대로 옷장에 저장하기"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:backgroundTint="#1976D2"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>
