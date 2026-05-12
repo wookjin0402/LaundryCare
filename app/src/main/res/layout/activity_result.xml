@@ -97,21 +97,38 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="옷장에 저장할 카테고리 설정"
+                android:text="옷장에 저장할 상세 정보 설정"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="#333333"
                 android:layout_marginBottom="15dp"/>
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="계절" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="계절" android:textStyle="bold" />
             <Spinner android:id="@+id/spinnerSeason" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="15dp" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="대분류" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="대분류" android:textStyle="bold" />
             <Spinner android:id="@+id/spinnerMain" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="15dp" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="소분류" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="소분류" android:textStyle="bold" />
             <Spinner android:id="@+id/spinnerSub" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="15dp" />
 
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="색상 (AI 분석 결과)" android:textStyle="bold" />
+            <EditText
+                android:id="@+id/etColor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="분석된 색상 또는 입력"
+                android:layout_marginBottom="15dp"/>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="사이즈 (수기 입력)" android:textStyle="bold" />
+            <EditText
+                android:id="@+id/etSize"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="예: XL, 100, 32 등"
+                android:layout_marginBottom="15dp"/>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="소재" android:textStyle="bold" />
             <EditText
                 android:id="@+id/etMaterial"
                 android:layout_width="match_parent"

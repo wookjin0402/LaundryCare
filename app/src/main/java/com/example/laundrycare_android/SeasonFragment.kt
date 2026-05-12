@@ -13,27 +13,29 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 
 class SeasonFragment : Fragment() {
-    private var currentSeason: String? = null
+
+    // 🌟 기존 currentSeason 대신, 상단 탭에서 넘어온 '대분류 카테고리(전체, 상의 등)'를 저장합니다.
+    private var currentTabCategory: String = "전체"
     private lateinit var rvSeasonClothing: RecyclerView
     private lateinit var adapter: ClothingAdapter
     private val clothingList = mutableListOf<ClothingItem>()
 
-    private var currentMainCategory: String = "상의"
-    private var currentSubCategory: String = "반팔"
+    private var currentSubCategory: String = "전체"
     private var firestoreListener: ListenerRegistration? = null
 
     companion object {
-        fun newInstance(season: String): SeasonFragment {
+        fun newInstance(categoryName: String): SeasonFragment {
             val fragment = SeasonFragment()
             val args = Bundle()
-            args.putString("SEASON", season)
+            // WardrobePagerAdapter와 안전하게 데이터를 주고받기 위해 키 값은 "SEASON"을 그대로 사용합니다.
+            args.putString("SEASON", categoryName)
             fragment.arguments = args
             return fragment
         }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        currentSeason = arguments?.getString("SEASON")
+        currentTabCategory = arguments?.getString("SEASON") ?: "전체"
         return inflater.inflate(R.layout.fragment_season, container, false)
     }
 
@@ -47,7 +49,10 @@ class SeasonFragment : Fragment() {
         val chipGroupCategory = view.findViewById<ChipGroup>(R.id.chipGroupCategory)
         val chipGroupSubCategory = view.findViewById<ChipGroup>(R.id.chipGroupSubCategory)
 
-        // 소분류 칩들
+        // 🌟 핵심: 상단 탭이 이미 '대분류' 역할을 하므로, 화면 안의 불필요한 대분류 칩은 숨김 처리합니다.
+        chipGroupCategory.visibility = View.GONE
+
+        // 소분류 칩들 연결
         val subChips = mapOf(
             "상의" to listOf(view.findViewById<Chip>(R.id.chipTopShort), view.findViewById<Chip>(R.id.chipTopLong), view.findViewById<Chip>(R.id.chipOuter)),
             "하의" to listOf(view.findViewById<Chip>(R.id.chipBottomShort), view.findViewById<Chip>(R.id.chipBottomLong), view.findViewById<Chip>(R.id.chipSkirt)),
@@ -55,45 +60,46 @@ class SeasonFragment : Fragment() {
             "기타" to listOf(view.findViewById<Chip>(R.id.chipEtcSocks), view.findViewById<Chip>(R.id.chipEtcUnderwear))
         )
 
-        // 대분류 선택 시 로직
-        chipGroupCategory.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (checkedIds.isNotEmpty()) {
-                // 모든 소분류 칩 숨기기
-                subChips.values.flatten().forEach { it.visibility = View.GONE }
+        // 상단 탭 종류에 따른 화면 설정
+        if (currentTabCategory == "전체") {
+            // '전체' 탭일 때는 소분류 칩도 숨깁니다.
+            chipGroupSubCategory.visibility = View.GONE
+            currentSubCategory = "전체"
+        } else {
+            // 다른 탭일 경우 소분류 칩을 보여줍니다.
+            chipGroupSubCategory.visibility = View.VISIBLE
 
-                currentMainCategory = when (checkedIds[0]) {
-                    R.id.chipTop -> "상의"
-                    R.id.chipBottom -> "하의"
-                    R.id.chipPremium -> "고급"
-                    R.id.chipEtc -> "기타"
-                    else -> "상의"
-                }
+            // 모든 소분류 칩을 일단 다 숨김
+            subChips.values.flatten().forEach { it.visibility = View.GONE }
 
-                // 해당되는 소분류 칩만 보여주기
-                subChips[currentMainCategory]?.forEach { it.visibility = View.VISIBLE }
+            // 현재 탭(예: "상의")에 해당하는 소분류 칩만 띄움
+            subChips[currentTabCategory]?.forEach { it.visibility = View.VISIBLE }
 
-                // 대분류 바뀔 때 첫 번째 소분류 자동 선택
-                val firstSubChipId = subChips[currentMainCategory]?.firstOrNull()?.id
-                if (firstSubChipId != null) {
-                    chipGroupSubCategory.check(firstSubChipId)
-                }
+            // 화면을 켰을 때 첫 번째 칩(예: "반팔")을 자동으로 선택되게 함
+            val firstChipId = subChips[currentTabCategory]?.firstOrNull()?.id
+            if (firstChipId != null) {
+                chipGroupSubCategory.check(firstChipId)
+                currentSubCategory = getSubCategoryName(firstChipId)
             }
         }
 
-        // 소분류 선택 시 로직
+        // 소분류 칩 클릭 시 로직
         chipGroupSubCategory.setOnCheckedStateChangeListener { _, checkedIds ->
             if (checkedIds.isNotEmpty()) {
-                currentSubCategory = when (checkedIds[0]) {
-                    R.id.chipTopShort -> "반팔"; R.id.chipTopLong -> "긴팔"; R.id.chipOuter -> "아우터"
-                    R.id.chipBottomShort -> "반바지"; R.id.chipBottomLong -> "긴바지"; R.id.chipSkirt -> "치마"
-                    R.id.chipPremiumLuxury -> "명품"; R.id.chipPremiumFunc -> "기능성"
-                    R.id.chipEtcSocks -> "양말"; R.id.chipEtcUnderwear -> "속옷"
-                    else -> "반팔"
-                }
-                updateClothesList()
+                currentSubCategory = getSubCategoryName(checkedIds[0])
+                updateClothesList() // 리스트 새로고침
             }
         }
-        chipGroupCategory.check(R.id.chipTop)
+    }
+
+    private fun getSubCategoryName(id: Int): String {
+        return when (id) {
+            R.id.chipTopShort -> "반팔"; R.id.chipTopLong -> "긴팔"; R.id.chipOuter -> "아우터"
+            R.id.chipBottomShort -> "반바지"; R.id.chipBottomLong -> "긴바지"; R.id.chipSkirt -> "치마"
+            R.id.chipPremiumLuxury -> "명품"; R.id.chipPremiumFunc -> "기능성"
+            R.id.chipEtcSocks -> "양말"; R.id.chipEtcUnderwear -> "속옷"
+            else -> "반팔"
+        }
     }
 
     override fun onResume() {
@@ -104,20 +110,33 @@ class SeasonFragment : Fragment() {
     private fun updateClothesList() {
         val db = FirebaseFirestore.getInstance()
         firestoreListener?.remove()
+
         firestoreListener = db.collection("clothes").addSnapshotListener { snapshots, e ->
             if (e != null) return@addSnapshotListener
             clothingList.clear()
+
             snapshots?.let {
                 for (doc in it.documents) {
                     val season = doc.getString("season") ?: "여름"
                     val mainCat = doc.getString("mainCategory") ?: "상의"
                     val subCat = doc.getString("subCategory") ?: "반팔"
 
-                    // 🌟 계절, 대분류, 소분류가 모두 일치할 때만 리스트업!
-                    if (season == currentSeason && mainCat == currentMainCategory && subCat == currentSubCategory) {
+                    // 🌟 필터링 변경: 계절(season) 검사를 빼고, '전체' 탭이거나 대/소분류가 일치할 때만 통과
+                    val isMatch = if (currentTabCategory == "전체") {
+                        true
+                    } else {
+                        mainCat == currentTabCategory && subCat == currentSubCategory
+                    }
+
+                    if (isMatch) {
                         clothingList.add(ClothingItem(
-                            doc.id, doc.getString("imageUrl") ?: "", season, mainCat, subCat,
-                            doc.getString("material") ?: "", doc.getString("laundryTip") ?: ""
+                            doc.id,
+                            doc.getString("imageUrl") ?: "",
+                            season, // 옷장 필터링엔 안 쓰지만 상세 정보 뷰를 위해 데이터는 그대로 넘깁니다.
+                            mainCat,
+                            subCat,
+                            doc.getString("material") ?: "",
+                            doc.getString("laundryTip") ?: ""
                         ))
                     }
                 }

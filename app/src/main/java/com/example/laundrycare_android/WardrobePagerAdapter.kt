@@ -5,12 +5,13 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 
 class WardrobePagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
 
-    private val seasons = listOf("봄", "여름", "가을", "겨울")
+    // 🌟 '계절' 대신 우리가 사용할 '카테고리' 리스트로 완전히 교체합니다.
+    private val categories = listOf("전체", "상의", "하의", "고급", "기타")
 
-    override fun getItemCount(): Int = seasons.size
+    override fun getItemCount(): Int = categories.size
 
     override fun createFragment(position: Int): Fragment {
-        // 각 탭마다 현재 계절이 무엇인지 글자를 담아서 SeasonFragment를 생성합니다.
-        return SeasonFragment.newInstance(seasons[position])
+        // 기존 화면 재활용: 이제 SeasonFragment로 "여름"이 아니라 "상의", "하의" 같은 카테고리 이름표가 넘어갑니다!
+        return SeasonFragment.newInstance(categories[position])
     }
 }

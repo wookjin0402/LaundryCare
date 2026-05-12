@@ -28,9 +28,14 @@ class ResultActivity : AppCompatActivity() {
         val tvRawTags = findViewById<TextView>(R.id.tvRawTags)
         val tvWarnings = findViewById<TextView>(R.id.tvWarnings)
         val tvCareSteps = findViewById<TextView>(R.id.tvCareSteps)
+
         val spinnerSeason = findViewById<Spinner>(R.id.spinnerSeason)
         val spinnerMain = findViewById<Spinner>(R.id.spinnerMain)
         val spinnerSub = findViewById<Spinner>(R.id.spinnerSub)
+
+        // 🌟 색상 및 사이즈 입력 필드 연결
+        val etColor = findViewById<EditText>(R.id.etColor)
+        val etSize = findViewById<EditText>(R.id.etSize)
         val etMaterial = findViewById<EditText>(R.id.etMaterial)
 
         btnBack.setOnClickListener { finish() }
@@ -52,12 +57,18 @@ class ResultActivity : AppCompatActivity() {
                 if (guide != null) {
                     tvGuideTitle.text = guide.optString("title", "의류 분석 결과")
                     parsedLaundryTip = guide.optString("summary", "세탁 가이드 요약")
+
+                    // 🌟 AI가 색상을 분석했다면 자동으로 입력창에 넣어줌 (JSON에 'color' 필드가 있다고 가정)
+                    val detectedColor = guide.optString("color", "색상 미상")
+                    etColor.setText(detectedColor)
+
                     val tagsArray = guide.optJSONArray("raw_tags")
                     var tagsText = ""
                     if (tagsArray != null) {
                         for (i in 0 until tagsArray.length()) tagsText += "#${tagsArray.getString(i)}  "
                     }
                     tvRawTags.text = tagsText
+
                     val warningsArray = guide.optJSONArray("warnings")
                     var warningsText = ""
                     var hasCritical = false
@@ -74,6 +85,7 @@ class ResultActivity : AppCompatActivity() {
                     }
                     tvWarnings.text = warningsText
                     if (!hasCritical) tvWarnings.setTextColor(android.graphics.Color.parseColor("#666666"))
+
                     val stepsArray = guide.optJSONArray("careSteps")
                     var stepsText = ""
                     if (stepsArray != null) {
@@ -106,25 +118,32 @@ class ResultActivity : AppCompatActivity() {
         btnSave.setOnClickListener {
             val db = FirebaseFirestore.getInstance()
             val storageRef = FirebaseStorage.getInstance().reference
+
             db.collection("clothes").get().addOnSuccessListener { snapshot ->
                 if (snapshot.size() >= 100) {
                     Toast.makeText(this, "옷장은 최대 100장까지만 저장할 수 있습니다.", Toast.LENGTH_LONG).show()
                 } else {
                     btnSave.isEnabled = false
                     btnSave.text = "클라우드 업로드 중..."
+
                     val fileUri = Uri.fromFile(File(currentImageUrl))
                     val imageRef = storageRef.child("clothes_images/${System.currentTimeMillis()}_cloth.jpg")
+
                     imageRef.putFile(fileUri).addOnSuccessListener {
                         imageRef.downloadUrl.addOnSuccessListener { uri ->
+                            // 🌟 Firestore에 저장할 데이터 구성 (색상, 사이즈 추가)
                             val clothData = hashMapOf(
                                 "season" to spinnerSeason.selectedItem.toString(),
                                 "mainCategory" to spinnerMain.selectedItem.toString(),
                                 "subCategory" to spinnerSub.selectedItem.toString(),
+                                "color" to etColor.text.toString(), // 색상 필드
+                                "size" to etSize.text.toString(),   // 사이즈 필드
                                 "material" to etMaterial.text.toString(),
                                 "laundryTip" to parsedLaundryTip,
                                 "imageUrl" to uri.toString(),
                                 "timestamp" to System.currentTimeMillis()
                             )
+
                             db.collection("clothes").add(clothData).addOnSuccessListener {
                                 Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show()
                                 val intent = Intent(this, MainActivity::class.java).apply {
