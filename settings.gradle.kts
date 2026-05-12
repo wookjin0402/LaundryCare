@@ -1,12 +1,6 @@
 pluginManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
+        google() // 🌟 까다로운 필터를 없애고 구글 서버를 시원하게 열어줍니다!
         mavenCentral()
         gradlePluginPortal()
     }
@@ -16,7 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") } // 👈 차트 라이브러리 다운로드를 위한 필수 주소 추가!
+        maven { url = uri("https://jitpack.io") } // 👈 차트 라이브러리 필수 주소
     }
 }
 

@@ -8,11 +8,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
@@ -41,14 +37,14 @@ class CameraActivity : AppCompatActivity() {
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
 
-    // 🌟 촬영 단계를 구분하는 핵심 변수 (1=옷 촬영, 2=라벨 촬영)
     private var scanStep = 1
     private var clothBitmap: Bitmap? = null
     private var labelBitmap: Bitmap? = null
+    private var savedClothFilePath: String = ""
 
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        if (isGranted) { startCamera() }
-        else { Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show() }
+        if (isGranted) startCamera()
+        else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
     }
 
     private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -85,21 +81,20 @@ class CameraActivity : AppCompatActivity() {
 
         resetToCameraState()
 
-        // 🌟 하단 버튼 클릭 시 단계별 로직
         btnStartAnalysis.setOnClickListener {
             if (scanStep == 1) {
-                // 1단계: 찍은 옷 사진을 스마트폰에 임시 저장하고 2단계로 넘어감
                 clothBitmap?.let { bmp ->
-                    val file = File(cacheDir, "temp_cloth_image.jpg")
+                    val uniqueFileName = "cloth_${System.currentTimeMillis()}.jpg"
+                    val file = File(cacheDir, uniqueFileName)
                     val fos = FileOutputStream(file)
                     bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos)
                     fos.flush()
                     fos.close()
+                    savedClothFilePath = file.absolutePath
                 }
-                scanStep = 2 // 라벨 촬영 단계로 변경
+                scanStep = 2
                 resetToCameraState()
             } else {
-                // 2단계: 찍은 라벨 사진과 저장해둔 옷 사진을 한 번에 서버로 전송
                 sendImageToAI()
             }
         }
@@ -133,12 +128,9 @@ class CameraActivity : AppCompatActivity() {
                 val bytes = ByteArray(buffer.capacity())
                 buffer.get(bytes)
                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
-
                 if (scanStep == 1) clothBitmap = bitmap else labelBitmap = bitmap
-
                 ivCapturedImage.setImageBitmap(bitmap)
                 image.close()
-
                 pbScanning.visibility = View.GONE
                 btnTakePhoto.isEnabled = true
                 showCapturedState()
@@ -160,12 +152,7 @@ class CameraActivity : AppCompatActivity() {
         btnSelectPhoto.visibility = View.GONE
         btnRetry.visibility = View.VISIBLE
         btnStartAnalysis.visibility = View.VISIBLE
-
-        if (scanStep == 1) {
-            btnStartAnalysis.text = "다음: 라벨 촬영하기"
-        } else {
-            btnStartAnalysis.text = "AI 분석 시작"
-        }
+        btnStartAnalysis.text = if (scanStep == 1) "다음: 라벨 촬영하기" else "AI 분석 시작"
     }
 
     private fun resetToCameraState() {
@@ -176,38 +163,26 @@ class CameraActivity : AppCompatActivity() {
         btnSelectPhoto.visibility = View.VISIBLE
         btnRetry.visibility = View.GONE
         btnStartAnalysis.visibility = View.GONE
-
         val tvGuide = findViewById<TextView>(R.id.tvGuideMessage)
-        if (scanStep == 1) {
-            tvGuide.text = "옷의 전체적인 형태가 보이게 촬영해주세요 (1/2)"
-        } else {
-            tvGuide.text = "옷 안쪽의 세탁 라벨을 촬영해주세요 (2/2)"
-        }
+        tvGuide.text = if (scanStep == 1) "옷의 전체적인 형태가 보이게 촬영해주세요 (1/2)" else "옷 안쪽의 세탁 라벨을 촬영해주세요 (2/2)"
     }
 
-    // 🌟 AI 서버로 '옷 사진'과 '라벨 사진' 2장을 동시에 묶어서 전송!
     private fun sendImageToAI() {
         val bitmap = labelBitmap ?: return
-
         pbScanning.visibility = View.VISIBLE
         btnStartAnalysis.isEnabled = false
         btnRetry.isEnabled = false
         btnStartAnalysis.text = "AI 종합 분석 중..."
 
-        // 1. 방금 찍은 라벨 사진을 파일로 저장
-        val labelFile = File(cacheDir, "temp_label_image.jpg")
+        val labelFile = File(cacheDir, "label_${System.currentTimeMillis()}.jpg")
         try {
             val fos = FileOutputStream(labelFile)
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
             fos.flush()
             fos.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return
-        }
+        } catch (e: Exception) { e.printStackTrace(); return }
 
-        // 2. 1단계에서 저장해둔 옷 사진 파일 꺼내오기
-        val clothFile = File(cacheDir, "temp_cloth_image.jpg")
+        val clothFile = File(savedClothFilePath)
         if (!clothFile.exists()) {
             Toast.makeText(this, "옷 사진을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
             pbScanning.visibility = View.GONE
@@ -217,8 +192,6 @@ class CameraActivity : AppCompatActivity() {
         }
 
         val client = OkHttpClient()
-
-        // 🌟 3. 팀원분이 정해준 Key값("clothImage", "labelImage")으로 2장 동시에 묶기
         val requestBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("clothImage", "cloth_image.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), clothFile))
@@ -240,18 +213,15 @@ class CameraActivity : AppCompatActivity() {
                     Toast.makeText(this@CameraActivity, "서버 연결 실패", Toast.LENGTH_SHORT).show()
                 }
             }
-
             override fun onResponse(call: Call, response: Response) {
                 val responseData = response.body?.string()
                 runOnUiThread {
                     pbScanning.visibility = View.GONE
                     btnStartAnalysis.isEnabled = true
                     btnRetry.isEnabled = true
-
                     if (response.isSuccessful && responseData != null) {
                         val intent = Intent(this@CameraActivity, ResultActivity::class.java)
                         intent.putExtra("ai_json_data", responseData)
-                        // 옷장 결과 화면에 보여줄 1단계 '옷 사진'의 경로를 함께 넘겨줍니다
                         intent.putExtra("cloth_image_path", clothFile.absolutePath)
                         startActivity(intent)
                         finish()
@@ -263,14 +233,5 @@ class CameraActivity : AppCompatActivity() {
         })
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown()
-    }
-
-    @Suppress("DEPRECATION")
-    override fun onBackPressed() {
-        super.onBackPressed()
-        finish()
-    }
+    override fun onDestroy() { super.onDestroy(); cameraExecutor.shutdown() }
 }
