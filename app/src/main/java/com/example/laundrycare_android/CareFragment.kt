@@ -14,17 +14,32 @@ class CareFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // fragment_care.xml 화면을 불러옵니다.
-        val view = inflater.inflate(R.layout.fragment_care, container, false)
+        return inflater.inflate(R.layout.fragment_care, container, false)
+    }
 
-        // 방금 만든 '계절별 의류 보관 관리' 버튼을 찾습니다.
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         val btnSeasonalStorage = view.findViewById<Button>(R.id.btnSeasonalStorage)
+        val btnHomeCare = view.findViewById<Button>(R.id.btnHomeCare)
+        val btnWardrobeDiet = view.findViewById<Button>(R.id.btnWardrobeDiet)
 
-        // 🌟 버튼을 누르면 우리가 뼈대를 짜둔 보관 관리 화면으로 넘어갑니다!
+        // 1. 계절별 보관 관리 버튼 클릭 시
         btnSeasonalStorage.setOnClickListener {
-            startActivity(Intent(requireContext(), SeasonalStorageActivity::class.java))
+            val intent = Intent(requireContext(), SeasonalStorageActivity::class.java)
+            startActivity(intent)
         }
 
-        return view
+        // 2. 특수 소재 홈케어 버튼 클릭 시
+        btnHomeCare.setOnClickListener {
+            val intent = Intent(requireContext(), HomeCareActivity::class.java)
+            startActivity(intent)
+        }
+
+        // 3. 옷장 다이어트 버튼 클릭 시
+        btnWardrobeDiet.setOnClickListener {
+            val intent = Intent(requireContext(), WardrobeDietActivity::class.java)
+            startActivity(intent)
+        }
     }
 }

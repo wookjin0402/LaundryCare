@@ -47,6 +47,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="20dp"
+            android:textAlignment="center"
             app:layout_constraintBottom_toTopOf="@id/vGuideCenter"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
@@ -88,12 +89,20 @@
             android:backgroundTint="#FF5722" />
 
         <Button
+            android:id="@+id/btnAddLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="라벨 더 찍기"
+            android:visibility="gone"
+            android:layout_marginEnd="10dp"/>
+
+        <Button
             android:id="@+id/btnRetry"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="다시 찍기"
             android:visibility="gone"
-            android:layout_marginStart="20dp"/>
+            android:layout_marginStart="10dp"/>
     </LinearLayout>
 
     <Button

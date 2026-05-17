@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F8F9FA">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:background="#FFFFFF"
+        android:elevation="2dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="◀"
+            android:background="@android:color/transparent"
+            android:textColor="#000000"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="특수 소재 홈케어"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_centerInParent="true"/>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/tvCareSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="옷장 데이터를 분석하고 있습니다..."
+                android:textSize="16sp"
+                android:textColor="#1976D2"
+                android:textStyle="bold"
+                android:layout_marginBottom="20dp"
+                android:lineSpacingExtra="4dp"
+                android:background="#E3F2FD"
+                android:padding="15dp"/>
+
+            <LinearLayout
+                android:id="@+id/layoutPadding"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🧥 패딩 / 구스다운 관리"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"/>
+
+                <TextView
+                    android:id="@+id/tvPaddingTip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="\n• 볼륨 복원: 보관 중 숨이 죽은 패딩은 빈 페트병으로 가볍게 두드려 공기층을 살려주세요.\n• 보관법: 습기 제거용 신문지를 끼워 접어서 보관하세요."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:visibility="gone"/>
+                <LinearLayout android:id="@+id/listPadding" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutKnit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🧶 니트 / 캐시미어 관리"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"/>
+
+                <TextView
+                    android:id="@+id/tvKnitTip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="\n• 보풀 제거: 눈썹 칼이나 일회용 면도기를 눕혀서 살살 긁어내세요.\n• 보관법: 반으로 접어 바에 걸치거나 돌돌 말아 보관하세요."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:visibility="gone"/>
+                <LinearLayout android:id="@+id/listKnit" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutLeather"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="💼 가죽 / 스웨이드 관리"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"/>
+
+                <TextView
+                    android:id="@+id/tvLeatherTip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="\n• 습기 관리: 비를 맞았다면 마른 수건으로 닦고 그늘에서 말리세요. 드라이기 금지!\n• 윤기 유지: 한 달에 한 번 가죽 전용 크림을 소량 발라주세요."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:visibility="gone"/>
+                <LinearLayout android:id="@+id/listLeather" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutSilk"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="👗 실크 / 레이온 관리"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"/>
+
+                <TextView
+                    android:id="@+id/tvSilkTip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="\n• 구김 방지: 분무기로 물을 살짝 뿌려 그늘에 걸어두면 자연스럽게 주름이 펴집니다.\n• 변색 주의: 직사광선과 형광등 빛이 차단된 옷장에 보관하세요."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:visibility="gone"/>
+                <LinearLayout android:id="@+id/listSilk" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutWool"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="👔 수트 / 울 코트 관리"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"/>
+
+                <TextView
+                    android:id="@+id/tvWoolTip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="\n• 형태 유지: 외출 후 두꺼운 정장용 옷걸이에 걸어 형태를 잡아주세요.\n• 먼지 제거: 착용 후 브러시를 이용해 위에서 아래로 쓸어내려 결을 살려주세요."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:visibility="gone"/>
+                <LinearLayout android:id="@+id/listWool" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutFunctional"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🏃 기능성 의류 (고어텍스)"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"/>
+
+                <TextView
+                    android:id="@+id/tvFunctionalTip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="\n• 발수 유지: 섬유유연제 사용은 미세 구멍을 막아 투습성을 떨어뜨리므로 절대 금지입니다.\n• 형태 유지: 지퍼와 벨크로를 모두 잠근 상태로 보관하세요."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:visibility="gone"/>
+                <LinearLayout android:id="@+id/listFunctional" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutDenim"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="15dp"
+                android:layout_marginBottom="30dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="👖 데님 (청바지) 관리"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"/>
+
+                <TextView
+                    android:id="@+id/tvDenimTip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="\n• 이염 방지: 뒤집어서 단독 세탁하고, 잦은 세탁보다는 탈취제 사용을 권장합니다.\n• 냄새 제거: 신문지에 말아 냉동실에 하룻밤 넣어두면 냄새가 제거됩니다."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:visibility="gone"/>
+                <LinearLayout android:id="@+id/listDenim" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

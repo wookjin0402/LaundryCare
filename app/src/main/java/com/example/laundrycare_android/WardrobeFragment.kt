@@ -27,14 +27,12 @@ class WardrobeFragment : Fragment() {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
-        // 🌟 새로 바꾼 카테고리 탭 아이디 연결
         val tabLayout = view.findViewById<TabLayout>(R.id.tabLayoutCategory)
         val viewPager = view.findViewById<ViewPager2>(R.id.viewPagerWardrobe)
 
         val pagerAdapter = WardrobePagerAdapter(this)
         viewPager.adapter = pagerAdapter
 
-        // 🌟 기존 "봄, 여름..." 대신 대분류 카테고리로 탭 이름 교체
         val tabTitles = arrayOf("전체", "상의", "하의", "고급", "기타")
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = tabTitles[position]
