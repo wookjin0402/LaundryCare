@@ -23,6 +23,8 @@ class SeasonFragment : Fragment() {
     private var currentSubCategory: String = "전체"
     private var firestoreListener: ListenerRegistration? = null
 
+    private var hasShownSeasonGuide = false
+
     companion object {
         fun newInstance(categoryName: String): SeasonFragment {
             val fragment = SeasonFragment()
@@ -107,6 +109,31 @@ class SeasonFragment : Fragment() {
         updateClothesList()
     }
 
+    private fun checkSeasonalStorage(list: List<ClothingItem>) {
+        // 1. 현재 '월' 가져오기
+        val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
+
+        // 2. 현재 계절 판별
+        val currentSeason = when (currentMonth) {
+            in 3..5 -> "봄"
+            in 6..8 -> "여름"
+            in 9..11 -> "가을"
+            else -> "겨울"
+        }
+
+        // 3. 현재 계절과 안 맞는 옷만 골라내기 (사계절 옷은 제외)
+        val outOfSeasonClothes = list.filter { it.season != currentSeason && it.season != "사계절" && it.season.isNotEmpty() }
+
+        // 4. 안 맞는 옷이 있다면 팝업(Dialog) 띄우기!
+        if (outOfSeasonClothes.isNotEmpty()) {
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("💡 $currentSeason 맞춤 옷장 정리 팁!")
+                .setMessage("지금 옷장에 현재 계절($currentSeason)과 맞지 않는 옷이 ${outOfSeasonClothes.size}벌 있어요!\n\n의류 손상을 막기 위해 제습제와 함께 통풍이 잘 되는 보관함에 따로 정리해 두는 것을 추천합니다.")
+                .setPositiveButton("확인", null)
+                .show()
+        }
+    }
+
     private fun updateClothesList() {
         val db = FirebaseFirestore.getInstance()
         firestoreListener?.remove()
@@ -139,6 +166,11 @@ class SeasonFragment : Fragment() {
                             doc.getString("laundryTip") ?: ""
                         ))
                     }
+                }
+                // 🌟 2단계 코드 삽입: 전체 탭이고, 옷이 1개라도 있고, 아직 팝업을 안 띄웠을 때만 실행!
+                if (currentTabCategory == "전체" && clothingList.isNotEmpty() && !hasShownSeasonGuide) {
+                    hasShownSeasonGuide = true
+                    checkSeasonalStorage(clothingList)
                 }
             }
             adapter.notifyDataSetChanged()

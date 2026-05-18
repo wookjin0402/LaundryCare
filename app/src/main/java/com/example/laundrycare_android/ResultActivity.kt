@@ -116,51 +116,68 @@ class ResultActivity : AppCompatActivity() {
         }
 
         btnSave.setOnClickListener {
+            // 🛑 1. 광클 방지: 누르자마자 즉시 버튼을 비활성화해버림!
+            btnSave.isEnabled = false
+            btnSave.text = "한도 확인 중..."
+
             val db = FirebaseFirestore.getInstance()
             val storageRef = FirebaseStorage.getInstance().reference
 
-            db.collection("clothes").get().addOnSuccessListener { snapshot ->
-                if (snapshot.size() >= 100) {
-                    Toast.makeText(this, "옷장은 최대 100장까지만 저장할 수 있습니다.", Toast.LENGTH_LONG).show()
-                } else {
-                    btnSave.isEnabled = false
-                    btnSave.text = "클라우드 업로드 중..."
+            // 🛑 2. 데이터를 무식하게 다 가져오지 않고, 서버에서 '개수'만 초고속으로 세어오기 (count() 사용)
+            db.collection("clothes").count().get(com.google.firebase.firestore.AggregateSource.SERVER)
+                .addOnSuccessListener { snapshot ->
+                    val currentCount = snapshot.count
 
-                    val fileUri = Uri.fromFile(File(currentImageUrl))
-                    val imageRef = storageRef.child("clothes_images/${System.currentTimeMillis()}_cloth.jpg")
-
-                    imageRef.putFile(fileUri).addOnSuccessListener {
-                        imageRef.downloadUrl.addOnSuccessListener { uri ->
-                            // 🌟 Firestore에 저장할 데이터 구성 (색상, 사이즈 추가)
-                            val clothData = hashMapOf(
-                                "season" to spinnerSeason.selectedItem.toString(),
-                                "mainCategory" to spinnerMain.selectedItem.toString(),
-                                "subCategory" to spinnerSub.selectedItem.toString(),
-                                "color" to etColor.text.toString(), // 색상 필드
-                                "size" to etSize.text.toString(),   // 사이즈 필드
-                                "material" to etMaterial.text.toString(),
-                                "laundryTip" to parsedLaundryTip,
-                                "imageUrl" to uri.toString(),
-                                "timestamp" to System.currentTimeMillis()
-                            )
-
-                            db.collection("clothes").add(clothData).addOnSuccessListener {
-                                Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show()
-                                val intent = Intent(this, MainActivity::class.java).apply {
-                                    putExtra("navigate_to", "closet")
-                                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                }
-                                startActivity(intent)
-                                finish()
-                            }
-                        }
-                    }.addOnFailureListener {
+                    if (currentCount >= 100) {
+                        // 한도 초과 시: 경고창 띄우고 버튼 다시 살려줌
+                        Toast.makeText(this, "옷장은 최대 100장까지만 저장할 수 있습니다.", Toast.LENGTH_LONG).show()
                         btnSave.isEnabled = true
                         btnSave.text = "이대로 옷장에 저장하기"
-                        Toast.makeText(this, "업로드 실패", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // 한도 미만 시: 본격적인 사진 업로드 시작
+                        btnSave.text = "클라우드 업로드 중..."
+
+                        val fileUri = Uri.fromFile(File(currentImageUrl))
+                        val imageRef = storageRef.child("clothes_images/${System.currentTimeMillis()}_cloth.jpg")
+
+                        imageRef.putFile(fileUri).addOnSuccessListener {
+                            imageRef.downloadUrl.addOnSuccessListener { uri ->
+                                // Firestore에 저장할 데이터 구성
+                                val clothData = hashMapOf(
+                                    "season" to spinnerSeason.selectedItem.toString(),
+                                    "mainCategory" to spinnerMain.selectedItem.toString(),
+                                    "subCategory" to spinnerSub.selectedItem.toString(),
+                                    "color" to etColor.text.toString(),
+                                    "size" to etSize.text.toString(),
+                                    "material" to etMaterial.text.toString(),
+                                    "laundryTip" to parsedLaundryTip,
+                                    "imageUrl" to uri.toString(),
+                                    "timestamp" to System.currentTimeMillis()
+                                )
+
+                                db.collection("clothes").add(clothData).addOnSuccessListener {
+                                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show()
+                                    val intent = Intent(this, MainActivity::class.java).apply {
+                                        putExtra("navigate_to", "closet")
+                                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    }
+                                    startActivity(intent)
+                                    finish()
+                                }
+                            }
+                        }.addOnFailureListener {
+                            // 사진 업로드 실패 시 버튼 다시 살려주기
+                            btnSave.isEnabled = true
+                            btnSave.text = "이대로 옷장에 저장하기"
+                            Toast.makeText(this, "업로드 실패", Toast.LENGTH_SHORT).show()
+                        }
                     }
+                }.addOnFailureListener {
+                    // 개수 확인(DB 연결) 자체를 실패했을 때 버튼 다시 살려주기
+                    btnSave.isEnabled = true
+                    btnSave.text = "이대로 옷장에 저장하기"
+                    Toast.makeText(this, "서버 통신 오류", Toast.LENGTH_SHORT).show()
                 }
-            }
         }
     }
 }

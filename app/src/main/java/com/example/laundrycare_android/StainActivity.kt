@@ -19,21 +19,17 @@ class StainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_stain)
 
         val btnBack = findViewById<Button>(R.id.btnBack)
-
-        // 🌟 XML에 만든 [+] 버튼 가져오기
         val btnScanStain = findViewById<View>(R.id.btnScanStain)
 
         btnBack.setOnClickListener {
             finish()
         }
 
-        // 🌟 [+] 버튼 누르면 묻지도 따지지도 않고 바로 스캔 화면으로 이동!
         btnScanStain.setOnClickListener {
             val intent = Intent(this, StainCameraActivity::class.java)
             startActivity(intent)
         }
 
-        // 화면에 띄울 리스트(RecyclerView) 뼈대 세팅
         rvStains = findViewById(R.id.rvStains)
         rvStains.layoutManager = LinearLayoutManager(this)
 
@@ -43,7 +39,6 @@ class StainActivity : AppCompatActivity() {
     private fun loadStainData() {
         val db = FirebaseFirestore.getInstance()
 
-        // 파이어베이스 'stains' 컬렉션에서 데이터 가져오기 대기
         db.collection("stains")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
