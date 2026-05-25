@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/rounded_bottom_sheet">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="어떤 얼룩인지 선택해주세요"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:textAlignment="center"
+        android:layout_marginBottom="20dp" />
+
+    <Button
+        android:id="@+id/btnCoffee"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="☕ 커피 / 음료"
+        android:textSize="16sp"
+        android:layout_marginBottom="10dp" />
+
+    <Button
+        android:id="@+id/btnMakeup"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="💄 화장품"
+        android:textSize="16sp"
+        android:layout_marginBottom="10dp" />
+
+    <Button
+        android:id="@+id/btnBlood"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="🩸 피 / 혈흔"
+        android:textSize="16sp" />
+
+</LinearLayout>

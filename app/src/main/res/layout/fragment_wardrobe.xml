@@ -5,18 +5,6 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
-    <Button
-        android:id="@+id/btnBack"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="◀"
-        android:textSize="20sp"
-        android:textColor="#000000"
-        android:padding="16dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
@@ -25,8 +13,8 @@
         android:textSize="22sp"
         android:textStyle="bold"
         android:textColor="#333333"
-        app:layout_constraintTop_toTopOf="@id/btnBack"
-        app:layout_constraintBottom_toBottomOf="@id/btnBack"
+        android:layout_marginTop="20dp"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -34,8 +22,9 @@
         android:id="@+id/tabLayoutCategory"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         app:tabMode="scrollable"
-        app:layout_constraintTop_toBottomOf="@id/btnBack" />
+        app:layout_constraintTop_toBottomOf="@id/tvTitle" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPagerWardrobe"

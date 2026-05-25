@@ -62,19 +62,6 @@
                 android:textColor="#333333"
                 android:textSize="15sp"
                 android:layout_marginTop="10dp" />
-
-            <TextView
-                android:id="@+id/tvCostSaving"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="예상 건조 절감 비용: 계산 중..."
-                android:textColor="#E64A19"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:layout_marginTop="12dp"
-                android:background="#FFCCBC"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="5dp"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 

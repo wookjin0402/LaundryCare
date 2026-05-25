@@ -27,7 +27,7 @@
             android:id="@+id/vGuideCenter"
             android:layout_width="280dp"
             android:layout_height="280dp"
-            android:background="@drawable/bg_guide_box"
+            android:background="@drawable/bg_guide_box_stain"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -42,15 +42,28 @@
             android:id="@+id/tvGuideMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="얼룩을 [   ] 칸 안에 맞춰주세요"
+            android:text="얼룩의 형태가 보이게 촬영해주세요"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="20dp"
+            android:textAlignment="center"
             app:layout_constraintBottom_toTopOf="@id/vGuideCenter"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <Button
+        android:id="@+id/btnStainCameraBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="◀"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ProgressBar
         android:id="@+id/pbScanning"
@@ -93,14 +106,14 @@
             android:layout_height="wrap_content"
             android:text="다시 찍기"
             android:visibility="gone"
-            android:layout_marginStart="20dp"/>
+            android:layout_marginStart="10dp"/>
     </LinearLayout>
 
     <Button
         android:id="@+id/btnStartAnalysis"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="이 사진으로 분석 시작"
+        android:text="이 얼룩 사진으로 분석 시작"
         android:visibility="gone"
         android:backgroundTint="#FF5722"
         android:layout_margin="20dp"

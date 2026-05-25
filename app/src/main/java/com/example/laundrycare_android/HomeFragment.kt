@@ -23,7 +23,6 @@ class HomeFragment : Fragment() {
 
     private lateinit var tvWeatherTitle: TextView
     private lateinit var tvRecommend: TextView
-    private lateinit var tvCostSaving: TextView
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
@@ -50,7 +49,6 @@ class HomeFragment : Fragment() {
 
         tvWeatherTitle = view.findViewById(R.id.tvWeatherTitle)
         tvRecommend = view.findViewById(R.id.tvRecommend)
-        tvCostSaving = view.findViewById(R.id.tvCostSaving)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
@@ -118,12 +116,10 @@ class HomeFragment : Fragment() {
                         val json = JSONObject(responseData)
                         val weather = json.getString("weather")
                         val recommend = json.getString("recommend")
-                        val savedCost = json.getInt("savedCost")
 
                         activity?.runOnUiThread {
                             tvWeatherTitle.text = "현재 날씨: $weather"
                             tvRecommend.text = recommend
-                            tvCostSaving.text = "건조 절감액: ${String.format("%,d", savedCost)}원"
                         }
                     } catch (e: Exception) {
                         activity?.runOnUiThread { showFallbackWeather() }
@@ -138,6 +134,5 @@ class HomeFragment : Fragment() {
     private fun showFallbackWeather() {
         tvWeatherTitle.text = "현재 날씨: 맑음 (22℃)"
         tvRecommend.text = "햇살이 좋아요! ☀️\n바람이 잘 통하는 곳에서 자연 건조를 추천해요."
-        tvCostSaving.text = "💡 예상 건조기 절감 비용: 1,500원"
     }
 }

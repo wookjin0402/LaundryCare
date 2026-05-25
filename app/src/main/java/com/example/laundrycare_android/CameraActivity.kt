@@ -35,6 +35,8 @@ class CameraActivity : AppCompatActivity() {
     private lateinit var btnRetry: Button
     private lateinit var btnStartAnalysis: Button
     private lateinit var btnAddLabel: Button
+    // 🌟 추가된 뒤로가기 버튼 변수
+    private lateinit var btnCameraBack: Button
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
@@ -71,6 +73,10 @@ class CameraActivity : AppCompatActivity() {
         btnRetry = findViewById(R.id.btnRetry)
         btnStartAnalysis = findViewById(R.id.btnStartAnalysis)
         btnAddLabel = findViewById(R.id.btnAddLabel)
+
+        // 🌟 뒤로가기 버튼 클릭 이벤트 연결
+        btnCameraBack = findViewById(R.id.btnCameraBack)
+        btnCameraBack.setOnClickListener { finish() }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -140,6 +146,8 @@ class CameraActivity : AppCompatActivity() {
         layoutGuide.visibility = View.INVISIBLE
         btnTakePhoto.isEnabled = false
         pbScanning.visibility = View.VISIBLE
+        // 사진 찍을 때 뒤로가기 버튼 숨기기
+        btnCameraBack.visibility = View.GONE
 
         imageCapture.takePicture(ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
@@ -163,6 +171,7 @@ class CameraActivity : AppCompatActivity() {
                     pbScanning.visibility = View.GONE
                     btnTakePhoto.isEnabled = true
                     layoutGuide.visibility = View.VISIBLE
+                    btnCameraBack.visibility = View.VISIBLE
                     Toast.makeText(baseContext, "사진 촬영 실패", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -173,6 +182,8 @@ class CameraActivity : AppCompatActivity() {
         viewFinder.visibility = View.INVISIBLE
         ivCapturedImage.visibility = View.VISIBLE
         layoutGuide.visibility = View.INVISIBLE
+        // 사진 확인 화면에서도 뒤로가기 유지
+        btnCameraBack.visibility = View.VISIBLE
 
         btnTakePhoto.visibility = View.GONE
         btnSelectPhoto.visibility = View.GONE
@@ -199,6 +210,7 @@ class CameraActivity : AppCompatActivity() {
         viewFinder.visibility = View.VISIBLE
         ivCapturedImage.visibility = View.GONE
         layoutGuide.visibility = View.VISIBLE
+        btnCameraBack.visibility = View.VISIBLE
 
         btnTakePhoto.visibility = View.VISIBLE
         btnSelectPhoto.visibility = View.VISIBLE
@@ -223,6 +235,7 @@ class CameraActivity : AppCompatActivity() {
         btnStartAnalysis.isEnabled = false
         btnRetry.isEnabled = false
         btnAddLabel.isEnabled = false
+        btnCameraBack.visibility = View.GONE
         btnStartAnalysis.text = "AI 종합 분석 중..."
 
         val clothFile = File(savedClothFilePath)
@@ -278,6 +291,7 @@ class CameraActivity : AppCompatActivity() {
         btnStartAnalysis.isEnabled = true
         btnRetry.isEnabled = true
         btnAddLabel.isEnabled = true
+        btnCameraBack.visibility = View.VISIBLE
 
         AlertDialog.Builder(this)
             .setTitle("분석 실패")

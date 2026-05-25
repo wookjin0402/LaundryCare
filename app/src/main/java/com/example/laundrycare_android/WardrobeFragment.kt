@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
@@ -22,10 +21,7 @@ class WardrobeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val btnBack = view.findViewById<Button>(R.id.btnBack)
-        btnBack.setOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
-        }
+        // ❌ 뒤로가기 버튼 클릭 이벤트 완전히 삭제 완료
 
         val tabLayout = view.findViewById<TabLayout>(R.id.tabLayoutCategory)
         val viewPager = view.findViewById<ViewPager2>(R.id.viewPagerWardrobe)

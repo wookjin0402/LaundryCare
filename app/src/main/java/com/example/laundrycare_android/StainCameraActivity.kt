@@ -19,11 +19,8 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -57,6 +54,7 @@ class StainCameraActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stain_camera)
 
+        // 🌟 XML 파일의 버튼 아이디들과 100% 일치하도록 매핑 완료
         viewFinder = findViewById(R.id.viewFinder)
         ivCapturedImage = findViewById(R.id.ivCapturedImage)
         layoutGuide = findViewById(R.id.layoutGuide)
@@ -65,6 +63,11 @@ class StainCameraActivity : AppCompatActivity() {
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
         btnRetry = findViewById(R.id.btnRetry)
         btnStartAnalysis = findViewById(R.id.btnStartAnalysis)
+
+        // 🌟 뒤로가기 버튼 완벽 연결
+        findViewById<Button>(R.id.btnStainCameraBack).setOnClickListener {
+            finish()
+        }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -77,8 +80,6 @@ class StainCameraActivity : AppCompatActivity() {
         btnSelectPhoto.setOnClickListener { getContent.launch("image/*") }
         btnTakePhoto.setOnClickListener { takePhoto() }
         btnRetry.setOnClickListener { resetToCameraState() }
-
-        // 분석 시작
         btnStartAnalysis.setOnClickListener { sendImageToAI() }
     }
 
@@ -104,6 +105,7 @@ class StainCameraActivity : AppCompatActivity() {
         layoutGuide.visibility = View.INVISIBLE
         btnTakePhoto.isEnabled = false
         pbScanning.visibility = View.VISIBLE
+        findViewById<Button>(R.id.btnStainCameraBack).visibility = View.GONE
 
         imageCapture.takePicture(ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
@@ -124,6 +126,7 @@ class StainCameraActivity : AppCompatActivity() {
                 pbScanning.visibility = View.GONE
                 btnTakePhoto.isEnabled = true
                 layoutGuide.visibility = View.VISIBLE
+                findViewById<Button>(R.id.btnStainCameraBack).visibility = View.VISIBLE
                 Toast.makeText(baseContext, "사진 촬영 실패", Toast.LENGTH_SHORT).show()
             }
         })
@@ -137,6 +140,7 @@ class StainCameraActivity : AppCompatActivity() {
         btnSelectPhoto.visibility = View.GONE
         btnRetry.visibility = View.VISIBLE
         btnStartAnalysis.visibility = View.VISIBLE
+        findViewById<Button>(R.id.btnStainCameraBack).visibility = View.VISIBLE
     }
 
     private fun resetToCameraState() {
@@ -147,6 +151,7 @@ class StainCameraActivity : AppCompatActivity() {
         btnSelectPhoto.visibility = View.VISIBLE
         btnRetry.visibility = View.GONE
         btnStartAnalysis.visibility = View.GONE
+        findViewById<Button>(R.id.btnStainCameraBack).visibility = View.VISIBLE
     }
 
     private fun sendImageToAI() {
@@ -160,9 +165,9 @@ class StainCameraActivity : AppCompatActivity() {
 
         pbScanning.visibility = View.VISIBLE
         btnStartAnalysis.isEnabled = false
-        btnStartAnalysis.text = "AI 분석 중..."
+        findViewById<Button>(R.id.btnStainCameraBack).visibility = View.GONE
 
-        val file = File(cacheDir, "temp_image.jpg")
+        val file = File(cacheDir, "temp_stain_image.jpg")
         try {
             val fos = FileOutputStream(file)
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
@@ -170,51 +175,17 @@ class StainCameraActivity : AppCompatActivity() {
             fos.close()
         } catch (e: Exception) {
             e.printStackTrace()
+            pbScanning.visibility = View.GONE
+            btnStartAnalysis.isEnabled = true
+            findViewById<Button>(R.id.btnStainCameraBack).visibility = View.VISIBLE
+            Toast.makeText(this, "이미지 저장 실패", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val client = OkHttpClient()
-
-        // 🌟 팀원분이 요청한 대로 키값을 "image"로 정확히 맞췄습니다.
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("image", "cloth_image.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), file))
-            .build()
-
-        val request = Request.Builder()
-            .url("http://34.64.101.110:3000/api/clothes/analyze")
-            .post(requestBody)
-            .build()
-
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                runOnUiThread {
-                    pbScanning.visibility = View.GONE
-                    btnStartAnalysis.isEnabled = true
-                    btnStartAnalysis.text = "AI 분석 결과 확인하기"
-                    Toast.makeText(this@StainCameraActivity, "서버 연결 실패", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                val responseData = response.body?.string()
-                runOnUiThread {
-                    pbScanning.visibility = View.GONE
-                    btnStartAnalysis.isEnabled = true
-                    btnStartAnalysis.text = "AI 분석 결과 확인하기"
-
-                    if (response.isSuccessful && responseData != null) {
-                        // 🌟 서버에서 온 JSON 데이터를 통째로 결과 화면에 넘겨줍니다.
-                        val intent = Intent(this@StainCameraActivity, StainResultActivity::class.java)
-                        intent.putExtra("ai_json_data", responseData)
-                        startActivity(intent)
-                        finish()
-                    } else {
-                        Toast.makeText(this@StainCameraActivity, "서버 에러: ${response.code}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        })
+        val intent = Intent(this, StainResultActivity::class.java)
+        intent.putExtra("stain_image_path", file.absolutePath)
+        startActivity(intent)
+        finish()
     }
 
     override fun onDestroy() {

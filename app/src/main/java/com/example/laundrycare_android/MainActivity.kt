@@ -1,5 +1,6 @@
 package com.example.laundrycare_android
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +18,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
+
+        // (이전에 있던 테스트용 버튼 코드는 깔끔하게 삭제되었습니다)
 
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
