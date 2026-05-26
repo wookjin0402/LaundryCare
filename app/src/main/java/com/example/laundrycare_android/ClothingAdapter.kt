@@ -38,6 +38,9 @@ class ClothingAdapter(private val clothingList: List<ClothingItem>) : RecyclerVi
                 putExtra("season", item.season); putExtra("mainCategory", item.mainCategory)
                 putExtra("subCategory", item.subCategory); putExtra("material", item.material)
                 putExtra("laundryTip", item.laundryTip)
+
+                // 🌟 추가됨: SeasonFragment에서 가져온 warnings 데이터를 상세 화면으로 전달!
+                putExtra("warnings", item.warnings)
             })
         }
 
@@ -81,7 +84,6 @@ class ClothingAdapter(private val clothingList: List<ClothingItem>) : RecyclerVi
 
         val spinnerSub = Spinner(context)
 
-        // 🌟 대분류 선택에 따라 소분류 어댑터가 실시간으로 바뀜!
         spinnerMain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 val selectedMain = spinnerMain.selectedItem.toString()

@@ -117,6 +117,11 @@ class SeasonFragment : Fragment() {
                     }
 
                     if (isMatch) {
+                        // 🌟 주의사항(warnings) 데이터를 Firestore에서 읽어옵니다.
+                        val warnings = doc.getString("warnings") ?: ""
+
+                        // 🌟 ClothingItem 생성자에 warnings를 추가로 넘겨줍니다.
+                        // (경고: ClothingItem 데이터 클래스와 어댑터 파일도 이에 맞게 수정되어 있어야 화면에 뜹니다!)
                         clothingList.add(ClothingItem(
                             doc.id,
                             doc.getString("imageUrl") ?: "",
@@ -124,7 +129,8 @@ class SeasonFragment : Fragment() {
                             mainCat,
                             subCat,
                             doc.getString("material") ?: "",
-                            doc.getString("laundryTip") ?: ""
+                            doc.getString("laundryTip") ?: "",
+                            warnings // 🌟 여기에 추가되었습니다.
                         ))
                     }
                 }

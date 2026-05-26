@@ -151,6 +151,7 @@ class ResultActivity : AppCompatActivity() {
                                     "size" to etSize.text.toString(),
                                     "material" to etMaterial.text.toString(),
                                     "laundryTip" to parsedLaundryTip,
+                                    "warnings" to tvWarnings.text.toString(), // 🌟 주의사항 데이터 추가
                                     "imageUrl" to uri.toString(),
                                     "timestamp" to System.currentTimeMillis()
                                 )

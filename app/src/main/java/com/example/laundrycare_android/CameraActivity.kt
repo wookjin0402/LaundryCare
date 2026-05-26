@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -156,10 +157,14 @@ class CameraActivity : AppCompatActivity() {
                 buffer.get(bytes)
                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
 
-                currentCapturedBitmap = bitmap
+                // 🌟 가로 사진 회전 처리 (90도 회전)
+                val matrix = Matrix()
+                matrix.postRotate(90f)
+                val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                currentCapturedBitmap = rotatedBitmap
 
                 runOnUiThread {
-                    ivCapturedImage.setImageBitmap(bitmap)
+                    ivCapturedImage.setImageBitmap(rotatedBitmap)
                     pbScanning.visibility = View.GONE
                     btnTakePhoto.isEnabled = true
                     showCapturedState()

@@ -7,5 +7,6 @@ data class ClothingItem(
     val mainCategory: String,  // 대분류 (상의, 하의, 고급, 기타)
     val subCategory: String,   // 소분류 (반팔, 긴팔, 아우터 등)
     val material: String,
-    val laundryTip: String
+    val laundryTip: String,
+    val warnings: String = ""
 )
