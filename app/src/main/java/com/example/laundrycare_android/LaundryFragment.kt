@@ -14,6 +14,19 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // 🌟 [추가] 뒤로가기 버튼 로직
+        val btnBack = view.findViewById<Button>(R.id.btnBack)
+        btnBack?.setOnClickListener {
+            requireActivity().finish()
+        }
+
+        // 🌟 [추가] 내 세탁기 관리 화면으로 이동!
+        val btnManageWasher = view.findViewById<LinearLayout>(R.id.btnManageWasher)
+        btnManageWasher?.setOnClickListener {
+            val intent = Intent(requireContext(), WasherListActivity::class.java)
+            startActivity(intent)
+        }
+
         // 1. 옷 바구니 열기 버튼
         val btnOpenMultiSelect = view.findViewById<Button>(R.id.btnOpenMultiSelect)
         btnOpenMultiSelect?.setOnClickListener {
@@ -32,9 +45,8 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
         val btnTimeRecommend = view.findViewById<LinearLayout>(R.id.btnTimeRecommend)
         val btnCourseGuide = view.findViewById<LinearLayout>(R.id.btnCourseGuide)
 
-        // 3. 세탁 묶음 자동 분류
-        btnLaundryBatch.setOnClickListener {
-            // 🌟 [수정] 유저 피드백에 따라 "옷장 데이터를 불러오는 중..." 팝업(Toast)을 완전히 삭제했습니다.
+        // 3. 세탁 묶음 자동 분류 (조원분의 파이어베이스 코드 유지)
+        btnLaundryBatch?.setOnClickListener {
             val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
 
             db.collection("clothes").get().addOnSuccessListener { snapshot ->
@@ -88,7 +100,7 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
         }
 
         // 4. 세탁 및 건조 시점 추천
-        btnTimeRecommend.setOnClickListener {
+        btnTimeRecommend?.setOnClickListener {
             val conditionList = arrayOf("땀을 많이 흘렸어요", "커피/음식물 얼룩이 묻었어요", "잠깐 입어서 깨끗해요")
             AlertDialog.Builder(requireContext())
                 .setTitle("현재 빨랫감의 상태는 어떤가요?")
@@ -106,7 +118,7 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
         }
 
         // 5. 세탁 코스 가이드
-        btnCourseGuide.setOnClickListener {
+        btnCourseGuide?.setOnClickListener {
             Toast.makeText(requireContext(), "세탁기 스캔은 '바구니 담기' 완료 후 진행됩니다.", Toast.LENGTH_LONG).show()
         }
     }

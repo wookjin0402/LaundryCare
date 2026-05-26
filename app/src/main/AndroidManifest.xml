@@ -55,7 +55,12 @@
         <activity android:name=".WasherCameraActivity" android:exported="false" />
         <activity android:name=".WasherResultActivity" android:exported="false" />
         <activity android:name=".LaundryHistoryActivity" android:exported="false" />
-        <activity android:name=".ScanActivity" android:exported="false" />
+
+        <!-- 🌟 새롭게 추가한 세탁기 관리 목록 화면 -->
+        <activity android:name=".WasherListActivity" android:exported="false" />
+
+        <!-- 🌟 아까 작성했던 세탁 결과 화면 -->
+        <activity android:name=".LaundryResultActivity" android:exported="false" />
 
         <activity
             android:name=".LoginActivity"
