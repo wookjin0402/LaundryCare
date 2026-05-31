@@ -5,15 +5,16 @@
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
-    <Button
+    <ImageView
         android:id="@+id/btnBack"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="◀"
-        android:textSize="20sp"
-        android:textColor="#000000"
-        android:padding="16dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:padding="12dp"
+        android:src="@drawable/ic_arrow_back"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

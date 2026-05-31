@@ -35,7 +35,7 @@ class SeasonalStorageActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_seasonal_storage)
 
-        val btnBack = findViewById<Button>(R.id.btnBack)
+        val btnBack = findViewById<ImageView>(R.id.btnBack)
         btnBack.setOnClickListener { finish() }
 
         rvStorageList = findViewById(R.id.rvStorageList)

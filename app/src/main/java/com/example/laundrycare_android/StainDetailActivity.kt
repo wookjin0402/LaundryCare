@@ -1,149 +1,76 @@
 package com.example.laundrycare_android
 
 import android.os.Bundle
-import android.view.View
-import android.widget.*
-import androidx.appcompat.app.AlertDialog
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.bumptech.glide.Glide
 import com.google.firebase.firestore.FirebaseFirestore
 
 class StainDetailActivity : AppCompatActivity() {
 
-    private lateinit var docId: String
-    private var currentSeason = ""
-    private var currentMain = ""
-    private var currentSub = ""
-    private var currentStainType = ""
-    private var currentSolution = ""
-    private lateinit var tvDetailContent: TextView
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stain_detail)
 
-        tvDetailContent = findViewById(R.id.tvDetailContent)
-        val btnBack = findViewById<Button>(R.id.btnBack)
-        val btnOptionsMenu = findViewById<TextView>(R.id.btnOptionsMenu)
+        val btnBack = findViewById<ImageView>(R.id.btnStainDetailBack)
+        val ivImage = findViewById<ImageView>(R.id.ivStainDetailImage)
+        val tvType = findViewById<TextView>(R.id.tvStainDetailType)
+        val tvDate = findViewById<TextView>(R.id.tvStainDetailDate)
+        val tvGuide = findViewById<TextView>(R.id.tvStainDetailGuide)
 
-        docId = intent.getStringExtra("docId") ?: ""
-        currentSeason = intent.getStringExtra("season") ?: "여름"
-        currentMain = intent.getStringExtra("mainCategory") ?: "상의"
-        currentSub = intent.getStringExtra("subCategory") ?: "반팔"
-        currentStainType = intent.getStringExtra("stainType") ?: ""
-        currentSolution = intent.getStringExtra("solution") ?: ""
+        val documentId = intent.getStringExtra("documentId")
 
-        updateUI()
-
-        btnBack.setOnClickListener { finish() }
-        btnOptionsMenu.setOnClickListener { showBottomSheet() }
-    }
-
-    private fun updateUI() {
-        tvDetailContent.text = "[ 옷 정보 ]\n계절: $currentSeason\n분류: $currentMain ($currentSub)\n\n[ 얼룩 종류 ]\n$currentStainType\n\n[ 💡 해결책 ]\n$currentSolution"
-    }
-
-    private fun showBottomSheet() {
-        val bottomSheetView = layoutInflater.inflate(R.layout.layout_bottom_sheet, null)
-        val bottomSheetDialog = BottomSheetDialog(this)
-        bottomSheetDialog.setContentView(bottomSheetView)
-
-        bottomSheetView.findViewById<TextView>(R.id.tvEdit).setOnClickListener {
-            bottomSheetDialog.dismiss()
-            showEditDialog()
+        btnBack.setOnClickListener {
+            finish()
         }
 
-        bottomSheetView.findViewById<TextView>(R.id.tvDelete).setOnClickListener {
-            bottomSheetDialog.dismiss()
-            AlertDialog.Builder(this)
-                .setTitle("경고")
-                .setMessage("정말 이 기록을 삭제하시겠습니까?")
-                .setPositiveButton("삭제") { _, _ ->
-                    FirebaseFirestore.getInstance().collection("stains").document(docId).delete()
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                            finish()
+        if (documentId != null) {
+            db.collection("stains").document(documentId).get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        val stainType = document.getString("stainType") ?: "알 수 없는 얼룩"
+                        val date = document.getString("date") ?: "정보 없음"
+                        val imageUrl = document.getString("imageUrl") ?: ""
+
+                        tvType.text = stainType
+                        tvDate.text = date
+
+                        // 이미지 로드
+                        if (imageUrl.isNotEmpty()) {
+                            Glide.with(this).load(imageUrl).into(ivImage)
                         }
+
+                        // 얼룩 종류별 맞춤형 세탁 팁 매칭
+                        tvGuide.text = getStainCareGuide(stainType)
+
+                    } else {
+                        Toast.makeText(this, "얼룩 기록을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
                 }
-                .setNegativeButton("취소", null)
-                .show()
+                .addOnFailureListener {
+                    Toast.makeText(this, "데이터 로딩 실패", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            Toast.makeText(this, "잘못된 접근입니다.", Toast.LENGTH_SHORT).show()
+            finish()
         }
-
-        bottomSheetView.findViewById<TextView>(R.id.tvCancel).setOnClickListener {
-            bottomSheetDialog.dismiss()
-        }
-
-        bottomSheetDialog.show()
     }
 
-    private fun showEditDialog() {
-        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 30, 50, 10) }
-
-        // 🌟 옷장과 완벽하게 동일한 3단계 카테고리 로직!
-        val subCategoryMap = mapOf(
-            "상의" to arrayOf("반팔", "긴팔", "아우터"),
-            "하의" to arrayOf("반바지", "긴바지", "치마"),
-            "고급" to arrayOf("명품", "기능성"),
-            "기타" to arrayOf("양말", "속옷")
-        )
-
-        val tvSeason = TextView(this).apply { text = "계절 선택"; setPadding(0, 20, 0, 10) }
-        val spinnerSeason = Spinner(this)
-        val seasonAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayOf("봄", "여름", "가을", "겨울"))
-        spinnerSeason.adapter = seasonAdapter
-        spinnerSeason.setSelection(seasonAdapter.getPosition(currentSeason))
-
-        val tvMain = TextView(this).apply { text = "대분류 선택"; setPadding(0, 20, 0, 10) }
-        val spinnerMain = Spinner(this)
-        val mainAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, subCategoryMap.keys.toTypedArray())
-        spinnerMain.adapter = mainAdapter
-        spinnerMain.setSelection(mainAdapter.getPosition(currentMain))
-
-        val tvSub = TextView(this).apply { text = "소분류 선택"; setPadding(0, 20, 0, 10) }
-        val spinnerSub = Spinner(this)
-
-        spinnerMain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                val selectedMain = spinnerMain.selectedItem.toString()
-                val subAdapter = ArrayAdapter(this@StainDetailActivity, android.R.layout.simple_spinner_dropdown_item, subCategoryMap[selectedMain]!!)
-                spinnerSub.adapter = subAdapter
-                if (selectedMain == currentMain) {
-                    spinnerSub.setSelection(subAdapter.getPosition(currentSub))
-                }
-            }
-            override fun onNothingSelected(p0: AdapterView<*>?) {}
+    /**
+     * 얼룩 종류별 최적의 초동 조치 방법을 반환하는 함수 (심사용 텍스트)
+     */
+    private fun getStainCareGuide(type: String): String {
+        return when {
+            type.contains("커피") -> "☕ 커피 얼룩 가이드:\n일반 세제를 사용하면 얼룩이 고착될 수 있습니다. 따뜻한 물과 주방세제(또는 식초)를 1:1로 섞어 얼룩 부위를 칫솔로 톡톡 두드린 후 세탁기에 돌리시는 것을 추천합니다."
+            type.contains("김치") -> "🌶️ 김치 국물 가이드:\n주방세제를 얼룩 안팎에 바른 뒤 손으로 살살 비벼 1차 애벌빨래를 해주십시오. 락스 대용으로 양파즙을 발라두었다가 하루 뒤 세탁하면 흔적이 깔끔하게 제거됩니다."
+            type.contains("기름") -> "🍔 기름/생선 얼룩 가이드:\n기름 성분은 일반 세탁으로 잘 빠지지 않습니다. 베이킹소다를 얼룩 위에 뿌려 기름기를 흡착시킨 뒤, 주방세제를 묻혀 미온수로 문지른 후 세탁하십시오."
+            type.contains("피") || type.contains("혈흔") -> "🩸 혈흔 가이드:\n절대 뜨거운 물을 사용하지 마십시오. 단백질 성분이 응고되어 고착됩니다. 반드시 '찬물'을 사용하고, 과산화수소를 살짝 묻혀 거품이 일어날 때 닦아내면 효과적입니다."
+            else -> "✨ 일반 오염 가이드:\n오염 물질이 섬유 안으로 완전히 흡수되기 전 중성세제를 미온수에 풀어 애벌빨래를 진행한 후 기기 맞춤 표준 코스로 세탁하시는 것을 권장합니다."
         }
-
-        val tvStain = TextView(this).apply { text = "얼룩 종류 (직접 입력)"; setPadding(0, 20, 0, 10) }
-        val etStain = EditText(this).apply { setText(currentStainType) }
-
-        layout.addView(tvSeason)
-        layout.addView(spinnerSeason)
-        layout.addView(tvMain)
-        layout.addView(spinnerMain)
-        layout.addView(tvSub)
-        layout.addView(spinnerSub)
-        layout.addView(tvStain)
-        layout.addView(etStain)
-
-        AlertDialog.Builder(this)
-            .setTitle("얼룩 정보 수정")
-            .setView(layout)
-            .setPositiveButton("저장") { _, _ ->
-                currentSeason = spinnerSeason.selectedItem.toString()
-                currentMain = spinnerMain.selectedItem.toString()
-                currentSub = spinnerSub.selectedItem.toString()
-                currentStainType = etStain.text.toString()
-
-                val db = FirebaseFirestore.getInstance()
-                db.collection("stains").document(docId)
-                    .update("season", currentSeason, "mainCategory", currentMain, "subCategory", currentSub, "stainType", currentStainType)
-                    .addOnSuccessListener {
-                        updateUI()
-                        Toast.makeText(this, "수정 완료!", Toast.LENGTH_SHORT).show()
-                    }
-            }
-            .setNegativeButton("취소", null)
-            .show()
     }
 }

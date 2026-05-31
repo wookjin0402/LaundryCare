@@ -2,7 +2,7 @@ package com.example.laundrycare_android
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,7 +13,7 @@ class MyPageActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_my_page)
 
-        findViewById<Button>(R.id.btnMyPageBack).setOnClickListener { finish() }
+        findViewById<ImageView>(R.id.btnMyPageBack).setOnClickListener { finish() }
 
         findViewById<LinearLayout>(R.id.btnGoEditInfo).setOnClickListener {
             startActivity(Intent(this, EditInfoActivity::class.java))

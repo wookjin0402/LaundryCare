@@ -5,8 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -18,7 +16,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
-// 🌟 여기서 구조를 바꿨습니다! (계절, 대분류, 소분류 추가)
+// 옷 정보가 추가된 데이터 구조
 data class StainItem(
     val id: String,
     val season: String,
@@ -31,9 +29,10 @@ data class StainItem(
 class StainAdapter(private val stainList: List<StainItem>) : RecyclerView.Adapter<StainAdapter.StainViewHolder>() {
 
     class StainViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tvStainType: TextView = view.findViewById(R.id.tvStainType)
-        val tvStainInfo: TextView = view.findViewById(R.id.tvStainInfo)
-        val btnItemOptions: TextView = view.findViewById(R.id.btnItemOptions)
+        // 🌟 수정됨: item_stain.xml에 적혀있는 진짜 ID로 변경했습니다!
+        val tvStainType: TextView = view.findViewById(R.id.tvItemStainType)
+        val tvStainInfo: TextView = view.findViewById(R.id.tvItemStainDate) // 기존 날짜 자리에 옷 정보를 넣습니다
+        val btnItemOptions: TextView = view.findViewById(R.id.btnStainMore)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StainViewHolder {
@@ -45,7 +44,7 @@ class StainAdapter(private val stainList: List<StainItem>) : RecyclerView.Adapte
         val item = stainList[position]
         holder.tvStainType.text = item.stainType
 
-        // 🌟 화면에 [계절 / 상의(반팔)] 형태로 깔끔하게 표시
+        // 화면에 [계절 / 상의(반팔)] 형태로 깔끔하게 표시
         holder.tvStainInfo.text = "${item.season} / ${item.mainCategory}(${item.subCategory})"
 
         holder.itemView.setOnClickListener {
@@ -64,6 +63,8 @@ class StainAdapter(private val stainList: List<StainItem>) : RecyclerView.Adapte
         holder.btnItemOptions.setOnClickListener {
             val context = holder.itemView.context
             val bottomSheetDialog = BottomSheetDialog(context)
+
+            // 🚨 주의: layout_bottom_sheet.xml 파일이 프로젝트에 있어야 작동합니다.
             val bottomSheetView = LayoutInflater.from(context).inflate(R.layout.layout_bottom_sheet, null)
             bottomSheetDialog.setContentView(bottomSheetView)
 
@@ -123,7 +124,6 @@ class StainFragment : Fragment() {
                 stainList.clear()
                 for (doc in snapshots) {
                     val id = doc.id
-                    // 🌟 파이어베이스에서 바뀐 데이터 구조를 정확히 읽어옵니다.
                     val season = doc.getString("season") ?: "여름"
                     val mainCategory = doc.getString("mainCategory") ?: "상의"
                     val subCategory = doc.getString("subCategory") ?: "반팔"

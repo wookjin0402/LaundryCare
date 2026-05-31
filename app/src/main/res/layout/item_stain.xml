@@ -1,50 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="15dp"
-    android:layout_marginBottom="10dp"
-    android:background="#FFFFFF"
-    android:elevation="2dp">
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_alignParentStart="true"
-        android:layout_toStartOf="@id/btnItemOptions">
+        android:orientation="horizontal"
+        android:padding="20dp"
+        android:background="#FFFFFF"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/ivItemStainThumb"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="#F0F0F0"
+            android:scaleType="centerCrop" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:id="@+id/tvItemStainType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="얼룩 종류 (예: 커피)"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="#333333"/>
+
+            <TextView
+                android:id="@+id/tvItemStainDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="등록일: 2026-05-29"
+                android:textSize="13sp"
+                android:textColor="#888888"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/tvStainType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="커피 자국"
-            android:textSize="18sp"
+            android:id="@+id/btnStainMore"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="⋮"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="#1976D2" />
-
-        <TextView
-            android:id="@+id/tvStainInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="옷 종류: 반팔 / 소재: 면"
-            android:layout_marginTop="5dp"
-            android:textSize="14sp"
-            android:textColor="#666666" />
+            android:gravity="center"
+            android:textColor="#888888"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"/>
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/btnItemOptions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:text="⋮"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#999999"
-        android:paddingStart="15dp"
-        android:paddingEnd="5dp"
-        android:background="@android:color/transparent" />
-
-</RelativeLayout>
+</androidx.cardview.widget.CardView>

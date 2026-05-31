@@ -2,6 +2,7 @@ package com.example.laundrycare_android
 
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
@@ -19,7 +20,7 @@ class ChangePasswordActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
 
-        val btnBack = findViewById<Button>(R.id.btnBack)
+        val btnBack = findViewById<ImageView>(R.id.btnBack)
         val etCurrentPassword = findViewById<TextInputEditText>(R.id.etCurrentPassword)
         val etNewPassword = findViewById<TextInputEditText>(R.id.etNewPassword)
         val etNewPasswordConfirm = findViewById<TextInputEditText>(R.id.etNewPasswordConfirm)

@@ -12,12 +12,11 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.firestore.FirebaseFirestore
 
-// 1. 옷 데이터를 담을 그릇 (선택 여부 Boolean 추가)
 data class SelectableCloth(
     val id: String,
     val imageUrl: String,
@@ -40,25 +39,32 @@ class ClothMultiSelectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cloth_multi_select)
 
+        // 🌟 뒤로가기 버튼 기능 연결
+        val btnBackSelect = findViewById<ImageView>(R.id.btnBackSelect)
+        btnBackSelect.setOnClickListener {
+            finish()
+        }
+
         rvClothes = findViewById(R.id.rvClothes)
         pbLoading = findViewById(R.id.pbLoading)
         btnNextStep = findViewById(R.id.btnNextStep)
 
-        rvClothes.layoutManager = LinearLayoutManager(this)
+        rvClothes.layoutManager = GridLayoutManager(this, 2)
+
         adapter = ClothSelectAdapter(clothList) { updateButtonState() }
         rvClothes.adapter = adapter
 
         fetchClothesFromFirebase()
 
-        // 🌟 다음 단계 버튼 로직: 카메라로 직행하지 않고 '등록된 세탁기 목록'을 먼저 띄웁니다!
         btnNextStep.setOnClickListener {
             val selectedClothes = clothList.filter { it.isSelected }
+
             val selectedImages = ArrayList(selectedClothes.map { it.imageUrl })
+            val selectedIds = ArrayList(selectedClothes.map { it.id })
 
             Toast.makeText(this, "내 세탁기 목록을 불러오는 중...", Toast.LENGTH_SHORT).show()
             val db = FirebaseFirestore.getInstance()
 
-            // 파이어베이스에서 내 세탁기 목록 가져오기
             db.collection("washers").get().addOnSuccessListener { snapshot ->
                 val machineNames = mutableListOf<String>()
                 val machineDocs = mutableListOf<Map<String, String>>()
@@ -73,7 +79,6 @@ class ClothMultiSelectActivity : AppCompatActivity() {
                     machineDocs.add(mapOf("brand" to brand, "model" to model, "type" to type))
                 }
 
-                // 리스트 맨 마지막에 '새로 등록하기' 버튼 추가
                 machineNames.add("➕ 새 세탁기 카메라로 등록하기")
                 val machineArray = machineNames.toTypedArray()
 
@@ -81,18 +86,18 @@ class ClothMultiSelectActivity : AppCompatActivity() {
                     .setTitle("어떤 세탁기를 사용하실 건가요?")
                     .setItems(machineArray) { _, which ->
                         if (which == machineArray.size - 1) {
-                            // 📷 새 세탁기 등록 -> 카메라 화면으로 이동
                             val intent = Intent(this, WasherCameraActivity::class.java)
                             intent.putStringArrayListExtra("selected_cloth_images", selectedImages)
+                            intent.putStringArrayListExtra("selected_cloth_ids", selectedIds)
                             startActivity(intent)
                         } else {
-                            // 🚀 기존 세탁기 선택 -> 카메라 건너뛰고 결과 화면으로 직행!
                             val selectedDoc = machineDocs[which]
-                            val intent = Intent(this, WasherResultActivity::class.java)
+                            val intent = Intent(this, LaundryResultActivity::class.java)
                             intent.putExtra("washer_type", selectedDoc["type"])
                             intent.putExtra("brand", selectedDoc["brand"])
                             intent.putExtra("model", selectedDoc["model"])
                             intent.putStringArrayListExtra("selected_cloth_images", selectedImages)
+                            intent.putStringArrayListExtra("selected_cloth_ids", selectedIds)
                             startActivity(intent)
                         }
                     }
@@ -145,7 +150,6 @@ class ClothMultiSelectActivity : AppCompatActivity() {
         }
     }
 
-    // 2. 리스트를 그려주는 내부 어댑터 클래스
     inner class ClothSelectAdapter(
         private val items: List<SelectableCloth>,
         private val onItemSelectionChanged: () -> Unit
@@ -172,7 +176,6 @@ class ClothMultiSelectActivity : AppCompatActivity() {
                 Glide.with(holder.itemView.context).load(item.imageUrl).into(holder.ivThumb)
             }
 
-            // 체크박스 꼬임 방지 처리
             holder.cbSelect.setOnCheckedChangeListener(null)
             holder.cbSelect.isChecked = item.isSelected
 
@@ -181,7 +184,6 @@ class ClothMultiSelectActivity : AppCompatActivity() {
                 onItemSelectionChanged()
             }
 
-            // 리스트 전체 영역 클릭 시에도 체크박스 토글되게 편의성 추가
             holder.itemView.setOnClickListener {
                 holder.cbSelect.isChecked = !holder.cbSelect.isChecked
             }

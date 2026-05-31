@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,6 +26,9 @@ class WasherCameraActivity : AppCompatActivity() {
     private lateinit var loadingLayout: LinearLayout
     private lateinit var btnCapture: Button
 
+    // 🌟 뒤로 가기 버튼 변수 타입 수정 (Button -> ImageView)
+    private lateinit var btnCameraBack: ImageView
+
     private var imageCapture: ImageCapture? = null
     // 🌟 PPT 핵심: 비동기 처리를 위한 Worker Thread (워커 스레드)
     private lateinit var cameraExecutor: ExecutorService
@@ -37,13 +41,22 @@ class WasherCameraActivity : AppCompatActivity() {
         loadingLayout = findViewById(R.id.loadingLayoutWasher)
         btnCapture = findViewById(R.id.btnCaptureWasher)
 
+        // 🌟 뒤로 가기 버튼 아이디 연결
+        btnCameraBack = findViewById(R.id.btnCameraBack)
+
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         // 카메라 실행 (권한은 이미 매니페스트에 있으므로 바로 실행)
         startCamera()
 
+        // 촬영 버튼 동작
         btnCapture.setOnClickListener {
             takePhotoAndAnalyze()
+        }
+
+        // 🌟 뒤로 가기 버튼 클릭 시 동작 (현재 화면 닫기)
+        btnCameraBack.setOnClickListener {
+            finish()
         }
     }
 

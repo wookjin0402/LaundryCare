@@ -2,8 +2,12 @@ package com.example.laundrycare_android
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -11,10 +15,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.firebase.firestore.FirebaseFirestore
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import org.json.JSONArray
 import org.json.JSONObject
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.io.File
+import java.io.IOException
 
 class LaundryResultActivity : AppCompatActivity() {
 
@@ -25,12 +33,13 @@ class LaundryResultActivity : AppCompatActivity() {
     private lateinit var btnFinishLaundry: Button
     private lateinit var rvSelectedClothes: RecyclerView
 
-    // 비동기 처리를 위한 워커 스레드 (ANR 방지)
-    private lateinit var executorService: ExecutorService
+    // 실제 서버 통신을 위한 OkHttpClient 및 기본 URL 세팅
+    private val client = OkHttpClient()
+    private val BASE_URL = "http://34.64.101.110:3000"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_laundry_result) // 우리가 만든 파일명으로!
+        setContentView(R.layout.activity_laundry_result)
 
         tvFinalCourse = findViewById(R.id.tvFinalCourse)
         cardWarning = findViewById(R.id.cardWarning)
@@ -39,16 +48,21 @@ class LaundryResultActivity : AppCompatActivity() {
         btnFinishLaundry = findViewById(R.id.btnFinishLaundry)
         rvSelectedClothes = findViewById(R.id.rvSelectedClothes)
 
-        executorService = Executors.newSingleThreadExecutor()
-
-        // 리사이클러뷰 가로 방향 설정 (선택한 옷 목록 가로 스크롤)
+        // 리사이클러뷰 가로 방향 설정
         rvSelectedClothes.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
-        // TODO: 이전 화면에서 넘겨받은 선택된 옷 데이터(이미지 URL 등)를 어댑터에 연결하는 코드 필요
-        // rvSelectedClothes.adapter = SelectedClothesAdapter(선택된옷리스트)
+        // 이전 화면에서 넘겨받은 데이터 세팅
+        val brand = intent.getStringExtra("brand") ?: "기본"
+        val model = intent.getStringExtra("model") ?: ""
+        val washerType = intent.getStringExtra("washer_type") ?: "드럼 세탁기"
+        val selectedImages = intent.getStringArrayListExtra("selected_cloth_images") ?: arrayListOf()
+        val selectedClothIds = intent.getStringArrayListExtra("selected_cloth_ids") ?: arrayListOf()
 
-        // 화면 켜지자마자 AI 분석 시작 (비동기)
-        analyzeLaundryCourseAsync()
+        // 🌟 이름 충돌을 피하기 위해 LaundryClothesAdapter 사용
+        rvSelectedClothes.adapter = LaundryClothesAdapter(selectedImages)
+
+        // 진짜 서버 API 호출 시작
+        analyzeLaundryCourseRealAPI(washerType, brand, model, selectedClothIds)
 
         // 세탁 시작 버튼 클릭 이벤트
         btnFinishLaundry.setOnClickListener {
@@ -57,37 +71,53 @@ class LaundryResultActivity : AppCompatActivity() {
     }
 
     /**
-     * 메인 스레드 멈춤 없이 워커 스레드에서 AI 서버와 통신하여 결과를 받아오는 함수
+     * 앱 단독이 아닌, Node.js 백엔드 서버로 데이터를 보내 진짜 AI 분석 결과를 받아옵니다.
      */
-    private fun analyzeLaundryCourseAsync() {
-        // 분석 전 초기 상태: 로딩바 켜기, 버튼 숨기기
+    private fun analyzeLaundryCourseRealAPI(washerType: String, brand: String, model: String, clothIds: List<String>) {
         pbFinalLoading.visibility = View.VISIBLE
         btnFinishLaundry.visibility = View.GONE
         cardWarning.visibility = View.GONE
-        tvFinalCourse.text = "분석 중..."
+        tvFinalCourse.text = "서버 AI 분석 중..."
 
-        executorService.execute {
-            // 백그라운드 스레드에서 무거운 작업 처리 (네트워크 통신 대기)
-            Thread.sleep(2500) // 2.5초 통신 딜레이 시뮬레이션
+        // 1. 서버로 보낼 JSON 데이터 만들기 (세탁기 정보 + 옷 ID 배열)
+        val jsonBody = JSONObject().apply {
+            put("washer_type", washerType)
+            put("brand", brand)
+            put("model", model)
+            put("cloth_ids", JSONArray(clothIds))
+        }.toString()
 
-            // AI 서버에서 반환했다고 가정하는 가짜 JSON 결과
-            val aiResultJson = """
-                {
-                    "recommended_course": "울/섬세 코스 (30도 미온수)",
-                    "has_critical_warning": true,
-                    "warning_message": "선택하신 옷 중 물빠짐이 심한 '청바지'와 '흰 셔츠'가 함께 있습니다. 이염 위험이 매우 높으니 분리 세탁을 강력히 권장합니다."
+        // 2. 백엔드의 세탁 추천 API 주소로 POST 요청 세팅
+        val request = Request.Builder()
+            .url("$BASE_URL/api/laundry/recommend")
+            .post(RequestBody.create("application/json".toMediaTypeOrNull(), jsonBody))
+            .build()
+
+        // 3. 비동기로 실제 서버 요청 보내기
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    Log.e("API_ERROR", "통신 실패: ${e.message}")
+                    showFallbackResult("서버 연결 실패")
                 }
-            """.trimIndent()
-
-            // 분석 완료 후 화면(UI) 업데이트는 다시 메인 스레드로 돌아와서 실행
-            runOnUiThread {
-                updateUIWithResult(aiResultJson)
             }
-        }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body?.string()
+                runOnUiThread {
+                    if (response.isSuccessful && responseData != null) {
+                        updateUIWithResult(responseData)
+                    } else {
+                        Log.e("API_ERROR", "서버 에러 코드: ${response.code}")
+                        showFallbackResult("서버 응답 오류 (Code: ${response.code})")
+                    }
+                }
+            }
+        })
     }
 
     /**
-     * 파싱한 AI 결과를 화면에 예쁘게 뿌려주는 함수
+     * 서버에서 받아온 진짜 JSON 결과를 파싱하여 화면에 뿌려주는 함수
      */
     private fun updateUIWithResult(jsonString: String) {
         try {
@@ -96,14 +126,10 @@ class LaundryResultActivity : AppCompatActivity() {
             val hasWarning = jsonObject.optBoolean("has_critical_warning", false)
             val warningMsg = jsonObject.optString("warning_message", "")
 
-            // 1. 로딩 끄고 버튼 켜기
             pbFinalLoading.visibility = View.GONE
             btnFinishLaundry.visibility = View.VISIBLE
-
-            // 2. 세탁 코스 표시
             tvFinalCourse.text = course
 
-            // 3. 치명적 주의사항이 있으면 빨간색 경고 카드 띄우기
             if (hasWarning && warningMsg.isNotEmpty()) {
                 cardWarning.visibility = View.VISIBLE
                 tvWarningDesc.text = warningMsg
@@ -111,23 +137,40 @@ class LaundryResultActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             e.printStackTrace()
-            pbFinalLoading.visibility = View.GONE
-            tvFinalCourse.text = "분석 실패 (기본 표준 세탁 권장)"
+            showFallbackResult("데이터 파싱 오류")
         }
     }
 
     /**
-     * 세탁 기록을 파이어베이스에 저장하고 메인으로 돌아가는 함수
+     * 서버가 꺼져있거나 통신 실패 시 튕기지 않도록 방어하는 임시 UI 함수
+     * 🌟 메인 스레드 충돌 방지를 위해 runOnUiThread 적용 완료
      */
+    private fun showFallbackResult(reason: String) {
+        runOnUiThread {
+            Toast.makeText(this@LaundryResultActivity, "$reason: 기본 표준 세탁 코스를 추천합니다.", Toast.LENGTH_SHORT).show()
+            pbFinalLoading.visibility = View.GONE
+            btnFinishLaundry.visibility = View.VISIBLE
+            tvFinalCourse.text = "기본 표준 세탁"
+        }
+    }
+
     private fun saveLaundryHistoryAndFinish() {
         btnFinishLaundry.isEnabled = false
         btnFinishLaundry.text = "기록 저장 중..."
 
+        // 🌟 히스토리 화면과 데이터를 맞추기 위해 수정된 부분
+        val washerInfoString = "${intent.getStringExtra("brand") ?: ""} ${intent.getStringExtra("model") ?: ""} (${intent.getStringExtra("washer_type") ?: ""})".trim()
+        val clothesImages = intent.getStringArrayListExtra("selected_cloth_images") ?: arrayListOf()
+        val warningMessage = if (cardWarning.visibility == View.VISIBLE) tvWarningDesc.text.toString() else "경고 없음"
+
         val db = FirebaseFirestore.getInstance()
+        // 🌟 LaundryHistoryActivity에서 요구하는 Key 값에 정확히 맞추어 데이터 저장
         val historyData = hashMapOf(
-            "course" to tvFinalCourse.text.toString(),
-            "timestamp" to System.currentTimeMillis()
-            // 선택된 옷들의 ID 목록 등도 여기에 함께 저장하면 좋습니다.
+            "timestamp" to System.currentTimeMillis(),
+            "washer_info" to washerInfoString,
+            "recommended_course" to tvFinalCourse.text.toString(),
+            "warning_msg" to warningMessage,
+            "clothes_images" to clothesImages
         )
 
         db.collection("laundry_history").add(historyData)
@@ -145,9 +188,40 @@ class LaundryResultActivity : AppCompatActivity() {
                 btnFinishLaundry.text = "이 코스로 세탁 시작하기"
             }
     }
+}
 
-    override fun onDestroy() {
-        super.onDestroy()
-        executorService.shutdown() // 메모리 누수 방지
+// 가로형 옷 요약 리스트 어댑터
+class LaundryClothesAdapter(private val images: List<String>) :
+    RecyclerView.Adapter<LaundryClothesAdapter.ViewHolder>() {
+
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val ivThumb: ImageView = view.findViewById(android.R.id.icon)
     }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val imageView = ImageView(parent.context).apply {
+            id = android.R.id.icon
+            layoutParams = ViewGroup.MarginLayoutParams(
+                (70 * resources.displayMetrics.density).toInt(),
+                (70 * resources.displayMetrics.density).toInt()
+            ).apply { marginEnd = (12 * resources.displayMetrics.density).toInt() }
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"))
+            clipToOutline = true
+        }
+        return ViewHolder(imageView)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val imgUrl = images[position]
+        if (imgUrl.isNotEmpty()) {
+            if (imgUrl.startsWith("http") || imgUrl.startsWith("content")) {
+                Glide.with(holder.itemView.context).load(imgUrl).into(holder.ivThumb)
+            } else {
+                Glide.with(holder.itemView.context).load(File(imgUrl)).into(holder.ivThumb)
+            }
+        }
+    }
+
+    override fun getItemCount(): Int = images.size
 }

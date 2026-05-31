@@ -5,17 +5,32 @@
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
+    <ImageView
+        android:id="@+id/btnBackHistory"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="20dp"
+        android:padding="12dp"
+        android:src="@drawable/ic_arrow_back"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="뒤로가기"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/tvHistoryTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="24dp"
+        android:layout_marginStart="8dp"
         android:text="📋 나의 세탁 기록 히스토리"
         android:textColor="#333333"
         android:textSize="22sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toEndOf="@id/btnBackHistory"
+        app:layout_constraintTop_toTopOf="@id/btnBackHistory"
+        app:layout_constraintBottom_toBottomOf="@id/btnBackHistory" />
 
     <ProgressBar
         android:id="@+id/pbHistoryLoading"
@@ -32,6 +47,6 @@
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvHistoryTitle" />
+        app:layout_constraintTop_toBottomOf="@id/btnBackHistory" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

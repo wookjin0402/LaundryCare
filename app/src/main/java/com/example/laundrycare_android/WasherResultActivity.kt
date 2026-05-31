@@ -25,7 +25,7 @@ class WasherResultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_washer_result)
 
-        val btnBack = findViewById<Button>(R.id.btnWasherBack)
+        val btnBack = findViewById<ImageView>(R.id.btnWasherBack)
         val btnSave = findViewById<Button>(R.id.btnWasherSave)
         val ivWasherPhoto = findViewById<ImageView>(R.id.ivWasherPhoto)
 
@@ -133,7 +133,7 @@ class WasherResultActivity : AppCompatActivity() {
     /**
      * 스피너 아이템 매칭 함수
      */
-    private fun setSpinnerToValue(spinner: Spinner, value: String) {
+    private fun setSpinnerToValue(spinner: Spinner, value: String)  {
         val adapter = spinner.adapter
         for (i in 0 until adapter.count) {
             if (adapter.getItem(i).toString() == value) {

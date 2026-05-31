@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -16,7 +17,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// 세탁 기록을 담을 그릇
 data class LaundryHistoryItem(
     val id: String,
     val timestamp: Long,
@@ -37,6 +37,12 @@ class LaundryHistoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_laundry_history)
 
+        // 🌟 뒤로가기 버튼 기능 연결
+        val btnBackHistory = findViewById<ImageView>(R.id.btnBackHistory)
+        btnBackHistory.setOnClickListener {
+            finish()
+        }
+
         rvLaundryHistory = findViewById(R.id.rvLaundryHistory)
         pbHistoryLoading = findViewById(R.id.pbHistoryLoading)
 
@@ -51,7 +57,6 @@ class LaundryHistoryActivity : AppCompatActivity() {
         pbHistoryLoading.visibility = View.VISIBLE
         val db = FirebaseFirestore.getInstance()
 
-        // 최신 세탁 기록이 맨 위로 오도록 시간 역순(DESCENDING) 정렬
         db.collection("laundry_history")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
@@ -83,7 +88,6 @@ class LaundryHistoryActivity : AppCompatActivity() {
             }
     }
 
-    // 리스트를 그려주는 내부 어댑터 클래스
     inner class HistoryAdapter(private val items: List<LaundryHistoryItem>) :
         RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
 
@@ -103,17 +107,14 @@ class LaundryHistoryActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val item = items[position]
 
-            // 타임스탬프 값을 읽기 좋은 날짜 형식으로 변환
             val sdf = SimpleDateFormat("yyyy.MM.dd HH:mm", Locale.KOREA)
             holder.tvDate.text = sdf.format(Date(item.timestamp))
 
             holder.tvWasher.text = item.washerInfo
-            // 🌟 문제의 오타(item.course)가 삭제되고 정상적인 변수로 수정되었습니다!
             holder.tvCourse.text = item.recommendedCourse
             holder.tvWarning.text = item.warningMsg
             holder.tvCount.text = "🧺 세탁한 옷: 총 ${item.clothesImages.size}벌"
 
-            // 경고 내용이 없으면 경고창 레이아웃 숨기기
             if (item.warningMsg == "경고 없음" || item.warningMsg.isEmpty()) {
                 holder.tvWarning.visibility = View.GONE
             } else {

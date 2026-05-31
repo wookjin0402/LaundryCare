@@ -3,11 +3,9 @@ package com.example.laundrycare_android
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.firebase.firestore.DocumentSnapshot
@@ -22,7 +20,7 @@ class HomeCareActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home_care)
 
-        findViewById<Button>(R.id.btnBack).setOnClickListener { finish() }
+        findViewById<ImageView>(R.id.btnBack).setOnClickListener { finish() }
 
         // 아코디언 메뉴 설정
         setupAccordion(R.id.layoutPadding, R.id.tvPaddingTip, R.id.listPadding)

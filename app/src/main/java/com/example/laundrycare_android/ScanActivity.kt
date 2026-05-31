@@ -46,8 +46,8 @@ class ScanActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scan)
 
-        // 🌟 뒤로가기 버튼 로직 추가
-        findViewById<Button>(R.id.btnScanBack).setOnClickListener {
+        // 🌟 핵심 해결 부분: Button에서 ImageView로 수정 완료!
+        findViewById<ImageView>(R.id.btnScanBack).setOnClickListener {
             finish()
         }
 

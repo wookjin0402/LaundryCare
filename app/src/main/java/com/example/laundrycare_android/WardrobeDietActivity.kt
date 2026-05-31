@@ -1,7 +1,7 @@
 package com.example.laundrycare_android
 
 import android.os.Bundle
-import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -21,7 +21,7 @@ class WardrobeDietActivity : AppCompatActivity(), DietClothingAdapter.OnMenuClic
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_wardrobe_diet)
 
-        findViewById<Button>(R.id.btnBack).setOnClickListener { finish() }
+        findViewById<ImageView>(R.id.btnBack).setOnClickListener { finish() }
 
         rvDietList = findViewById(R.id.rvDietList)
         rvDietList.layoutManager = LinearLayoutManager(this)

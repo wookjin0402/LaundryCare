@@ -1,7 +1,7 @@
 package com.example.laundrycare_android
 
 import android.os.Bundle
-import android.widget.Button
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 
 class CareActivity : AppCompatActivity() {
@@ -9,7 +9,7 @@ class CareActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_care)
 
-        val btnBack = findViewById<Button>(R.id.btnBack)
+        val btnBack = findViewById<ImageView>(R.id.btnBack)
 
         // 화면 안의 ◀ 버튼 클릭 시 뒤로가기
         btnBack.setOnClickListener {

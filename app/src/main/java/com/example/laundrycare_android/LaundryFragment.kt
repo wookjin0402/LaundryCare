@@ -14,13 +14,7 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 🌟 [추가] 뒤로가기 버튼 로직
-        val btnBack = view.findViewById<Button>(R.id.btnBack)
-        btnBack?.setOnClickListener {
-            requireActivity().finish()
-        }
-
-        // 🌟 [추가] 내 세탁기 관리 화면으로 이동!
+        // 내 세탁기 관리 화면으로 이동
         val btnManageWasher = view.findViewById<LinearLayout>(R.id.btnManageWasher)
         btnManageWasher?.setOnClickListener {
             val intent = Intent(requireContext(), WasherListActivity::class.java)
@@ -45,7 +39,7 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
         val btnTimeRecommend = view.findViewById<LinearLayout>(R.id.btnTimeRecommend)
         val btnCourseGuide = view.findViewById<LinearLayout>(R.id.btnCourseGuide)
 
-        // 3. 세탁 묶음 자동 분류 (조원분의 파이어베이스 코드 유지)
+        // 3. 세탁 묶음 자동 분류
         btnLaundryBatch?.setOnClickListener {
             val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
 

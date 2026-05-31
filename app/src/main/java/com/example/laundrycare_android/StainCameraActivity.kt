@@ -54,7 +54,6 @@ class StainCameraActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stain_camera)
 
-        // 🌟 XML 파일의 버튼 아이디들과 100% 일치하도록 매핑 완료
         viewFinder = findViewById(R.id.viewFinder)
         ivCapturedImage = findViewById(R.id.ivCapturedImage)
         layoutGuide = findViewById(R.id.layoutGuide)
@@ -64,8 +63,8 @@ class StainCameraActivity : AppCompatActivity() {
         btnRetry = findViewById(R.id.btnRetry)
         btnStartAnalysis = findViewById(R.id.btnStartAnalysis)
 
-        // 🌟 뒤로가기 버튼 완벽 연결
-        findViewById<Button>(R.id.btnStainCameraBack).setOnClickListener {
+        // 🌟 여기가 문제의 66번째 줄 근처입니다! ImageView로 완벽 교체 완료
+        findViewById<ImageView>(R.id.btnStainCameraBack).setOnClickListener {
             finish()
         }
 
@@ -105,7 +104,9 @@ class StainCameraActivity : AppCompatActivity() {
         layoutGuide.visibility = View.INVISIBLE
         btnTakePhoto.isEnabled = false
         pbScanning.visibility = View.VISIBLE
-        findViewById<Button>(R.id.btnStainCameraBack).visibility = View.GONE
+
+        // 🌟 여기도 ImageView로 교체
+        findViewById<ImageView>(R.id.btnStainCameraBack).visibility = View.GONE
 
         imageCapture.takePicture(ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
@@ -126,7 +127,9 @@ class StainCameraActivity : AppCompatActivity() {
                 pbScanning.visibility = View.GONE
                 btnTakePhoto.isEnabled = true
                 layoutGuide.visibility = View.VISIBLE
-                findViewById<Button>(R.id.btnStainCameraBack).visibility = View.VISIBLE
+
+                // 🌟 여기도 ImageView로 교체
+                findViewById<ImageView>(R.id.btnStainCameraBack).visibility = View.VISIBLE
                 Toast.makeText(baseContext, "사진 촬영 실패", Toast.LENGTH_SHORT).show()
             }
         })
@@ -140,7 +143,9 @@ class StainCameraActivity : AppCompatActivity() {
         btnSelectPhoto.visibility = View.GONE
         btnRetry.visibility = View.VISIBLE
         btnStartAnalysis.visibility = View.VISIBLE
-        findViewById<Button>(R.id.btnStainCameraBack).visibility = View.VISIBLE
+
+        // 🌟 여기도 ImageView로 교체
+        findViewById<ImageView>(R.id.btnStainCameraBack).visibility = View.VISIBLE
     }
 
     private fun resetToCameraState() {
@@ -151,7 +156,9 @@ class StainCameraActivity : AppCompatActivity() {
         btnSelectPhoto.visibility = View.VISIBLE
         btnRetry.visibility = View.GONE
         btnStartAnalysis.visibility = View.GONE
-        findViewById<Button>(R.id.btnStainCameraBack).visibility = View.VISIBLE
+
+        // 🌟 여기도 ImageView로 교체
+        findViewById<ImageView>(R.id.btnStainCameraBack).visibility = View.VISIBLE
     }
 
     private fun sendImageToAI() {
@@ -165,9 +172,13 @@ class StainCameraActivity : AppCompatActivity() {
 
         pbScanning.visibility = View.VISIBLE
         btnStartAnalysis.isEnabled = false
-        findViewById<Button>(R.id.btnStainCameraBack).visibility = View.GONE
 
-        val file = File(cacheDir, "temp_stain_image.jpg")
+        // 🌟 여기도 ImageView로 교체
+        findViewById<ImageView>(R.id.btnStainCameraBack).visibility = View.GONE
+
+        val fileName = "stain_${System.currentTimeMillis()}.jpg"
+        val file = File(cacheDir, fileName)
+
         try {
             val fos = FileOutputStream(file)
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
@@ -177,7 +188,9 @@ class StainCameraActivity : AppCompatActivity() {
             e.printStackTrace()
             pbScanning.visibility = View.GONE
             btnStartAnalysis.isEnabled = true
-            findViewById<Button>(R.id.btnStainCameraBack).visibility = View.VISIBLE
+
+            // 🌟 마지막으로 여기도 ImageView로 교체
+            findViewById<ImageView>(R.id.btnStainCameraBack).visibility = View.VISIBLE
             Toast.makeText(this, "이미지 저장 실패", Toast.LENGTH_SHORT).show()
             return
         }

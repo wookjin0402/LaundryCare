@@ -5,7 +5,7 @@
     android:background="#F8F9FA">
 
     <RelativeLayout
-        android:id="@+id/toolbarWasherList"
+        android:id="@+id/toolbarStainList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="20dp"
@@ -13,7 +13,7 @@
         android:elevation="4dp">
 
         <ImageView
-            android:id="@+id/btnWasherListBack"
+            android:id="@+id/btnStainListBack"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:padding="12dp"
@@ -26,7 +26,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="내 세탁기 관리"
+            android:text="내 얼룩 기록"
             android:textSize="20sp"
             android:textStyle="bold"
             android:layout_centerInParent="true"
@@ -34,34 +34,34 @@
     </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvWasherList"
+        android:id="@+id/rvStainList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolbarWasherList"
-        android:layout_above="@id/btnAddWasher"
-        android:padding="16dp"
-        android:clipToPadding="false"/>
+        android:layout_below="@id/toolbarStainList"
+        android:layout_above="@id/btnAddStain"
+        android:padding="8dp"
+        android:clipToPadding="false" />
 
     <TextView
-        android:id="@+id/tvEmptyWasher"
+        android:id="@+id/tvEmptyStain"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="등록된 세탁기가 없습니다.\n아래 버튼을 눌러 추가해보세요!"
-        android:textAlignment="center"
+        android:text="등록된 얼룩 기록이 없습니다."
         android:textColor="#888888"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:visibility="gone"/>
 
     <Button
-        android:id="@+id/btnAddWasher"
+        android:id="@+id/btnAddStain"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_alignParentBottom="true"
-        android:layout_margin="20dp"
-        android:text="➕ 새 세탁기 등록하기"
+        android:layout_margin="16dp"
+        android:text="➕ 새 얼룩 스캔하기"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:backgroundTint="#FF9800"
+        android:backgroundTint="#FF5722"
         android:textColor="#FFFFFF" />
 
 </RelativeLayout>

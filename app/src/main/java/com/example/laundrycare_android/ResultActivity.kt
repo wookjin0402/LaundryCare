@@ -3,6 +3,7 @@ package com.example.laundrycare_android
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +18,6 @@ class ResultActivity : AppCompatActivity() {
     private var parsedLaundryTip = ""
     private var currentImageUrl = ""
 
-    // AI가 분석한 초기 분류값을 임시 저장할 변수 (색상 추가)
     private var aiPredictedSeason = ""
     private var aiPredictedMain = ""
     private var aiPredictedSub = ""
@@ -28,7 +28,6 @@ class ResultActivity : AppCompatActivity() {
     private lateinit var spinnerSub: Spinner
     private lateinit var etColor: EditText
 
-    // 소분류 데이터 맵핑
     private val subCategoryMap = mapOf(
         "상의" to arrayOf("반팔", "긴팔", "아우터"),
         "하의" to arrayOf("반바지", "긴바지", "치마"),
@@ -40,7 +39,7 @@ class ResultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
 
-        val btnBack = findViewById<Button>(R.id.btnBack)
+        val btnBack = findViewById<ImageView>(R.id.btnBack)
         val btnSave = findViewById<Button>(R.id.btnSave)
         val ivResultPhoto = findViewById<ImageView>(R.id.ivResultPhoto)
         val tvGuideTitle = findViewById<TextView>(R.id.tvGuideTitle)
@@ -58,95 +57,94 @@ class ResultActivity : AppCompatActivity() {
 
         btnBack.setOnClickListener { finish() }
 
-        // 1. 이미지 로드
+        // 1. 이미지 로드 (null 방어 추가)
         val clothImagePath = intent.getStringExtra("cloth_image_path")
         if (!clothImagePath.isNullOrEmpty()) {
             val imgFile = File(clothImagePath)
             if (imgFile.exists()) {
                 Glide.with(this).load(imgFile).centerCrop().into(ivResultPhoto)
                 currentImageUrl = clothImagePath
+            } else {
+                Toast.makeText(this, "이미지 파일을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
             }
+        } else {
+            Toast.makeText(this, "전달된 이미지 경로가 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        // 2. 스피너 초기 어댑터 설정 (기본값 세팅)
         val seasons = arrayOf("봄", "여름", "가을", "겨울")
         spinnerSeason.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, seasons)
 
         val mainCategories = subCategoryMap.keys.toTypedArray()
         spinnerMain.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, mainCategories)
 
-        // 3. AI JSON 데이터 파싱 및 예측값 저장
+        // 3. AI JSON 데이터 파싱 (안전장치 추가)
         val jsonString = intent.getStringExtra("ai_json_data") ?: ""
+        Log.d("ResultActivity", "수신된 JSON: $jsonString") // 확인용 로그 추가
+
         if (jsonString.isNotEmpty()) {
             try {
                 val jsonObject = JSONObject(jsonString)
-                val guide = jsonObject.optJSONObject("guide")
+                // 서버가 'guide'로 안 감싸고 바로 보냈을 경우를 대비한 유연한 파싱
+                val guide = jsonObject.optJSONObject("guide") ?: jsonObject
 
-                if (guide != null) {
-                    tvGuideTitle.text = guide.optString("title", "의류 분석 결과")
-                    parsedLaundryTip = guide.optString("summary", "세탁 가이드 요약")
+                tvGuideTitle.text = guide.optString("title", "의류 분석 결과")
+                parsedLaundryTip = guide.optString("summary", "AI 분석 결과를 확인하세요.")
 
-                    // 🌟 AI가 예측한 색상, 계절, 분류값 가져오기
-                    aiPredictedSeason = guide.optString("season", "")
-                    aiPredictedMain = guide.optString("mainCategory", "")
-                    aiPredictedSub = guide.optString("subCategory", "")
-                    aiPredictedColor = guide.optString("color", "") // 색상 데이터 파싱
+                // 🌟 수정된 부분: guide 내부가 아닌 jsonObject(루트)에서 카테고리 정보 파싱
+                aiPredictedSeason = jsonObject.optString("season", "")
+                aiPredictedMain = jsonObject.optString("mainCategory", "")
+                aiPredictedSub = jsonObject.optString("subCategory", "")
+                aiPredictedColor = jsonObject.optString("color", "")
 
-                    // 태그 처리
-                    val tagsArray = guide.optJSONArray("raw_tags")
-                    var tagsText = ""
-                    if (tagsArray != null) {
-                        for (i in 0 until tagsArray.length()) tagsText += "#${tagsArray.getString(i)}  "
-                    }
-                    tvRawTags.text = tagsText
-
-                    // 경고 처리
-                    val warningsArray = guide.optJSONArray("warnings")
-                    var warningsText = ""
-                    var hasCritical = false
-                    if (warningsArray != null) {
-                        for (i in 0 until warningsArray.length()) {
-                            val warnObj = warningsArray.getJSONObject(i)
-                            if (warnObj.optBoolean("is_critical", false)) {
-                                hasCritical = true
-                                warningsText += "🚨 [치명적 주의] ${warnObj.optString("icon_name")}\n${warnObj.optString("desc")}\n\n"
-                            } else {
-                                warningsText += "⚠️ ${warnObj.optString("icon_name")}\n${warnObj.optString("desc")}\n\n"
-                            }
-                        }
-                    }
-                    tvWarnings.text = warningsText
-                    if (!hasCritical) tvWarnings.setTextColor(android.graphics.Color.parseColor("#666666"))
-
-                    // 세탁 스텝 처리
-                    val stepsArray = guide.optJSONArray("careSteps")
-                    var stepsText = ""
-                    if (stepsArray != null) {
-                        for (i in 0 until stepsArray.length()) {
-                            val stepObj = stepsArray.getJSONObject(i)
-                            stepsText += "✅ ${stepObj.optString("step")}\n${stepObj.optString("desc")}\n\n"
-                        }
-                    }
-                    tvCareSteps.text = stepsText
+                val tagsArray = guide.optJSONArray("raw_tags")
+                var tagsText = ""
+                if (tagsArray != null) {
+                    for (i in 0 until tagsArray.length()) tagsText += "#${tagsArray.getString(i)}  "
                 }
-            } catch (e: Exception) { e.printStackTrace() }
+                tvRawTags.text = tagsText
+
+                val warningsArray = guide.optJSONArray("warnings")
+                var warningsText = ""
+                var hasCritical = false
+                if (warningsArray != null) {
+                    for (i in 0 until warningsArray.length()) {
+                        val warnObj = warningsArray.getJSONObject(i)
+                        if (warnObj.optBoolean("is_critical", false)) {
+                            hasCritical = true
+                            warningsText += "🚨 [치명적 주의] ${warnObj.optString("icon_name", "경고")}\n${warnObj.optString("desc", "주의가 필요합니다.")}\n\n"
+                        } else {
+                            warningsText += "⚠️ ${warnObj.optString("icon_name", "주의")}\n${warnObj.optString("desc", "참고사항입니다.")}\n\n"
+                        }
+                    }
+                }
+                tvWarnings.text = if (warningsText.isEmpty()) "특이사항 없음" else warningsText
+                if (!hasCritical) tvWarnings.setTextColor(android.graphics.Color.parseColor("#666666"))
+
+                val stepsArray = guide.optJSONArray("careSteps")
+                var stepsText = ""
+                if (stepsArray != null) {
+                    for (i in 0 until stepsArray.length()) {
+                        val stepObj = stepsArray.getJSONObject(i)
+                        stepsText += "✅ ${stepObj.optString("step", "단계")}\n${stepObj.optString("desc", "진행하세요.")}\n\n"
+                    }
+                }
+                tvCareSteps.text = if (stepsText.isEmpty()) "관리 정보 없음" else stepsText
+
+            } catch (e: Exception) {
+                Log.e("ResultActivity", "JSON 파싱 에러: ${e.message}")
+                Toast.makeText(this, "데이터 분석 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                // 파싱 에러가 나도 빈 텍스트로 기본 세팅되게 함
+            }
+        } else {
+            Toast.makeText(this, "AI 분석 데이터를 받지 못했습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        // 4. 입력창 및 스피너에 AI 예측값 자동 매칭 실행
-        if (aiPredictedSeason.isNotEmpty()) {
-            setSpinnerToValue(spinnerSeason, aiPredictedSeason)
-        }
+        // 4. 스피너 초기화
+        if (aiPredictedSeason.isNotEmpty()) setSpinnerToValue(spinnerSeason, aiPredictedSeason)
+        if (aiPredictedMain.isNotEmpty()) setSpinnerToValue(spinnerMain, aiPredictedMain)
+        if (aiPredictedColor.isNotEmpty()) etColor.setText(aiPredictedColor)
 
-        if (aiPredictedMain.isNotEmpty()) {
-            setSpinnerToValue(spinnerMain, aiPredictedMain)
-        }
-
-        // 🌟 색상 값이 있으면 EditText에 자동으로 채워줌
-        if (aiPredictedColor.isNotEmpty()) {
-            etColor.setText(aiPredictedColor)
-        }
-
-        // 5. 대분류 변경 시 소분류 어댑터 갱신 로직
+        // 5. 스피너 연동
         spinnerMain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
                 val selectedMain = spinnerMain.selectedItem.toString()
@@ -154,82 +152,83 @@ class ResultActivity : AppCompatActivity() {
 
                 spinnerSub.adapter = ArrayAdapter(this@ResultActivity, android.R.layout.simple_spinner_dropdown_item, subCategories)
 
-                // 대분류가 바뀌었을 때, AI가 예측한 소분류가 현재 선택된 대분류에 속한다면 자동으로 세팅
                 if (aiPredictedSub.isNotEmpty() && subCategories.contains(aiPredictedSub)) {
                     setSpinnerToValue(spinnerSub, aiPredictedSub)
-                    // 한 번 세팅 후 비워주어 사용자가 나중에 대분류를 바꿀 때 꼬이지 않게 함
                     aiPredictedSub = ""
                 }
             }
             override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
-
-        // 6. 저장 버튼 로직 (한도 확인 및 업로드)
+        // 6. 저장 로직 (에러가 적은 전통적 방식의 컬렉션 갯수 세기로 변경)
         btnSave.setOnClickListener {
+            if (currentImageUrl.isEmpty()) {
+                Toast.makeText(this, "저장할 이미지 파일이 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             btnSave.isEnabled = false
-            btnSave.text = "한도 확인 중..."
+            btnSave.text = "클라우드 업로드 중..."
 
             val db = FirebaseFirestore.getInstance()
             val storageRef = FirebaseStorage.getInstance().reference
 
-            db.collection("clothes").count().get(com.google.firebase.firestore.AggregateSource.SERVER)
+            // get()으로 전체 문서를 가져와서 갯수 세기 (count() 쿼리 에러 방지)
+            db.collection("clothes").get()
                 .addOnSuccessListener { snapshot ->
-                    val currentCount = snapshot.count
-
-                    if (currentCount >= 100) {
+                    if (snapshot.size() >= 100) {
                         Toast.makeText(this, "옷장은 최대 100장까지만 저장할 수 있습니다.", Toast.LENGTH_LONG).show()
                         btnSave.isEnabled = true
                         btnSave.text = "이대로 옷장에 저장하기"
-                    } else {
-                        btnSave.text = "클라우드 업로드 중..."
-
-                        val fileUri = Uri.fromFile(File(currentImageUrl))
-                        val imageRef = storageRef.child("clothes_images/${System.currentTimeMillis()}_cloth.jpg")
-
-                        imageRef.putFile(fileUri).addOnSuccessListener {
-                            imageRef.downloadUrl.addOnSuccessListener { uri ->
-                                // 사용자가 최종 확인/수정한 스피너 및 텍스트 값을 저장함
-                                val clothData = hashMapOf(
-                                    "season" to spinnerSeason.selectedItem.toString(),
-                                    "mainCategory" to spinnerMain.selectedItem.toString(),
-                                    "subCategory" to (spinnerSub.selectedItem?.toString() ?: ""),
-                                    "color" to etColor.text.toString(),
-                                    "size" to etSize.text.toString(),
-                                    "material" to etMaterial.text.toString(),
-                                    "laundryTip" to parsedLaundryTip,
-                                    "warnings" to tvWarnings.text.toString(),
-                                    "imageUrl" to uri.toString(),
-                                    "timestamp" to System.currentTimeMillis()
-                                )
-
-                                db.collection("clothes").add(clothData).addOnSuccessListener {
-                                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show()
-                                    val intent = Intent(this, MainActivity::class.java).apply {
-                                        putExtra("navigate_to", "closet")
-                                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                    }
-                                    startActivity(intent)
-                                    finish()
-                                }
-                            }
-                        }.addOnFailureListener {
-                            btnSave.isEnabled = true
-                            btnSave.text = "이대로 옷장에 저장하기"
-                            Toast.makeText(this, "업로드 실패", Toast.LENGTH_SHORT).show()
-                        }
+                        return@addOnSuccessListener
                     }
-                }.addOnFailureListener {
+
+                    val fileUri = Uri.fromFile(File(currentImageUrl))
+                    val imageRef = storageRef.child("clothes_images/${System.currentTimeMillis()}_cloth.jpg")
+
+                    imageRef.putFile(fileUri).addOnSuccessListener {
+                        imageRef.downloadUrl.addOnSuccessListener { uri ->
+
+                            // 🌟 핵심 수정: careSteps 추가 🌟
+                            val clothData = hashMapOf(
+                                "season" to spinnerSeason.selectedItem.toString(),
+                                "mainCategory" to spinnerMain.selectedItem.toString(),
+                                "subCategory" to (spinnerSub.selectedItem?.toString() ?: ""),
+                                "color" to etColor.text.toString(),
+                                "size" to etSize.text.toString(),
+                                "material" to etMaterial.text.toString(),
+                                "laundryTip" to parsedLaundryTip,
+                                "warnings" to tvWarnings.text.toString(),
+                                "careSteps" to tvCareSteps.text.toString(), // <-- 추가된 데이터
+                                "imageUrl" to uri.toString(),
+                                "timestamp" to System.currentTimeMillis()
+                            )
+
+                            db.collection("clothes").add(clothData).addOnSuccessListener {
+                                Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(this, MainActivity::class.java).apply {
+                                    putExtra("navigate_to", "closet")
+                                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                }
+                                startActivity(intent)
+                                finish()
+                            }
+                        }
+                    }.addOnFailureListener { e ->
+                        Log.e("ResultActivity", "Storage 업로드 에러: ${e.message}")
+                        btnSave.isEnabled = true
+                        btnSave.text = "이대로 옷장에 저장하기"
+                        Toast.makeText(this, "사진 업로드에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                }.addOnFailureListener { e ->
+                    Log.e("ResultActivity", "Firestore 읽기 에러: ${e.message}")
                     btnSave.isEnabled = true
                     btnSave.text = "이대로 옷장에 저장하기"
-                    Toast.makeText(this, "서버 통신 오류", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "서버와 연결할 수 없습니다.", Toast.LENGTH_SHORT).show()
                 }
         }
     }
 
-    /**
-     * 스피너의 아이템 리스트 중에서 주어진 텍스트와 일치하는 항목을 찾아 선택합니다.
-     */
     private fun setSpinnerToValue(spinner: Spinner, value: String) {
         val adapter = spinner.adapter
         for (i in 0 until adapter.count) {

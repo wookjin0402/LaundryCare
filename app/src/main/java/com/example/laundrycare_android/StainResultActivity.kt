@@ -1,7 +1,6 @@
 package com.example.laundrycare_android
 
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -45,7 +44,7 @@ class StainResultActivity : AppCompatActivity() {
         setContentView(R.layout.activity_stain_result)
 
         // 🌟 새로 추가한 뒤로가기 버튼 클릭 이벤트 연동
-        findViewById<Button>(R.id.btnStainResultBack).setOnClickListener {
+        findViewById<ImageView>(R.id.btnStainResultBack).setOnClickListener {
             finish()
         }
 

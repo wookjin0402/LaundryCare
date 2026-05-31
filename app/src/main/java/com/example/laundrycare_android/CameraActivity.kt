@@ -36,8 +36,7 @@ class CameraActivity : AppCompatActivity() {
     private lateinit var btnRetry: Button
     private lateinit var btnStartAnalysis: Button
     private lateinit var btnAddLabel: Button
-    // 🌟 추가된 뒤로가기 버튼 변수
-    private lateinit var btnCameraBack: Button
+    private lateinit var btnCameraBack: ImageView
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
@@ -75,7 +74,6 @@ class CameraActivity : AppCompatActivity() {
         btnStartAnalysis = findViewById(R.id.btnStartAnalysis)
         btnAddLabel = findViewById(R.id.btnAddLabel)
 
-        // 🌟 뒤로가기 버튼 클릭 이벤트 연결
         btnCameraBack = findViewById(R.id.btnCameraBack)
         btnCameraBack.setOnClickListener { finish() }
 
@@ -147,7 +145,6 @@ class CameraActivity : AppCompatActivity() {
         layoutGuide.visibility = View.INVISIBLE
         btnTakePhoto.isEnabled = false
         pbScanning.visibility = View.VISIBLE
-        // 사진 찍을 때 뒤로가기 버튼 숨기기
         btnCameraBack.visibility = View.GONE
 
         imageCapture.takePicture(ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageCapturedCallback() {
@@ -157,9 +154,9 @@ class CameraActivity : AppCompatActivity() {
                 buffer.get(bytes)
                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
 
-                // 🌟 가로 사진 회전 처리 (90도 회전)
+                val rotationDegrees = image.imageInfo.rotationDegrees.toFloat()
                 val matrix = Matrix()
-                matrix.postRotate(90f)
+                matrix.postRotate(rotationDegrees)
                 val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
                 currentCapturedBitmap = rotatedBitmap
 
@@ -187,7 +184,6 @@ class CameraActivity : AppCompatActivity() {
         viewFinder.visibility = View.INVISIBLE
         ivCapturedImage.visibility = View.VISIBLE
         layoutGuide.visibility = View.INVISIBLE
-        // 사진 확인 화면에서도 뒤로가기 유지
         btnCameraBack.visibility = View.VISIBLE
 
         btnTakePhoto.visibility = View.GONE
@@ -251,18 +247,27 @@ class CameraActivity : AppCompatActivity() {
 
         val client = OkHttpClient()
         val requestBodyBuilder = MultipartBody.Builder().setType(MultipartBody.FORM)
-            .addFormDataPart("clothImage", "cloth_image.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), clothFile))
 
+        // 1. 전체 사진 전송
+        requestBodyBuilder.addFormDataPart("clothImage", "cloth_main.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), clothFile))
+
+        // 2. 모든 라벨 사진을 각각 'labelImages' 키로 전송 (서버 리스트 대응)
         labelBitmaps.forEachIndexed { index, bitmap ->
-            val labelFile = File(cacheDir, "label_${System.currentTimeMillis()}_$index.jpg")
+            val labelFile = File(cacheDir, "label_$index.jpg")
             try {
                 val fos = FileOutputStream(labelFile)
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
                 fos.flush()
                 fos.close()
-                requestBodyBuilder.addFormDataPart("labelImage", "label_image_$index.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), labelFile))
+                requestBodyBuilder.addFormDataPart("labelImages", "label_$index.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), labelFile))
             } catch (e: Exception) { e.printStackTrace() }
         }
+
+        // 3. 포스트맨 누락 데이터 추가 세팅
+        requestBodyBuilder.addFormDataPart("uid", "test_user_uid")
+        requestBodyBuilder.addFormDataPart("lat", "37.5665")
+        requestBodyBuilder.addFormDataPart("lon", "126.9780")
+        requestBodyBuilder.addFormDataPart("category", "반팔")
 
         val request = Request.Builder()
             .url("http://34.64.101.110:3000/api/clothes/analyze")
@@ -284,7 +289,7 @@ class CameraActivity : AppCompatActivity() {
                         startActivity(intent)
                         finish()
                     } else {
-                        showRetryDialog("대상이 구겨져 있거나 손상되어 스캔이 어렵습니다.")
+                        showRetryDialog("대상을 분석할 수 없습니다. 세탁 기호가 잘 보이게 다시 촬영해 주세요.")
                     }
                 }
             }

@@ -62,6 +62,9 @@
         <!-- 🌟 아까 작성했던 세탁 결과 화면 -->
         <activity android:name=".LaundryResultActivity" android:exported="false" />
 
+        <!-- 🌟 옷 상세 정보 수정을 위한 전체 화면 액티비티 추가 -->
+        <activity android:name=".ClothEditActivity" android:exported="false" />
+
         <activity
             android:name=".LoginActivity"
             android:exported="true">

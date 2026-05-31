@@ -5,18 +5,19 @@
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
+    <!-- 수정된 헤더 -->
     <TextView
         android:id="@+id/tvStainTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginStart="20dp"
-        android:text="얼룩 관리"
-        android:textSize="22sp"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:text="Stain"
+        android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="#333333"
+        android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvStains"

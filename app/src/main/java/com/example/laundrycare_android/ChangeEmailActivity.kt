@@ -3,6 +3,7 @@ package com.example.laundrycare_android
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -15,7 +16,7 @@ class ChangeEmailActivity : AppCompatActivity() {
         val auth = FirebaseAuth.getInstance()
         val user = auth.currentUser
 
-        findViewById<Button>(R.id.btnBack).setOnClickListener { finish() }
+        findViewById<ImageView>(R.id.btnBack).setOnClickListener { finish() }
 
         findViewById<Button>(R.id.btnSendEmailVerify).setOnClickListener {
             val newEmail = findViewById<EditText>(R.id.etNewEmail).text.toString().trim()
