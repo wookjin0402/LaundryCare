@@ -1,27 +1,25 @@
 package com.example.laundrycare_android
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import com.bumptech.glide.Glide
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class StainResultActivity : AppCompatActivity() {
 
@@ -35,6 +33,7 @@ class StainResultActivity : AppCompatActivity() {
     private var currentImagePath = ""
     private var finalStainType = ""
     private var finalCareTip = ""
+    private var selectedClothType = ""
 
     private val client = OkHttpClient()
     private val BASE_URL = "http://34.64.101.110:3000"
@@ -43,10 +42,7 @@ class StainResultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stain_result)
 
-        // 🌟 새로 추가한 뒤로가기 버튼 클릭 이벤트 연동
-        findViewById<ImageView>(R.id.btnStainResultBack).setOnClickListener {
-            finish()
-        }
+        findViewById<ImageView>(R.id.btnStainResultBack).setOnClickListener { finish() }
 
         ivStainPhoto = findViewById(R.id.ivStainPhoto)
         viewBoundingBox = findViewById(R.id.viewBoundingBox)
@@ -64,7 +60,7 @@ class StainResultActivity : AppCompatActivity() {
             finish()
         }
 
-        btnSaveStain.setOnClickListener { saveStainDataToFirebase() }
+        btnSaveStain.setOnClickListener { saveStainWithImage() }
     }
 
     private fun analyzeStainImage() {
@@ -86,19 +82,33 @@ class StainResultActivity : AppCompatActivity() {
                     val responseData = response.body?.string()
                     try {
                         val json = JSONObject(responseData)
+
+                        // 🌟 1. 백엔드에서 계산해 준 네모 박스 좌표 데이터 추출
                         val box = json.optJSONObject("box")
+
+                        // 🌟 2. 백엔드에서 매핑 완료한 얼룩 종류 및 신뢰도 데이터 추출
+                        finalStainType = json.optString("stainType", "일반 오염")
+                        val confidence = json.optDouble("confidence", 0.0)
+
                         runOnUiThread {
                             pbLoading.visibility = View.GONE
+
+                            // 🌟 3. 화면에 얼룩 네모 박스 시각화
                             if (box != null) {
                                 drawBoundingBox(box.getInt("x"), box.getInt("y"), box.getInt("w"), box.getInt("h"))
                             }
-                            showBottomSheet()
+
+                            // 🌟 4. 분석 결과 토스트 알림 (예: 커피 (95%))
+                            val confPercent = (confidence * 100).toInt()
+                            Toast.makeText(this@StainResultActivity, "AI 인식: $finalStainType ($confPercent%)", Toast.LENGTH_SHORT).show()
+
+                            // 🌟 5. 수동 선택 팝업을 건너뛰고, 곧바로 의류 재질 선택 다이얼로그 실행!
+                            showClothSelectionDialog()
                         }
                     } catch (e: Exception) {
                         runOnUiThread { showFallbackMockUI("데이터 파싱 오류") }
                     }
                 } else {
-                    Log.e("API_ERROR", "분석 에러 코드: ${response.code}")
                     runOnUiThread { showFallbackMockUI("서버 500 에러") }
                 }
             }
@@ -106,10 +116,11 @@ class StainResultActivity : AppCompatActivity() {
     }
 
     private fun showFallbackMockUI(reason: String) {
-        Toast.makeText(this, "$reason: 임시 UI로 테스트를 진행합니다.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "$reason: 임시 데이터로 진행합니다.", Toast.LENGTH_SHORT).show()
         pbLoading.visibility = View.GONE
         drawBoundingBox(250, 400, 400, 400)
-        showBottomSheet()
+        finalStainType = "커피" // 실패 시 기본값 세팅
+        showClothSelectionDialog()
     }
 
     private fun drawBoundingBox(x: Int, y: Int, w: Int, h: Int) {
@@ -124,105 +135,100 @@ class StainResultActivity : AppCompatActivity() {
         viewBoundingBox.layoutParams = params
     }
 
-    private fun showBottomSheet() {
-        val dialog = BottomSheetDialog(this)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_stain, null)
-        dialog.setContentView(view)
+    private fun showClothSelectionDialog() {
+        val clothTypes = arrayOf("일반(면/폴리)", "민감성(실크/울)", "가죽/모피")
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("어떤 재질의 옷인가요?")
+            .setCancelable(false)
+            .setItems(clothTypes) { _, which ->
+                selectedClothType = clothTypes[which]
+                pbLoading.visibility = View.VISIBLE
 
-        val btnCoffee = view.findViewById<Button>(R.id.btnCoffee)
-        val btnMakeup = view.findViewById<Button>(R.id.btnMakeup)
-        val btnBlood = view.findViewById<Button>(R.id.btnBlood)
+                determineCareGuideLocally()
+            }
+            .show()
+    }
 
-        val clickListener = View.OnClickListener { v ->
-            finalStainType = (v as Button).text.toString().replace(Regex("[^가-힣 ]"), "").trim()
-            dialog.dismiss()
-            pbLoading.visibility = View.VISIBLE
-            requestStainGuide()
+    private fun determineCareGuideLocally() {
+        pbLoading.visibility = View.GONE
+
+        if (selectedClothType == "민감성(실크/울)" || selectedClothType == "가죽/모피") {
+            finalCareTip = "⚠️ 세탁소 방문 권장\n해당 재질($selectedClothType)은 홈케어 시 옷감이 손상될 위험이 매우 높습니다. 전문가(세탁소)에게 맡기시는 것을 강력히 권장합니다."
+            cardSolution.setBackgroundColor(android.graphics.Color.parseColor("#FFEBEE"))
+        } else {
+            finalCareTip = when (finalStainType) {
+                "커피" -> "☕ 커피 얼룩:\n따뜻한 물과 주방세제(또는 식초)를 1:1로 섞어 칫솔로 톡톡 두드린 후 세탁하세요."
+                "화장품" -> "💄 화장품 얼룩:\n클렌징 오일이나 폼을 묻혀 살살 문지른 후, 미온수로 헹궈내세요."
+                "피", "혈흔" -> "🩸 혈흔:\n절대 뜨거운 물을 쓰지 마시고, 찬물과 과산화수소로 닦아내세요."
+                else -> "✨ $finalStainType 오염:\n중성세제를 미온수에 풀어 애벌빨래를 진행한 후 세탁하세요."
+            }
+            cardSolution.setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"))
         }
 
-        btnCoffee.setOnClickListener(clickListener)
-        btnMakeup.setOnClickListener(clickListener)
-        btnBlood.setOnClickListener(clickListener)
-
-        dialog.setCancelable(false)
-        dialog.show()
-    }
-
-    private fun requestStainGuide() {
-        val jsonBody = JSONObject().apply {
-            put("uid", "user_123")
-            put("clothId", "cloth_123")
-            put("stainType", finalStainType)
-        }.toString()
-
-        val request = Request.Builder()
-            .url("$BASE_URL/api/stains/guide")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), jsonBody))
-            .build()
-
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                runOnUiThread { showFallbackGuide() }
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                runOnUiThread { pbLoading.visibility = View.GONE }
-                if (response.isSuccessful) {
-                    val responseData = response.body?.string()
-                    try {
-                        val json = JSONObject(responseData)
-                        finalCareTip = json.optString("care_tip", "가이드를 찾을 수 없습니다.")
-                        runOnUiThread {
-                            cardSolution.visibility = View.VISIBLE
-                            tvCareTip.text = finalCareTip
-                            btnSaveStain.visibility = View.VISIBLE
-                        }
-                    } catch (e: Exception) {
-                        runOnUiThread { showFallbackGuide() }
-                    }
-                } else {
-                    runOnUiThread { showFallbackGuide() }
-                }
-            }
-        })
-    }
-
-    private fun showFallbackGuide() {
-        finalCareTip = "($finalStainType) 주방세제와 식초를 1:1로 섞어 칫솔로 가볍게 두드리며 닦아주세요. (임시 데이터)"
         cardSolution.visibility = View.VISIBLE
         tvCareTip.text = finalCareTip
         btnSaveStain.visibility = View.VISIBLE
     }
 
-    private fun saveStainDataToFirebase() {
+    private fun saveStainWithImage() {
         btnSaveStain.isEnabled = false
-        val db = FirebaseFirestore.getInstance()
+        btnSaveStain.text = "저장 중..."
+        pbLoading.visibility = View.VISIBLE // 🌟 에러 수정 완료
 
-        db.collection("stains").count().get(com.google.firebase.firestore.AggregateSource.SERVER)
-            .addOnSuccessListener { snapshot ->
-                if (snapshot.count >= 10) {
-                    Toast.makeText(this, "얼룩 기록은 최대 10개까지만 저장할 수 있습니다.", Toast.LENGTH_LONG).show()
-                    btnSaveStain.isEnabled = true
-                } else {
-                    val savedData = hashMapOf(
-                        "stainType" to finalStainType,
-                        "solution" to finalCareTip,
-                        "timestamp" to System.currentTimeMillis()
-                    )
-                    db.collection("stains").add(savedData).addOnSuccessListener {
-                        Toast.makeText(this, "얼룩 홈케어 기록이 저장되었습니다!", Toast.LENGTH_SHORT).show()
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            val intent = Intent(this, MainActivity::class.java)
-                            intent.putExtra("navigate_to", "stain")
-                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                            startActivity(intent)
-                            finish()
-                        }, 500)
-                    }.addOnFailureListener {
-                        btnSaveStain.isEnabled = true
-                        Toast.makeText(this, "저장 실패", Toast.LENGTH_SHORT).show()
-                    }
+        val fileUri = Uri.fromFile(File(currentImagePath))
+        val storageRef = FirebaseStorage.getInstance().reference.child("stains/stain_${System.currentTimeMillis()}.jpg")
+
+        storageRef.putFile(fileUri)
+            .addOnSuccessListener {
+                storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                    saveDataToFirestore(downloadUri.toString())
+                }.addOnFailureListener {
+                    Toast.makeText(this, "이미지 URL 획득 실패", Toast.LENGTH_SHORT).show()
+                    resetSaveButton()
                 }
             }
+            .addOnFailureListener {
+                Toast.makeText(this, "이미지 업로드 실패", Toast.LENGTH_SHORT).show()
+                resetSaveButton()
+            }
+    }
+
+    private fun saveDataToFirestore(imageUrl: String) {
+        val db = FirebaseFirestore.getInstance()
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
+        val today = dateFormat.format(Date())
+
+        val savedData = hashMapOf(
+            "stainType" to finalStainType,
+            "clothType" to selectedClothType,
+            "solution" to finalCareTip,
+            "imageUrl" to imageUrl,
+            "date" to today,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("stains").add(savedData)
+            .addOnSuccessListener {
+                pbLoading.visibility = View.GONE
+                Toast.makeText(this, "얼룩 기록이 완벽하게 저장되었습니다!", Toast.LENGTH_SHORT).show()
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.putExtra("navigate_to", "stain")
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    startActivity(intent)
+                    finish()
+                }, 500)
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "DB 저장 실패", Toast.LENGTH_SHORT).show()
+                resetSaveButton()
+            }
+    }
+
+    private fun resetSaveButton() {
+        pbLoading.visibility = View.GONE
+        btnSaveStain.isEnabled = true
+        btnSaveStain.text = "얼룩 기록 저장하기"
     }
 }

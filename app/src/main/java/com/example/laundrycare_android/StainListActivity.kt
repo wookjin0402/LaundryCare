@@ -5,11 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.PopupMenu
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -44,13 +40,10 @@ class StainListActivity : AppCompatActivity() {
         btnStainListBack = findViewById(R.id.btnStainListBack)
 
         rvStainList.layoutManager = LinearLayoutManager(this)
-
         btnStainListBack.setOnClickListener { finish() }
 
-        // 새 얼룩 스캔 버튼 -> 방금 버그 수정한 카메라 화면으로 이동
         btnAddStain.setOnClickListener {
-            val intent = Intent(this, StainCameraActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, StainCameraActivity::class.java))
         }
 
         fetchStainsFromFirebase()
@@ -62,43 +55,32 @@ class StainListActivity : AppCompatActivity() {
     }
 
     private fun fetchStainsFromFirebase() {
-        // 파이어베이스 "stains" 컬렉션 호출 (이름이 다르면 수정 필요)
         db.collection("stains").get()
             .addOnSuccessListener { snapshot ->
                 stainList.clear()
-
                 if (snapshot.isEmpty) {
                     tvEmptyStain.visibility = View.VISIBLE
                     rvStainList.visibility = View.GONE
                 } else {
                     tvEmptyStain.visibility = View.GONE
                     rvStainList.visibility = View.VISIBLE
-
                     for (doc in snapshot.documents) {
-                        val docId = doc.id
-                        val type = doc.getString("stainType") ?: "알 수 없는 얼룩"
-                        val date = doc.getString("date") ?: "날짜 미상"
-                        val imageUrl = doc.getString("imageUrl") ?: ""
-
-                        stainList.add(StainData(docId, type, date, imageUrl))
+                        stainList.add(StainData(
+                            doc.id,
+                            doc.getString("stainType") ?: "알 수 없음",
+                            doc.getString("date") ?: "날짜 미상",
+                            doc.getString("imageUrl") ?: ""
+                        ))
                     }
-
-                    // 🌟 수정됨: StainListAdapter로 이름 변경
-                    rvStainList.adapter = StainListAdapter(
-                        stainList,
+                    rvStainList.adapter = StainListAdapter(stainList,
                         onItemClick = { stain ->
                             val intent = Intent(this, StainDetailActivity::class.java)
                             intent.putExtra("documentId", stain.documentId)
                             startActivity(intent)
                         },
-                        onMoreClick = { view, stain ->
-                            showPopupMenu(view, stain)
-                        }
+                        onMoreClick = { view, stain -> showPopupMenu(view, stain) }
                     )
                 }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "얼룩 목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -110,7 +92,11 @@ class StainListActivity : AppCompatActivity() {
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 0 -> {
-                    Toast.makeText(this, "수정 화면 준비 중", Toast.LENGTH_SHORT).show()
+                    // 수정하기 클릭 시 상세 화면으로 이동하면서 수정 모드 전달
+                    val intent = Intent(this, StainDetailActivity::class.java)
+                    intent.putExtra("documentId", stain.documentId)
+                    intent.putExtra("isEditMode", true)
+                    startActivity(intent)
                     true
                 }
                 1 -> {
@@ -124,18 +110,14 @@ class StainListActivity : AppCompatActivity() {
     }
 
     private fun deleteStain(documentId: String) {
-        db.collection("stains").document(documentId).delete()
-            .addOnSuccessListener {
-                Toast.makeText(this, "기록이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                fetchStainsFromFirebase()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "삭제 실패", Toast.LENGTH_SHORT).show()
-            }
+        db.collection("stains").document(documentId).delete().addOnSuccessListener {
+            Toast.makeText(this, "삭제 완료", Toast.LENGTH_SHORT).show()
+            fetchStainsFromFirebase()
+        }
     }
 }
 
-// 🌟 수정됨: 리사이클러뷰 어댑터 이름 중복 방지를 위해 StainListAdapter로 변경
+// 하나의 파일 안에 어댑터 클래스 정의
 class StainListAdapter(
     private val stains: List<StainData>,
     private val onItemClick: (StainData) -> Unit,
@@ -156,14 +138,12 @@ class StainListAdapter(
 
     override fun onBindViewHolder(holder: StainViewHolder, position: Int) {
         val stain = stains[position]
-
         holder.tvType.text = stain.stainType
         holder.tvDate.text = "등록일: ${stain.date}"
 
         if (stain.imageUrl.isNotEmpty()) {
             Glide.with(holder.itemView.context).load(stain.imageUrl).into(holder.ivThumb)
         } else {
-            // 이미지가 없을 때 기본 회색 배경 유지
             holder.ivThumb.setBackgroundColor(android.graphics.Color.parseColor("#F0F0F0"))
         }
 

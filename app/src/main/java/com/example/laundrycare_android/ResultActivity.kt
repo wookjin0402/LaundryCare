@@ -160,10 +160,17 @@ class ResultActivity : AppCompatActivity() {
             override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
-        // 6. 저장 로직 (에러가 적은 전통적 방식의 컬렉션 갯수 세기로 변경)
+        // 6. 저장 로직 (빈 데이터 컷팅 및 에러가 적은 전통적 방식)
         btnSave.setOnClickListener {
+            // [방어 1] 이미지가 없으면 컷
             if (currentImageUrl.isEmpty()) {
                 Toast.makeText(this, "저장할 이미지 파일이 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // [방어 2] 메인 카테고리가 비어있거나 '분석 실패'면 유령 데이터 방지를 위해 컷
+            if (spinnerMain.selectedItem == null || spinnerMain.selectedItem.toString().isEmpty()) {
+                Toast.makeText(this, "카테고리가 선택되지 않아 저장할 수 없습니다.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -173,7 +180,7 @@ class ResultActivity : AppCompatActivity() {
             val db = FirebaseFirestore.getInstance()
             val storageRef = FirebaseStorage.getInstance().reference
 
-            // get()으로 전체 문서를 가져와서 갯수 세기 (count() 쿼리 에러 방지)
+            // get()으로 전체 문서를 가져와서 갯수 세기
             db.collection("clothes").get()
                 .addOnSuccessListener { snapshot ->
                     if (snapshot.size() >= 100) {
@@ -189,17 +196,16 @@ class ResultActivity : AppCompatActivity() {
                     imageRef.putFile(fileUri).addOnSuccessListener {
                         imageRef.downloadUrl.addOnSuccessListener { uri ->
 
-                            // 🌟 핵심 수정: careSteps 추가 🌟
                             val clothData = hashMapOf(
-                                "season" to spinnerSeason.selectedItem.toString(),
+                                "season" to (spinnerSeason.selectedItem?.toString() ?: ""),
                                 "mainCategory" to spinnerMain.selectedItem.toString(),
                                 "subCategory" to (spinnerSub.selectedItem?.toString() ?: ""),
-                                "color" to etColor.text.toString(),
-                                "size" to etSize.text.toString(),
-                                "material" to etMaterial.text.toString(),
+                                "color" to etColor.text.toString().trim(),
+                                "size" to etSize.text.toString().trim(),
+                                "material" to etMaterial.text.toString().trim(),
                                 "laundryTip" to parsedLaundryTip,
                                 "warnings" to tvWarnings.text.toString(),
-                                "careSteps" to tvCareSteps.text.toString(), // <-- 추가된 데이터
+                                "careSteps" to tvCareSteps.text.toString(),
                                 "imageUrl" to uri.toString(),
                                 "timestamp" to System.currentTimeMillis()
                             )

@@ -1,6 +1,6 @@
 package com.example.laundrycare_android
 
-import android.content.Intent
+import android.content.Intent // 🌟 이 부분이 추가되었습니다!
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -13,13 +13,14 @@ class MainActivity : AppCompatActivity() {
     private val tabHistory = Stack<Int>()
     private lateinit var bottomNavigationView: BottomNavigationView
 
+    // 🌟 홈 화면에서 받아온 백엔드의 날씨 추천 문구를 저장할 공용 변수
+    var sharedWeatherRecommend: String = "날씨 정보를 불러오는 중입니다..."
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
-
-        // (이전에 있던 테스트용 버튼 코드는 깔끔하게 삭제되었습니다)
 
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -37,11 +38,15 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+        // 🌟 신호 처리 로직
         if (savedInstanceState == null) {
+            val navigateToFragment = intent.getStringExtra("navigate_to_fragment")
             val navigateTo = intent.getStringExtra("navigate_to")
-            val targetId = when (navigateTo) {
-                "closet" -> R.id.nav_closet
-                "stain" -> R.id.nav_stain
+
+            val targetId = when {
+                navigateToFragment == "stain" -> R.id.nav_stain
+                navigateTo == "closet" -> R.id.nav_closet
+                navigateTo == "stain" -> R.id.nav_stain
                 else -> R.id.nav_home
             }
             bottomNavigationView.selectedItemId = targetId
@@ -58,6 +63,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) { // 🌟 타입 명시적으로 수정
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val navigateToFragment = intent.getStringExtra("navigate_to_fragment")
+        if (navigateToFragment == "stain") {
+            bottomNavigationView.selectedItemId = R.id.nav_stain
+        }
     }
 
     private fun replaceFragment(fragment: Fragment) {

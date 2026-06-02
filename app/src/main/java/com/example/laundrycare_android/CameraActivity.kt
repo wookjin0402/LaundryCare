@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,6 +25,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class CameraActivity : AppCompatActivity() {
 
@@ -245,13 +247,19 @@ class CameraActivity : AppCompatActivity() {
             return
         }
 
-        val client = OkHttpClient()
+        // 🌟 타임아웃 30초 설정 적용
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+
         val requestBodyBuilder = MultipartBody.Builder().setType(MultipartBody.FORM)
 
         // 1. 전체 사진 전송
         requestBodyBuilder.addFormDataPart("clothImage", "cloth_main.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), clothFile))
 
-        // 2. 모든 라벨 사진을 각각 'labelImages' 키로 전송 (서버 리스트 대응)
+        // 2. 모든 라벨 사진을 각각 전송
         labelBitmaps.forEachIndexed { index, bitmap ->
             val labelFile = File(cacheDir, "label_$index.jpg")
             try {
@@ -276,7 +284,12 @@ class CameraActivity : AppCompatActivity() {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                runOnUiThread { showRetryDialog("서버에 연결할 수 없습니다.") }
+                // 🌟 수정됨: 안드로이드 시스템이 던지는 진짜 에러 메시지를 낚아채서 화면에 띄웁니다.
+                val realError = e.message ?: "알 수 없는 에러"
+                Log.e("CameraError", "통신 실패 진짜 원인: $realError")
+                runOnUiThread {
+                    showRetryDialog("서버 연결 실패 이유:\n$realError")
+                }
             }
             override fun onResponse(call: Call, response: Response) {
                 val responseData = response.body?.string()
@@ -289,7 +302,8 @@ class CameraActivity : AppCompatActivity() {
                         startActivity(intent)
                         finish()
                     } else {
-                        showRetryDialog("대상을 분석할 수 없습니다. 세탁 기호가 잘 보이게 다시 촬영해 주세요.")
+                        // 🌟 수정됨: 백엔드 서버가 거절한 '진짜 이유(HTTP 에러 코드와 메시지)'를 화면에 강제로 띄웁니다!
+                        showRetryDialog("서버 에러코드: ${response.code}\n서버 응답: $responseData")
                     }
                 }
             }

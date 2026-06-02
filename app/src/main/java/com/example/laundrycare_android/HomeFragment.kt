@@ -120,6 +120,9 @@ class HomeFragment : Fragment() {
                         activity?.runOnUiThread {
                             tvWeatherTitle.text = "현재 날씨: $weather"
                             tvRecommend.text = recommend
+
+                            // 🌟 핵심: 가져온 추천 문구를 MainActivity 공용 변수에 저장!
+                            (activity as? MainActivity)?.sharedWeatherRecommend = recommend
                         }
                     } catch (e: Exception) {
                         activity?.runOnUiThread { showFallbackWeather() }
@@ -133,6 +136,10 @@ class HomeFragment : Fragment() {
 
     private fun showFallbackWeather() {
         tvWeatherTitle.text = "현재 날씨: 맑음 (22℃)"
-        tvRecommend.text = "햇살이 좋아요! ☀️\n바람이 잘 통하는 곳에서 자연 건조를 추천해요."
+        val fallbackText = "햇살이 좋아요! ☀️\n바람이 잘 통하는 곳에서 자연 건조를 추천해요."
+        tvRecommend.text = fallbackText
+
+        // 🌟 에러가 났을 때도 임시 문구를 저장해 둠
+        (activity as? MainActivity)?.sharedWeatherRecommend = fallbackText
     }
 }

@@ -1,5 +1,6 @@
 package com.example.laundrycare_android
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,16 +43,22 @@ class DietClothingAdapter(
             .centerCrop()
             .into(holder.ivPhoto)
 
+        holder.itemView.setOnClickListener { view ->
+            val intent = Intent(view.context, ClothDetailActivity::class.java)
+            intent.putExtra("docId", item.id)
+            view.context.startActivity(intent)
+        }
+
         holder.btnMore.setOnClickListener { view ->
             val popup = PopupMenu(view.context, view)
             popup.menu.add("기간 연장 (1년 유지)")
-            // 🌟 삭제가 아닌 숨기기로 텍스트 변경
-            popup.menu.add("목록에서 숨기기 (내 옷장 유지)")
+            // 🌟 "버리기"로 텍스트 직관적 변경
+            popup.menu.add("버리기 (옷장에서도 완전 삭제)")
 
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.title) {
                     "기간 연장 (1년 유지)" -> onMenuClickListener.onExtend(item, position)
-                    "목록에서 숨기기 (내 옷장 유지)" -> onMenuClickListener.onDelete(item, position)
+                    "버리기 (옷장에서도 완전 삭제)" -> onMenuClickListener.onDelete(item, position)
                 }
                 true
             }

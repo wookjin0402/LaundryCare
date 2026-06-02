@@ -1,6 +1,9 @@
 package com.example.laundrycare_android
 
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -16,61 +19,93 @@ class StainDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stain_detail)
 
+        val tvTitle = findViewById<TextView>(R.id.tvStainDetailTitle)
         val btnBack = findViewById<ImageView>(R.id.btnStainDetailBack)
         val ivImage = findViewById<ImageView>(R.id.ivStainDetailImage)
-        val tvType = findViewById<TextView>(R.id.tvStainDetailType)
+
+        // 🌟 수정됨: TextView에서 EditText로 뷰 찾기 변경
+        val etType = findViewById<EditText>(R.id.etStainDetailType)
         val tvDate = findViewById<TextView>(R.id.tvStainDetailDate)
         val tvGuide = findViewById<TextView>(R.id.tvStainDetailGuide)
+        val btnSave = findViewById<Button>(R.id.btnSaveStain)
 
         val documentId = intent.getStringExtra("documentId")
+        val isEditMode = intent.getBooleanExtra("isEditMode", false)
 
-        btnBack.setOnClickListener {
-            finish()
+        btnBack.setOnClickListener { finish() }
+
+        // 🌟 수정 모드에 따른 화면 세팅
+        if (isEditMode) {
+            tvTitle.text = "얼룩 정보 수정하기"
+            etType.isEnabled = true // 글자 수정 가능하게 활성화
+            etType.setBackgroundResource(android.R.drawable.edit_text) // 입력창처럼 보이게 테두리 추가
+            btnSave.visibility = View.VISIBLE // 저장 버튼 표시
+            Toast.makeText(this, "수정 모드입니다. 얼룩 종류를 변경하세요.", Toast.LENGTH_SHORT).show()
         }
 
-        if (documentId != null) {
+        if (!documentId.isNullOrEmpty()) {
             db.collection("stains").document(documentId).get()
                 .addOnSuccessListener { document ->
                     if (document != null && document.exists()) {
                         val stainType = document.getString("stainType") ?: "알 수 없는 얼룩"
-                        val date = document.getString("date") ?: "정보 없음"
+                        val date = document.getString("date") ?: "날짜 미상"
                         val imageUrl = document.getString("imageUrl") ?: ""
 
-                        tvType.text = stainType
-                        tvDate.text = date
+                        etType.setText(stainType)
+                        tvDate.text = "등록일: $date"
 
-                        // 이미지 로드
                         if (imageUrl.isNotEmpty()) {
                             Glide.with(this).load(imageUrl).into(ivImage)
                         }
 
-                        // 얼룩 종류별 맞춤형 세탁 팁 매칭
                         tvGuide.text = getStainCareGuide(stainType)
-
                     } else {
-                        Toast.makeText(this, "얼룩 기록을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "데이터를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
                         finish()
                     }
                 }
                 .addOnFailureListener {
-                    Toast.makeText(this, "데이터 로딩 실패", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "서버 연결 실패", Toast.LENGTH_SHORT).show()
+                    finish()
                 }
+
+            // 🌟 수정 사항을 파이어베이스에 저장하는 로직
+            btnSave.setOnClickListener {
+                val newStainType = etType.text.toString().trim()
+                if (newStainType.isEmpty()) {
+                    Toast.makeText(this, "얼룩 종류를 입력해주세요.", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                btnSave.isEnabled = false // 중복 클릭 방지
+                btnSave.text = "저장 중..."
+
+                // 파이어베이스 데이터 업데이트
+                db.collection("stains").document(documentId)
+                    .update("stainType", newStainType)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "수정이 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                        finish() // 성공 시 목록 화면으로 돌아감
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "수정에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                        btnSave.isEnabled = true
+                        btnSave.text = "수정 내용 저장하기"
+                    }
+            }
         } else {
             Toast.makeText(this, "잘못된 접근입니다.", Toast.LENGTH_SHORT).show()
             finish()
         }
     }
 
-    /**
-     * 얼룩 종류별 최적의 초동 조치 방법을 반환하는 함수 (심사용 텍스트)
-     */
     private fun getStainCareGuide(type: String): String {
         return when {
-            type.contains("커피") -> "☕ 커피 얼룩 가이드:\n일반 세제를 사용하면 얼룩이 고착될 수 있습니다. 따뜻한 물과 주방세제(또는 식초)를 1:1로 섞어 얼룩 부위를 칫솔로 톡톡 두드린 후 세탁기에 돌리시는 것을 추천합니다."
-            type.contains("김치") -> "🌶️ 김치 국물 가이드:\n주방세제를 얼룩 안팎에 바른 뒤 손으로 살살 비벼 1차 애벌빨래를 해주십시오. 락스 대용으로 양파즙을 발라두었다가 하루 뒤 세탁하면 흔적이 깔끔하게 제거됩니다."
-            type.contains("기름") -> "🍔 기름/생선 얼룩 가이드:\n기름 성분은 일반 세탁으로 잘 빠지지 않습니다. 베이킹소다를 얼룩 위에 뿌려 기름기를 흡착시킨 뒤, 주방세제를 묻혀 미온수로 문지른 후 세탁하십시오."
-            type.contains("피") || type.contains("혈흔") -> "🩸 혈흔 가이드:\n절대 뜨거운 물을 사용하지 마십시오. 단백질 성분이 응고되어 고착됩니다. 반드시 '찬물'을 사용하고, 과산화수소를 살짝 묻혀 거품이 일어날 때 닦아내면 효과적입니다."
-            else -> "✨ 일반 오염 가이드:\n오염 물질이 섬유 안으로 완전히 흡수되기 전 중성세제를 미온수에 풀어 애벌빨래를 진행한 후 기기 맞춤 표준 코스로 세탁하시는 것을 권장합니다."
+            type.contains("커피") -> "☕ 커피 얼룩 가이드:\n따뜻한 물과 주방세제(또는 식초)를 1:1로 섞어 얼룩 부위를 칫솔로 톡톡 두드린 후 세탁하세요."
+            type.contains("김치") -> "🌶️ 김치 국물 가이드:\n주방세제를 바른 뒤 손으로 살살 비벼 애벌빨래 후, 양파즙을 활용하면 효과적입니다."
+            type.contains("기름") -> "🍔 기름/생선 얼룩 가이드:\n베이킹소다를 뿌려 기름기를 흡착시킨 뒤, 주방세제를 묻혀 미온수로 문지르세요."
+            type.contains("피") || type.contains("혈흔") -> "🩸 혈흔 가이드:\n절대 뜨거운 물 금지! '찬물'과 과산화수소를 사용하여 닦아내세요."
+            else -> "✨ 일반 오염 가이드:\n중성세제를 미온수에 풀어 애벌빨래를 진행한 후 표준 코스로 세탁하세요."
         }
     }
 }

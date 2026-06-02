@@ -23,6 +23,7 @@ data class SelectableCloth(
     val mainCategory: String,
     val subCategory: String,
     val color: String,
+    val material: String,
     var isSelected: Boolean = false
 )
 
@@ -39,7 +40,6 @@ class ClothMultiSelectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cloth_multi_select)
 
-        // 🌟 뒤로가기 버튼 기능 연결
         val btnBackSelect = findViewById<ImageView>(R.id.btnBackSelect)
         btnBackSelect.setOnClickListener {
             finish()
@@ -58,52 +58,12 @@ class ClothMultiSelectActivity : AppCompatActivity() {
 
         btnNextStep.setOnClickListener {
             val selectedClothes = clothList.filter { it.isSelected }
+            val mode = intent.getStringExtra("mode") ?: "batch"
 
-            val selectedImages = ArrayList(selectedClothes.map { it.imageUrl })
-            val selectedIds = ArrayList(selectedClothes.map { it.id })
-
-            Toast.makeText(this, "내 세탁기 목록을 불러오는 중...", Toast.LENGTH_SHORT).show()
-            val db = FirebaseFirestore.getInstance()
-
-            db.collection("washers").get().addOnSuccessListener { snapshot ->
-                val machineNames = mutableListOf<String>()
-                val machineDocs = mutableListOf<Map<String, String>>()
-
-                for (doc in snapshot.documents) {
-                    val name = doc.getString("name") ?: "내 세탁기"
-                    val brand = doc.getString("brand") ?: "LG"
-                    val model = doc.getString("model") ?: "기본모델"
-                    val type = doc.getString("type") ?: "드럼 세탁기"
-
-                    machineNames.add("✅ $name ($brand $model)")
-                    machineDocs.add(mapOf("brand" to brand, "model" to model, "type" to type))
-                }
-
-                machineNames.add("➕ 새 세탁기 카메라로 등록하기")
-                val machineArray = machineNames.toTypedArray()
-
-                androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("어떤 세탁기를 사용하실 건가요?")
-                    .setItems(machineArray) { _, which ->
-                        if (which == machineArray.size - 1) {
-                            val intent = Intent(this, WasherCameraActivity::class.java)
-                            intent.putStringArrayListExtra("selected_cloth_images", selectedImages)
-                            intent.putStringArrayListExtra("selected_cloth_ids", selectedIds)
-                            startActivity(intent)
-                        } else {
-                            val selectedDoc = machineDocs[which]
-                            val intent = Intent(this, LaundryResultActivity::class.java)
-                            intent.putExtra("washer_type", selectedDoc["type"])
-                            intent.putExtra("brand", selectedDoc["brand"])
-                            intent.putExtra("model", selectedDoc["model"])
-                            intent.putStringArrayListExtra("selected_cloth_images", selectedImages)
-                            intent.putStringArrayListExtra("selected_cloth_ids", selectedIds)
-                            startActivity(intent)
-                        }
-                    }
-                    .show()
-            }.addOnFailureListener {
-                Toast.makeText(this, "세탁기 목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+            if (mode == "recommend") {
+                showConditionSelection(selectedClothes)
+            } else {
+                executeWasherMatching(selectedClothes)
             }
         }
     }
@@ -123,7 +83,8 @@ class ClothMultiSelectActivity : AppCompatActivity() {
                         imageUrl = doc.getString("imageUrl") ?: "",
                         mainCategory = doc.getString("mainCategory") ?: "알 수 없음",
                         subCategory = doc.getString("subCategory") ?: "알 수 없음",
-                        color = doc.getString("color") ?: "미상"
+                        color = doc.getString("color") ?: "미상",
+                        material = doc.getString("material") ?: "일반"
                     )
                     clothList.add(cloth)
                 }
@@ -141,12 +102,121 @@ class ClothMultiSelectActivity : AppCompatActivity() {
 
     private fun updateButtonState() {
         val selectedCount = clothList.count { it.isSelected }
+        val mode = intent.getStringExtra("mode") ?: "batch"
+
         if (selectedCount > 0) {
             btnNextStep.isEnabled = true
-            btnNextStep.text = "세탁기 매칭하기 (${selectedCount}벌 선택됨)"
+            if (mode == "recommend") {
+                btnNextStep.text = "AI 맞춤 추천 받기 (${selectedCount}벌 선택됨)"
+            } else {
+                btnNextStep.text = "세탁기 매칭하기 (${selectedCount}벌 선택됨)"
+            }
         } else {
             btnNextStep.isEnabled = false
-            btnNextStep.text = "세탁기 매칭하기 (0벌 선택됨)"
+            btnNextStep.text = "의류를 선택해주세요 (0벌 선택됨)"
+        }
+    }
+
+    private fun showConditionSelection(selectedClothes: List<SelectableCloth>) {
+        val conditionList = arrayOf("땀을 많이 흘렸어요", "얼룩이 묻었어요", "깨끗해요")
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("빨랫감 상태는 어떤가요?")
+            .setItems(conditionList) { _, whichCond ->
+                showFinalAIResult(selectedClothes, conditionList[whichCond])
+            }.show()
+    }
+
+    private fun showFinalAIResult(selectedClothes: List<SelectableCloth>, cond: String) {
+        val materials = selectedClothes.joinToString { it.material }
+        val colors = selectedClothes.joinToString { it.color }
+
+        val hasSensitive = materials.contains("실크") || materials.contains("울") || materials.contains("가죽") || materials.contains("니트")
+        val hasWhite = colors.contains("흰") || colors.contains("백") || colors.contains("화이트")
+        val hasColor = colors.contains("검") || colors.contains("빨") || colors.contains("파") || colors.contains("블랙")
+
+        var resultMessage = "👕 선택된 의류: 총 ${selectedClothes.size}벌\n"
+        resultMessage += "💧 빨랫감 상태: $cond\n\n"
+
+        if (hasSensitive) {
+            resultMessage += "⚠️ [소재 주의] 민감한 소재(실크/울 등)가 포함되어 있습니다. 단독 세탁이나 섬세/울코스를 권장합니다.\n\n"
+        }
+        if (hasWhite && hasColor) {
+            resultMessage += "⚠️ [이염 주의] 밝은 색 옷과 짙은 색 옷이 섞여 있습니다. 이염 방지를 위해 분리 세탁하세요.\n\n"
+        }
+        if (cond.contains("얼룩")) {
+            resultMessage += "⚠️ [상태 맞춤] 얼룩이 있는 의류가 포함되어 있습니다. 본 세탁 전 애벌빨래를 진행해 주세요.\n\n"
+        }
+
+        val weatherGuide = intent.getStringExtra("weatherGuide") ?: "현재 날씨 기반 건조 팁을 확인 중입니다..."
+        resultMessage += "💡 [오늘의 날씨 맞춤 건조 팁] 💡\n$weatherGuide"
+
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("AI 통합 세탁 가이드")
+            .setMessage(resultMessage)
+
+        // 🌟 핵심: 프래그먼트로 이동하기 위해 MainActivity로 신호를 보냅니다!
+        if (cond.contains("얼룩")) {
+            builder.setPositiveButton("얼룩 지우는 법 보러가기") { _, _ ->
+                val intent = Intent(this, MainActivity::class.java)
+                intent.putExtra("navigate_to_fragment", "stain") // 신호 부착
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP // 백스택 정리
+                startActivity(intent)
+                finish()
+            }
+            builder.setNegativeButton("닫기") { _, _ -> finish() }
+        } else {
+            builder.setPositiveButton("확인") { _, _ -> finish() }
+        }
+
+        builder.show()
+    }
+
+    private fun executeWasherMatching(selectedClothes: List<SelectableCloth>) {
+        val selectedImages = ArrayList(selectedClothes.map { it.imageUrl })
+        val selectedIds = ArrayList(selectedClothes.map { it.id })
+
+        Toast.makeText(this, "내 세탁기 목록을 불러오는 중...", Toast.LENGTH_SHORT).show()
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("washers").get().addOnSuccessListener { snapshot ->
+            val machineNames = mutableListOf<String>()
+            val machineDocs = mutableListOf<Map<String, String>>()
+
+            for (doc in snapshot.documents) {
+                val name = doc.getString("name") ?: "내 세탁기"
+                val brand = doc.getString("brand") ?: "LG"
+                val model = doc.getString("model") ?: "기본모델"
+                val type = doc.getString("type") ?: "드럼 세탁기"
+
+                machineNames.add("✅ $name ($brand $model)")
+                machineDocs.add(mapOf("brand" to brand, "model" to model, "type" to type))
+            }
+
+            machineNames.add("➕ 새 세탁기 카메라로 등록하기")
+            val machineArray = machineNames.toTypedArray()
+
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("어떤 세탁기를 사용하실 건가요?")
+                .setItems(machineArray) { _, which ->
+                    if (which == machineArray.size - 1) {
+                        val intent = Intent(this, WasherCameraActivity::class.java)
+                        intent.putStringArrayListExtra("selected_cloth_images", selectedImages)
+                        intent.putStringArrayListExtra("selected_cloth_ids", selectedIds)
+                        startActivity(intent)
+                    } else {
+                        val selectedDoc = machineDocs[which]
+                        val intent = Intent(this, LaundryResultActivity::class.java)
+                        intent.putExtra("washer_type", selectedDoc["type"])
+                        intent.putExtra("brand", selectedDoc["brand"])
+                        intent.putExtra("model", selectedDoc["model"])
+                        intent.putStringArrayListExtra("selected_cloth_images", selectedImages)
+                        intent.putStringArrayListExtra("selected_cloth_ids", selectedIds)
+                        startActivity(intent)
+                    }
+                }
+                .show()
+        }.addOnFailureListener {
+            Toast.makeText(this, "세탁기 목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
         }
     }
 

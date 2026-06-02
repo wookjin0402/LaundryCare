@@ -10,14 +10,16 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.firebase.firestore.FirebaseFirestore
 
-// 파이어베이스 문서 ID를 저장하는 데이터 구조
+// 파이어베이스 문서 ID를 저장하는 데이터 구조 (이미지 URL 추가)
 data class WasherData(
     val documentId: String = "",
     val type: String = "",
     val brand: String = "",
-    val model: String = ""
+    val model: String = "",
+    val imageUrl: String = "" // 🌟 사진 URL 추가
 )
 
 class WasherListActivity : AppCompatActivity() {
@@ -25,8 +27,6 @@ class WasherListActivity : AppCompatActivity() {
     private lateinit var rvWasherList: RecyclerView
     private lateinit var tvEmptyWasher: TextView
     private lateinit var btnAddWasher: Button
-
-    // 🌟 버튼 튕김 지뢰 제거! (Button -> ImageView)
     private lateinit var btnWasherListBack: ImageView
 
     private val db = FirebaseFirestore.getInstance()
@@ -75,14 +75,14 @@ class WasherListActivity : AppCompatActivity() {
                         val type = doc.getString("type") ?: "알 수 없음"
                         val brand = doc.getString("brand") ?: "브랜드 미상"
                         val model = doc.getString("model") ?: ""
+                        val imageUrl = doc.getString("imageUrl") ?: "" // 🌟 URL 파싱 추가
 
-                        washerList.add(WasherData(docId, type, brand, model))
+                        washerList.add(WasherData(docId, type, brand, model, imageUrl))
                     }
 
                     rvWasherList.adapter = WasherAdapter(
                         washerList,
                         onItemClick = { washer ->
-                            // 상세 화면으로 이동하며 문서 ID 전달
                             val intent = Intent(this, WasherDetailActivity::class.java)
                             intent.putExtra("documentId", washer.documentId)
                             startActivity(intent)
@@ -98,7 +98,6 @@ class WasherListActivity : AppCompatActivity() {
             }
     }
 
-    // 점 3개 메뉴를 눌렀을 때 뜨는 팝업 (수정/삭제)
     private fun showPopupMenu(view: View, washer: WasherData) {
         val popup = PopupMenu(this, view)
         popup.menu.add(0, 0, 0, "수정하기")
@@ -106,22 +105,14 @@ class WasherListActivity : AppCompatActivity() {
 
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                0 -> {
-                    // 🌟 준비중 토스트 대신 실제 수정 팝업 띄우기
-                    showEditWasherDialog(washer)
-                    true
-                }
-                1 -> {
-                    deleteWasher(washer.documentId)
-                    true
-                }
+                0 -> { showEditWasherDialog(washer); true }
+                1 -> { deleteWasher(washer.documentId); true }
                 else -> false
             }
         }
         popup.show()
     }
 
-    // 🌟 세탁기 정보 수정 팝업 로직 추가
     private fun showEditWasherDialog(washer: WasherData) {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -159,7 +150,7 @@ class WasherListActivity : AppCompatActivity() {
                     .update(mapOf("type" to newType, "brand" to newBrand, "model" to newModel))
                     .addOnSuccessListener {
                         Toast.makeText(this, "성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
-                        fetchWashersFromFirebase() // 화면 새로고침
+                        fetchWashersFromFirebase()
                     }
                     .addOnFailureListener {
                         Toast.makeText(this, "수정 실패", Toast.LENGTH_SHORT).show()
@@ -169,12 +160,11 @@ class WasherListActivity : AppCompatActivity() {
             .show()
     }
 
-    // 파이어베이스에서 세탁기 데이터 실제 삭제
     private fun deleteWasher(documentId: String) {
         db.collection("washers").document(documentId).delete()
             .addOnSuccessListener {
                 Toast.makeText(this, "세탁기가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                fetchWashersFromFirebase() // 삭제 후 리스트 새로고침
+                fetchWashersFromFirebase()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "삭제 실패", Toast.LENGTH_SHORT).show()
@@ -182,7 +172,6 @@ class WasherListActivity : AppCompatActivity() {
     }
 }
 
-// 리사이클러뷰 어댑터
 class WasherAdapter(
     private val washers: List<WasherData>,
     private val onItemClick: (WasherData) -> Unit,
@@ -193,6 +182,7 @@ class WasherAdapter(
         val tvName: TextView = view.findViewById(R.id.tvItemWasherName)
         val tvType: TextView = view.findViewById(R.id.tvItemWasherType)
         val btnMore: TextView = view.findViewById(R.id.btnWasherMore)
+        val ivThumb: ImageView = view.findViewById(R.id.ivItemWasherThumb) // 🌟 썸네일 이미지뷰 연결
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WasherViewHolder {
@@ -203,14 +193,17 @@ class WasherAdapter(
     override fun onBindViewHolder(holder: WasherViewHolder, position: Int) {
         val washer = washers[position]
 
-        val displayName = if (washer.model.isNotEmpty()) {
-            "${washer.brand} ${washer.model}"
-        } else {
-            washer.brand
-        }
-
+        val displayName = if (washer.model.isNotEmpty()) "${washer.brand} ${washer.model}" else washer.brand
         holder.tvName.text = displayName
         holder.tvType.text = washer.type
+
+        // 🌟 Glide를 사용하여 이미지 로드
+        if (washer.imageUrl.isNotEmpty()) {
+            Glide.with(holder.itemView.context).load(washer.imageUrl).into(holder.ivThumb)
+        } else {
+            // 이미지가 없을 경우 기본 배경색 처리
+            holder.ivThumb.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"))
+        }
 
         holder.itemView.setOnClickListener { onItemClick(washer) }
         holder.btnMore.setOnClickListener { onMoreClick(holder.btnMore, washer) }

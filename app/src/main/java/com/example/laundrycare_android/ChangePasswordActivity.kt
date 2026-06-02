@@ -20,10 +20,13 @@ class ChangePasswordActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
 
+        // 🌟 수정 적용: Button 대신 ImageView로 짝을 맞춤
         val btnBack = findViewById<ImageView>(R.id.btnBack)
+
         val etCurrentPassword = findViewById<TextInputEditText>(R.id.etCurrentPassword)
         val etNewPassword = findViewById<TextInputEditText>(R.id.etNewPassword)
         val etNewPasswordConfirm = findViewById<TextInputEditText>(R.id.etNewPasswordConfirm)
+
         val btnChangePassword = findViewById<Button>(R.id.btnChangePassword)
 
         // 뒤로 가기
