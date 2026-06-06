@@ -56,9 +56,10 @@ class ClothMultiSelectActivity : AppCompatActivity() {
 
         fetchClothesFromFirebase()
 
+        val mode = intent.getStringExtra("mode") ?: "batch"
+
         btnNextStep.setOnClickListener {
             val selectedClothes = clothList.filter { it.isSelected }
-            val mode = intent.getStringExtra("mode") ?: "batch"
 
             if (mode == "recommend") {
                 showConditionSelection(selectedClothes)
@@ -147,6 +148,7 @@ class ClothMultiSelectActivity : AppCompatActivity() {
             resultMessage += "⚠️ [상태 맞춤] 얼룩이 있는 의류가 포함되어 있습니다. 본 세탁 전 애벌빨래를 진행해 주세요.\n\n"
         }
 
+        // 🌟 HomeFragment에서 만들어서 LaundryFragment를 거쳐 넘어온 '최종 날씨 가이드'가 여기에 들어갑니다!
         val weatherGuide = intent.getStringExtra("weatherGuide") ?: "현재 날씨 기반 건조 팁을 확인 중입니다..."
         resultMessage += "💡 [오늘의 날씨 맞춤 건조 팁] 💡\n$weatherGuide"
 
@@ -154,12 +156,11 @@ class ClothMultiSelectActivity : AppCompatActivity() {
             .setTitle("AI 통합 세탁 가이드")
             .setMessage(resultMessage)
 
-        // 🌟 핵심: 프래그먼트로 이동하기 위해 MainActivity로 신호를 보냅니다!
         if (cond.contains("얼룩")) {
             builder.setPositiveButton("얼룩 지우는 법 보러가기") { _, _ ->
                 val intent = Intent(this, MainActivity::class.java)
-                intent.putExtra("navigate_to_fragment", "stain") // 신호 부착
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP // 백스택 정리
+                intent.putExtra("navigate_to_fragment", "stain")
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 startActivity(intent)
                 finish()
             }

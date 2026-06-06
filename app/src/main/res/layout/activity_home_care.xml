@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -56,23 +57,40 @@
                 android:background="#E3F2FD"
                 android:padding="15dp"/>
 
+            <!-- 🌟 1. 패딩 -->
             <LinearLayout
                 android:id="@+id/layoutPadding"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="#FFFFFF"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="15dp"
                 android:layout_marginBottom="15dp"
                 android:elevation="2dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🧥 패딩 / 구스다운 관리"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333333"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🧥 패딩 / 구스다운 관리"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"/>
+                    <!-- 🌟 텍스트 대신 방금 만든 90도 화살표 이미지 적용 -->
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#888888" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvPaddingTip"
@@ -85,23 +103,39 @@
                 <LinearLayout android:id="@+id/listPadding" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
             </LinearLayout>
 
+            <!-- 🌟 2. 니트 -->
             <LinearLayout
                 android:id="@+id/layoutKnit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="#FFFFFF"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="15dp"
                 android:layout_marginBottom="15dp"
                 android:elevation="2dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🧶 니트 / 캐시미어 관리"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333333"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🧶 니트 / 캐시미어 관리"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"/>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#888888" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvKnitTip"
@@ -114,23 +148,39 @@
                 <LinearLayout android:id="@+id/listKnit" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
             </LinearLayout>
 
+            <!-- 🌟 3. 가죽 -->
             <LinearLayout
                 android:id="@+id/layoutLeather"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="#FFFFFF"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="15dp"
                 android:layout_marginBottom="15dp"
                 android:elevation="2dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="💼 가죽 / 스웨이드 관리"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333333"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="💼 가죽 / 스웨이드 관리"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"/>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#888888" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvLeatherTip"
@@ -143,23 +193,39 @@
                 <LinearLayout android:id="@+id/listLeather" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
             </LinearLayout>
 
+            <!-- 🌟 4. 실크 -->
             <LinearLayout
                 android:id="@+id/layoutSilk"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="#FFFFFF"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="15dp"
                 android:layout_marginBottom="15dp"
                 android:elevation="2dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="👗 실크 / 레이온 관리"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333333"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="👗 실크 / 레이온 관리"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"/>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#888888" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvSilkTip"
@@ -172,23 +238,39 @@
                 <LinearLayout android:id="@+id/listSilk" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
             </LinearLayout>
 
+            <!-- 🌟 5. 울/수트 -->
             <LinearLayout
                 android:id="@+id/layoutWool"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="#FFFFFF"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="15dp"
                 android:layout_marginBottom="15dp"
                 android:elevation="2dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="👔 수트 / 울 코트 관리"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333333"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="👔 수트 / 울 코트 관리"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"/>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#888888" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvWoolTip"
@@ -201,23 +283,39 @@
                 <LinearLayout android:id="@+id/listWool" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
             </LinearLayout>
 
+            <!-- 🌟 6. 기능성 의류 -->
             <LinearLayout
                 android:id="@+id/layoutFunctional"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="#FFFFFF"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="15dp"
                 android:layout_marginBottom="15dp"
                 android:elevation="2dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🏃 기능성 의류 (고어텍스)"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333333"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🏃 기능성 의류 (고어텍스)"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"/>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#888888" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvFunctionalTip"
@@ -230,23 +328,39 @@
                 <LinearLayout android:id="@+id/listFunctional" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone" android:layout_marginTop="10dp"/>
             </LinearLayout>
 
+            <!-- 🌟 7. 데님 -->
             <LinearLayout
                 android:id="@+id/layoutDenim"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="#FFFFFF"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="15dp"
                 android:layout_marginBottom="30dp"
                 android:elevation="2dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="👖 데님 (청바지) 관리"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333333"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="👖 데님 (청바지) 관리"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"/>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#888888" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvDenimTip"

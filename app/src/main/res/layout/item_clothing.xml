@@ -5,6 +5,9 @@
     android:padding="15dp"
     android:layout_marginBottom="10dp"
     android:background="#FFFFFF"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     android:elevation="2dp">
 
     <ImageView
@@ -42,18 +45,20 @@
             android:textColor="#666666" />
     </LinearLayout>
 
+    <!-- 🌟 버튼 크기를 48dp로 고정하고 글자를 정중앙(center)에 배치 -->
     <TextView
         android:id="@+id/btnItemOptions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:text="⋮"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="#999999"
-        android:paddingStart="15dp"
-        android:paddingEnd="5dp"
-        android:background="@android:color/transparent" />
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless" />
 
 </RelativeLayout>

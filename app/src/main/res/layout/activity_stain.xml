@@ -1,57 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
-
-    <androidx.camera.view.PreviewView
-        android:id="@+id/stainViewFinder"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    android:background="#F8F9FA">
 
     <ImageView
-        android:id="@+id/btnStainCameraBack"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_margin="16dp"
-        android:padding="12dp"
-        android:src="@drawable/ic_arrow_back"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:clickable="true"
-        app:tint="#FFFFFF"
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="8dp"
+        android:layout_marginStart="16dp"
+        android:src="@android:drawable/ic_menu_revert"
+        app:layout_constraintTop_toTopOf="@id/tvStainTitle"
+        app:layout_constraintBottom_toBottomOf="@id/tvStainTitle"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/tvStainTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="60dp"
+        android:text="Stain"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layoutStainGuide"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <View
-            android:id="@+id/vStainGuideCenter"
-            android:layout_width="220dp"
-            android:layout_height="220dp"
-            android:background="@drawable/bg_guide_box_stain"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-        <View android:layout_width="match_parent" android:layout_height="0dp" android:background="#99000000" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toTopOf="@id/vStainGuideCenter" />
-        <View android:layout_width="match_parent" android:layout_height="0dp" android:background="#99000000" app:layout_constraintTop_toBottomOf="@id/vStainGuideCenter" app:layout_constraintBottom_toBottomOf="parent" />
-        <View android:layout_width="0dp" android:layout_height="0dp" android:background="#99000000" app:layout_constraintTop_toTopOf="@id/vStainGuideCenter" app:layout_constraintBottom_toBottomOf="@id/vStainGuideCenter" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toStartOf="@id/vStainGuideCenter" />
-        <View android:layout_width="0dp" android:layout_height="0dp" android:background="#99000000" app:layout_constraintTop_toTopOf="@id/vStainGuideCenter" app:layout_constraintBottom_toBottomOf="@id/vStainGuideCenter" app:layout_constraintStart_toEndOf="@id/vStainGuideCenter" app:layout_constraintEnd_toEndOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <LinearLayout
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayoutStain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="20dp"
-        app:layout_constraintBottom_toBottomOf="parent">
-        <Button android:id="@+id/btnStainGallery" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="갤러리" android:layout_marginEnd="30dp"/>
-        <Button android:id="@+id/btnStainCapture" android:layout_width="70dp" android:layout_height="70dp" android:background="@drawable/bg_capture_button"/>
-    </LinearLayout>
+        app:tabMode="fixed"
+        app:tabGravity="fill"
+        app:layout_constraintTop_toBottomOf="@id/tvStainTitle" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerStain"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/tabLayoutStain"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnScanStain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="24dp"
+        android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="#1976D2"
+        app:tint="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

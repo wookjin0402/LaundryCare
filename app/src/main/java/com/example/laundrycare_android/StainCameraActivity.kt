@@ -5,9 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
+import android.net.Uri // 🌟 갤러리 이미지 URI 처리를 위해 추가
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts // 🌟 갤러리 런처 처리를 위해 추가
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -24,6 +26,15 @@ class StainCameraActivity : AppCompatActivity() {
     private lateinit var pbScanning: ProgressBar
     private var imageCapture: ImageCapture? = null
 
+    // 🌟 1. 갤러리에서 사진을 선택했을 때 결과를 받아오는 런처 설정
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            // 사진을 성공적으로 골라오면 화면에 띄우고 상태 변경
+            ivCapturedImage.setImageURI(uri)
+            showCapturedState()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stain_camera)
@@ -36,6 +47,11 @@ class StainCameraActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnTakePhoto).setOnClickListener { takePhoto() }
         findViewById<Button>(R.id.btnStartAnalysis).setOnClickListener { sendImageToAI() }
         findViewById<Button>(R.id.btnRetry).setOnClickListener { resetToCameraState() }
+
+        // 🌟 2. 갤러리 버튼 클릭 이벤트 추가 (이 부분이 빠져 있었습니다!)
+        findViewById<Button>(R.id.btnSelectPhoto).setOnClickListener {
+            galleryLauncher.launch("image/*")
+        }
 
         startCamera()
     }

@@ -31,7 +31,6 @@ class HomeCareActivity : AppCompatActivity() {
         setupAccordion(R.id.layoutFunctional, R.id.tvFunctionalTip, R.id.listFunctional)
         setupAccordion(R.id.layoutDenim, R.id.tvDenimTip, R.id.listDenim)
 
-        // 🌟 실크타임 업데이트를 위해 addSnapshotListener 사용
         observeWardrobeData()
     }
 
@@ -40,17 +39,28 @@ class HomeCareActivity : AppCompatActivity() {
         val textView = findViewById<TextView>(textViewId)
         val listView = findViewById<LinearLayout>(listId)
 
+        val headerLayout = layout.getChildAt(0) as LinearLayout
+        // 🌟 TextView가 아니라 이미지(ImageView)로 정확하게 캐스팅!
+        val arrowView = headerLayout.getChildAt(1) as ImageView
+
         layout.setOnClickListener {
             val isCurrentlyHidden = textView.visibility == View.GONE
-            textView.visibility = if (isCurrentlyHidden) View.VISIBLE else View.GONE
-            listView.visibility = if (isCurrentlyHidden) View.VISIBLE else View.GONE
+
+            if (isCurrentlyHidden) {
+                textView.visibility = View.VISIBLE
+                listView.visibility = View.VISIBLE
+                arrowView.animate().rotation(90f).setDuration(200).start()
+            } else {
+                textView.visibility = View.GONE
+                listView.visibility = View.GONE
+                arrowView.animate().rotation(0f).setDuration(200).start()
+            }
         }
     }
 
     private fun observeWardrobeData() {
         val tvCareSummary = findViewById<TextView>(R.id.tvCareSummary)
 
-        // 🌟 실시간 데이터 감시 시작
         db.collection("clothes").addSnapshotListener { snapshot, error ->
             if (error != null) {
                 tvCareSummary.text = "데이터를 불러오는 중 오류가 발생했습니다."
@@ -58,7 +68,6 @@ class HomeCareActivity : AppCompatActivity() {
             }
 
             if (snapshot != null) {
-                // 리스트 중복 방지를 위해 기존 뷰 모두 삭제
                 clearAllLists()
 
                 var paddingCount = 0
@@ -70,49 +79,41 @@ class HomeCareActivity : AppCompatActivity() {
                 var denimCount = 0
 
                 for (doc in snapshot.documents) {
-                    // 공백 제거 및 소문자 변환으로 검색 정확도 향상
                     val material = doc.getString("material")?.trim() ?: ""
                     val category = doc.getString("category")?.trim() ?: ""
                     val subCategory = doc.getString("subCategory")?.trim() ?: ""
                     val fullText = material + category + subCategory
 
-                    // 가죽 관련 키워드 검색
                     if (fullText.contains("가죽") || fullText.contains("레더") || fullText.contains("스웨이드")) {
                         leatherCount++
                         addClothToView(R.id.listLeather, doc)
                     }
 
-                    // 패딩 관련 키워드
                     if (fullText.contains("패딩") || fullText.contains("구스") || fullText.contains("다운")) {
                         paddingCount++
                         addClothToView(R.id.listPadding, doc)
                     }
 
-                    // 니트/캐시미어
                     if (fullText.contains("니트") || fullText.contains("스웨터") || fullText.contains("캐시미어")) {
                         knitCount++
                         addClothToView(R.id.listKnit, doc)
                     }
 
-                    // 실크/레이온
                     if (fullText.contains("실크") || fullText.contains("견") || fullText.contains("레이온")) {
                         silkCount++
                         addClothToView(R.id.listSilk, doc)
                     }
 
-                    // 수트/코트/울
                     if (fullText.contains("울") || fullText.contains("모") || fullText.contains("수트") || fullText.contains("코트")) {
                         woolCount++
                         addClothToView(R.id.listWool, doc)
                     }
 
-                    // 기능성
                     if (fullText.contains("기능성") || fullText.contains("고어텍스") || fullText.contains("등산복") || fullText.contains("바람막이")) {
                         functionalCount++
                         addClothToView(R.id.listFunctional, doc)
                     }
 
-                    // 데님
                     if (fullText.contains("데님") || fullText.contains("청바지") || fullText.contains("청자켓")) {
                         denimCount++
                         addClothToView(R.id.listDenim, doc)

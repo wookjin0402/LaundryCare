@@ -37,12 +37,11 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
             startActivity(intent)
         }
 
-        // 🌟 5. 세탁 및 건조 시점 추천 (추천 모드로 옷 선택창 바로 열기)
+        // 🌟 5. 세탁 및 건조 시점 추천 (추천 모드로 옷 선택창 바로 열기 + 날씨/습도 데이터 전달)
         view.findViewById<LinearLayout>(R.id.btnTimeRecommend)?.setOnClickListener {
             val intent = Intent(requireContext(), ClothMultiSelectActivity::class.java)
-            intent.putExtra("mode", "recommend") // 꼬리표 부착
+            intent.putExtra("mode", "recommend")
 
-            // 메인에서 가져온 날씨 데이터도 같이 싸서 보냅니다.
             val mainActivity = activity as? MainActivity
             val weatherGuide = mainActivity?.sharedWeatherRecommend ?: "날씨 데이터를 불러오는 중입니다..."
             intent.putExtra("weatherGuide", weatherGuide)
@@ -51,9 +50,10 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
         }
     }
 
+    // 🌟 탭이 화면에 보일 때마다 최신 날씨(습도 포함)로 업데이트
     override fun onResume() {
         super.onResume()
-        // 상단 세탁 지수 실시간 업데이트
+
         val tvLaundryIndexTitle = view?.findViewById<TextView>(R.id.tvLaundryIndexTitle)
         val tvLaundryIndexDesc = view?.findViewById<TextView>(R.id.tvLaundryIndexDesc)
         val mainActivity = activity as? MainActivity
