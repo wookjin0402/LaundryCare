@@ -6,20 +6,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.appcompat.app.AlertDialog
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.firestore.FirebaseFirestore
 
-// 파이어베이스 문서 ID를 저장하는 데이터 구조 (이미지 URL 추가)
+// 🌟 WasherData에 isSelected 속성 완벽 추가
 data class WasherData(
     val documentId: String = "",
     val type: String = "",
     val brand: String = "",
     val model: String = "",
-    val imageUrl: String = "" // 🌟 사진 URL 추가
+    val imageUrl: String = "",
+    var isSelected: Boolean = false
 )
 
 class WasherListActivity : AppCompatActivity() {
@@ -32,6 +33,15 @@ class WasherListActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val washerList = mutableListOf<WasherData>()
 
+    // 🌟 어댑터를 전역 변수로 선언
+    private lateinit var adapter: WasherAdapter
+
+    // 🌟 다중 선택 바 및 뒤로가기 콜백
+    private lateinit var layoutSelectionMode: LinearLayout
+    private lateinit var btnSelectAll: Button
+    private lateinit var btnDeleteSelected: Button
+    private lateinit var backPressedCallback: OnBackPressedCallback
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_washer_list)
@@ -41,7 +51,20 @@ class WasherListActivity : AppCompatActivity() {
         btnAddWasher = findViewById(R.id.btnAddWasher)
         btnWasherListBack = findViewById(R.id.btnWasherListBack)
 
+        // 🌟 새로 추가한 UI 연결
+        layoutSelectionMode = findViewById(R.id.layoutSelectionMode)
+        btnSelectAll = findViewById(R.id.btnSelectAll)
+        btnDeleteSelected = findViewById(R.id.btnDeleteSelected)
+
         rvWasherList.layoutManager = LinearLayoutManager(this)
+
+        // 🌟 시스템 뒤로가기 가로채기 등록 (액티비티 전용)
+        backPressedCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                adapter.exitSelectionMode()
+            }
+        }
+        onBackPressedDispatcher.addCallback(this, backPressedCallback)
 
         btnWasherListBack.setOnClickListener { finish() }
 
@@ -50,12 +73,56 @@ class WasherListActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        btnSelectAll.setOnClickListener { adapter.selectAll() }
+        btnDeleteSelected.setOnClickListener { deleteSelectedItems() }
+
+        // 어댑터 초기 세팅 (데이터를 불러오기 전 빈 리스트로 연결)
+        adapter = WasherAdapter(
+            washerList,
+            onItemClick = { washer ->
+                val intent = Intent(this, WasherDetailActivity::class.java)
+                intent.putExtra("documentId", washer.documentId)
+                startActivity(intent)
+            },
+            onMoreClick = { view, washer ->
+                showPopupMenu(view, washer)
+            },
+            onSelectionModeChanged = { isSelectionMode ->
+                layoutSelectionMode.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+                backPressedCallback.isEnabled = isSelectionMode
+            }
+        )
+        rvWasherList.adapter = adapter
+
         fetchWashersFromFirebase()
     }
 
     override fun onResume() {
         super.onResume()
         fetchWashersFromFirebase()
+    }
+
+    // 🌟 다중 선택 삭제 로직 추가
+    private fun deleteSelectedItems() {
+        val selectedItems = washerList.filter { it.isSelected }
+        if (selectedItems.isEmpty()) {
+            Toast.makeText(this, "삭제할 세탁기를 선택해주세요.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val batch = db.batch()
+        for (item in selectedItems) {
+            val docRef = db.collection("washers").document(item.documentId)
+            batch.delete(docRef)
+        }
+
+        batch.commit().addOnSuccessListener {
+            Toast.makeText(this, "${selectedItems.size}개의 세탁기가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+            adapter.exitSelectionMode()
+            fetchWashersFromFirebase()
+        }.addOnFailureListener {
+            Toast.makeText(this, "삭제에 실패했습니다.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun fetchWashersFromFirebase() {
@@ -75,22 +142,12 @@ class WasherListActivity : AppCompatActivity() {
                         val type = doc.getString("type") ?: "알 수 없음"
                         val brand = doc.getString("brand") ?: "브랜드 미상"
                         val model = doc.getString("model") ?: ""
-                        val imageUrl = doc.getString("imageUrl") ?: "" // 🌟 URL 파싱 추가
+                        val imageUrl = doc.getString("imageUrl") ?: ""
 
                         washerList.add(WasherData(docId, type, brand, model, imageUrl))
                     }
-
-                    rvWasherList.adapter = WasherAdapter(
-                        washerList,
-                        onItemClick = { washer ->
-                            val intent = Intent(this, WasherDetailActivity::class.java)
-                            intent.putExtra("documentId", washer.documentId)
-                            startActivity(intent)
-                        },
-                        onMoreClick = { view, washer ->
-                            showPopupMenu(view, washer)
-                        }
-                    )
+                    adapter.exitSelectionMode()
+                    adapter.notifyDataSetChanged()
                 }
             }
             .addOnFailureListener {
@@ -105,59 +162,20 @@ class WasherListActivity : AppCompatActivity() {
 
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                0 -> { showEditWasherDialog(washer); true }
-                1 -> { deleteWasher(washer.documentId); true }
+                0 -> {
+                    val intent = Intent(this, WasherEditActivity::class.java)
+                    intent.putExtra("documentId", washer.documentId)
+                    startActivity(intent)
+                    true
+                }
+                1 -> {
+                    deleteWasher(washer.documentId)
+                    true
+                }
                 else -> false
             }
         }
         popup.show()
-    }
-
-    private fun showEditWasherDialog(washer: WasherData) {
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(60, 40, 60, 20)
-        }
-
-        val typeLabel = TextView(this).apply { text = "세탁기 형태" }
-        val spinnerType = Spinner(this).apply {
-            adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, arrayOf("드럼", "통돌이"))
-        }
-        spinnerType.setSelection(if (washer.type == "통돌이") 1 else 0)
-
-        val brandLabel = TextView(this).apply { text = "\n브랜드" }
-        val etBrand = EditText(this).apply { setText(washer.brand) }
-
-        val modelLabel = TextView(this).apply { text = "\n모델명 (선택)" }
-        val etModel = EditText(this).apply { setText(washer.model) }
-
-        layout.addView(typeLabel)
-        layout.addView(spinnerType)
-        layout.addView(brandLabel)
-        layout.addView(etBrand)
-        layout.addView(modelLabel)
-        layout.addView(etModel)
-
-        AlertDialog.Builder(this)
-            .setTitle("세탁기 정보 수정")
-            .setView(layout)
-            .setPositiveButton("저장") { _, _ ->
-                val newType = spinnerType.selectedItem.toString()
-                val newBrand = etBrand.text.toString().trim()
-                val newModel = etModel.text.toString().trim()
-
-                db.collection("washers").document(washer.documentId)
-                    .update(mapOf("type" to newType, "brand" to newBrand, "model" to newModel))
-                    .addOnSuccessListener {
-                        Toast.makeText(this, "성공적으로 수정되었습니다.", Toast.LENGTH_SHORT).show()
-                        fetchWashersFromFirebase()
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(this, "수정 실패", Toast.LENGTH_SHORT).show()
-                    }
-            }
-            .setNegativeButton("취소", null)
-            .show()
     }
 
     private fun deleteWasher(documentId: String) {
@@ -172,17 +190,23 @@ class WasherListActivity : AppCompatActivity() {
     }
 }
 
+// 🌟 황금 패턴(선택, 체크박스 버그 수정)이 완벽하게 이식된 어댑터
 class WasherAdapter(
     private val washers: List<WasherData>,
     private val onItemClick: (WasherData) -> Unit,
-    private val onMoreClick: (View, WasherData) -> Unit
+    private val onMoreClick: (View, WasherData) -> Unit,
+    private val onSelectionModeChanged: (Boolean) -> Unit
 ) : RecyclerView.Adapter<WasherAdapter.WasherViewHolder>() {
 
+    var isSelectionMode = false
+    private var isAllSelected = false
+
     class WasherViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val cbSelect: CheckBox = view.findViewById(R.id.cbWasherSelect) // 🌟 체크박스 연결
         val tvName: TextView = view.findViewById(R.id.tvItemWasherName)
         val tvType: TextView = view.findViewById(R.id.tvItemWasherType)
         val btnMore: TextView = view.findViewById(R.id.btnWasherMore)
-        val ivThumb: ImageView = view.findViewById(R.id.ivItemWasherThumb) // 🌟 썸네일 이미지뷰 연결
+        val ivThumb: ImageView = view.findViewById(R.id.ivItemWasherThumb)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WasherViewHolder {
@@ -197,16 +221,59 @@ class WasherAdapter(
         holder.tvName.text = displayName
         holder.tvType.text = washer.type
 
-        // 🌟 Glide를 사용하여 이미지 로드
         if (washer.imageUrl.isNotEmpty()) {
             Glide.with(holder.itemView.context).load(washer.imageUrl).into(holder.ivThumb)
         } else {
-            // 이미지가 없을 경우 기본 배경색 처리
             holder.ivThumb.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"))
         }
 
-        holder.itemView.setOnClickListener { onItemClick(washer) }
+        // 🌟 UI 상태 적용
+        holder.cbSelect.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+        holder.cbSelect.isChecked = washer.isSelected
+        holder.btnMore.visibility = if (isSelectionMode) View.GONE else View.VISIBLE
+
+        // 🌟 체크박스 삼키기 버그 방지
+        holder.cbSelect.setOnClickListener {
+            washer.isSelected = holder.cbSelect.isChecked
+        }
+
+        // 🌟 길게 누르기: 선택 모드 진입
+        holder.itemView.setOnLongClickListener {
+            if (!isSelectionMode) {
+                isSelectionMode = true
+                washer.isSelected = true
+                onSelectionModeChanged(true)
+                notifyDataSetChanged()
+            }
+            true
+        }
+
+        // 🌟 짧게 누르기: 모드에 따라 분기
+        holder.itemView.setOnClickListener {
+            if (isSelectionMode) {
+                washer.isSelected = !washer.isSelected
+                holder.cbSelect.isChecked = washer.isSelected
+            } else {
+                onItemClick(washer)
+            }
+        }
+
         holder.btnMore.setOnClickListener { onMoreClick(holder.btnMore, washer) }
+    }
+
+    fun selectAll() {
+        isAllSelected = !isAllSelected
+        washers.forEach { it.isSelected = isAllSelected }
+        notifyDataSetChanged()
+    }
+
+    fun exitSelectionMode() {
+        if (!isSelectionMode) return
+        isSelectionMode = false
+        isAllSelected = false
+        washers.forEach { it.isSelected = false }
+        onSelectionModeChanged(false)
+        notifyDataSetChanged()
     }
 
     override fun getItemCount(): Int = washers.size

@@ -1,21 +1,17 @@
 package com.example.laundrycare_android
 
+import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
+import android.view.*
+import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 data class LaundryHistoryItem(
     val id: String,
@@ -23,105 +19,87 @@ data class LaundryHistoryItem(
     val washerInfo: String,
     val recommendedCourse: String,
     val warningMsg: String,
-    val clothesImages: List<String>
+    val clothesImages: List<String>,
+    var isSelected: Boolean = false // 🌟 추가
 )
 
 class LaundryHistoryActivity : AppCompatActivity() {
-
     private lateinit var rvLaundryHistory: RecyclerView
-    private lateinit var pbHistoryLoading: ProgressBar
-    private val historyList = mutableListOf<LaundryHistoryItem>()
     private lateinit var adapter: HistoryAdapter
+    private val historyList = mutableListOf<LaundryHistoryItem>()
+
+    // UI 추가
+    private lateinit var layoutSelectionMode: LinearLayout
+    private lateinit var backPressedCallback: OnBackPressedCallback
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_laundry_history)
 
-        // 🌟 뒤로가기 버튼 기능 연결
-        val btnBackHistory = findViewById<ImageView>(R.id.btnBackHistory)
-        btnBackHistory.setOnClickListener {
-            finish()
-        }
-
+        layoutSelectionMode = findViewById(R.id.layoutSelectionMode)
         rvLaundryHistory = findViewById(R.id.rvLaundryHistory)
-        pbHistoryLoading = findViewById(R.id.pbHistoryLoading)
-
         rvLaundryHistory.layoutManager = LinearLayoutManager(this)
-        adapter = HistoryAdapter(historyList)
+
+        adapter = HistoryAdapter(historyList) { isMode ->
+            layoutSelectionMode.visibility = if (isMode) View.VISIBLE else View.GONE
+            backPressedCallback.isEnabled = isMode
+        }
         rvLaundryHistory.adapter = adapter
+
+        findViewById<Button>(R.id.btnSelectAll).setOnClickListener { adapter.selectAll() }
+        findViewById<Button>(R.id.btnDeleteSelected).setOnClickListener { deleteSelected() }
+        findViewById<ImageView>(R.id.btnBackHistory).setOnClickListener { finish() }
+
+        backPressedCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() { adapter.exitSelectionMode() }
+        }
+        onBackPressedDispatcher.addCallback(this, backPressedCallback)
 
         fetchHistoryFromFirebase()
     }
 
-    private fun fetchHistoryFromFirebase() {
-        pbHistoryLoading.visibility = View.VISIBLE
+    private fun deleteSelected() {
+        val selected = historyList.filter { it.isSelected }
         val db = FirebaseFirestore.getInstance()
+        val batch = db.batch()
+        for (item in selected) batch.delete(db.collection("laundry_history").document(item.id))
+        batch.commit().addOnSuccessListener {
+            Toast.makeText(this, "삭제 완료", Toast.LENGTH_SHORT).show()
+            adapter.exitSelectionMode()
+            fetchHistoryFromFirebase()
+        }
+    }
 
-        db.collection("laundry_history")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .get()
-            .addOnSuccessListener { documents ->
-                pbHistoryLoading.visibility = View.GONE
+    private fun fetchHistoryFromFirebase() {
+        FirebaseFirestore.getInstance().collection("laundry_history")
+            .orderBy("timestamp", Query.Direction.DESCENDING).get().addOnSuccessListener { documents ->
                 historyList.clear()
-
                 for (doc in documents) {
-                    val images = doc.get("clothes_images") as? List<String> ?: listOf()
-                    val item = LaundryHistoryItem(
-                        id = doc.id,
-                        timestamp = doc.getLong("timestamp") ?: 0L,
-                        washerInfo = doc.getString("washer_info") ?: "알 수 없는 기기",
-                        recommendedCourse = doc.getString("recommended_course") ?: "기본 세탁 코스",
-                        warningMsg = doc.getString("warning_msg") ?: "경고 없음",
-                        clothesImages = images
-                    )
-                    historyList.add(item)
+                    historyList.add(LaundryHistoryItem(doc.id, doc.getLong("timestamp")?:0L, doc.getString("washer_info")?:"", doc.getString("recommended_course")?:"", doc.getString("warning_msg")?:"", doc.get("clothes_images") as? List<String> ?: listOf()))
                 }
                 adapter.notifyDataSetChanged()
-
-                if (historyList.isEmpty()) {
-                    Toast.makeText(this, "기록된 세탁 히스토리가 없습니다.", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .addOnFailureListener { e ->
-                pbHistoryLoading.visibility = View.GONE
-                Toast.makeText(this, "기록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
             }
     }
 
-    inner class HistoryAdapter(private val items: List<LaundryHistoryItem>) :
-        RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
-
+    inner class HistoryAdapter(private val items: MutableList<LaundryHistoryItem>, private val onModeChanged: (Boolean) -> Unit) : RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
+        var isMode = false
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+            val cb: CheckBox = view.findViewById(R.id.cbHistorySelect)
             val tvDate: TextView = view.findViewById(R.id.tvHistoryDate)
-            val tvWasher: TextView = view.findViewById(R.id.tvHistoryWasher)
-            val tvCourse: TextView = view.findViewById(R.id.tvHistoryCourse)
-            val tvWarning: TextView = view.findViewById(R.id.tvHistoryWarning)
-            val tvCount: TextView = view.findViewById(R.id.tvHistoryClothesCount)
+            val btnMore: TextView = view.findViewById(R.id.btnMore)
         }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_laundry_history, parent, false)
-            return ViewHolder(view)
+        override fun onCreateViewHolder(p: ViewGroup, v: Int) = ViewHolder(LayoutInflater.from(p.context).inflate(R.layout.item_laundry_history, p, false))
+        override fun onBindViewHolder(h: ViewHolder, pos: Int) {
+            val item = items[pos]
+            h.cb.visibility = if(isMode) View.VISIBLE else View.GONE
+            h.cb.isChecked = item.isSelected
+            h.cb.setOnClickListener { item.isSelected = h.cb.isChecked }
+            h.itemView.setOnLongClickListener { isMode=true; item.isSelected=true; onModeChanged(true); notifyDataSetChanged(); true }
+            h.itemView.setOnClickListener { if(isMode) { item.isSelected = !item.isSelected; notifyDataSetChanged() } else { /* 상세이동 */ } }
+            h.btnMore.visibility = if(isMode) View.GONE else View.VISIBLE
         }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = items[position]
-
-            val sdf = SimpleDateFormat("yyyy.MM.dd HH:mm", Locale.KOREA)
-            holder.tvDate.text = sdf.format(Date(item.timestamp))
-
-            holder.tvWasher.text = item.washerInfo
-            holder.tvCourse.text = item.recommendedCourse
-            holder.tvWarning.text = item.warningMsg
-            holder.tvCount.text = "🧺 세탁한 옷: 총 ${item.clothesImages.size}벌"
-
-            if (item.warningMsg == "경고 없음" || item.warningMsg.isEmpty()) {
-                holder.tvWarning.visibility = View.GONE
-            } else {
-                holder.tvWarning.visibility = View.VISIBLE
-            }
-        }
-
-        override fun getItemCount(): Int = items.size
+        fun selectAll() { items.forEach { it.isSelected = true }; notifyDataSetChanged() }
+        fun exitSelectionMode() { isMode=false; items.forEach { it.isSelected = false }; onModeChanged(false); notifyDataSetChanged() }
+        override fun getItemCount() = items.size
     }
 }

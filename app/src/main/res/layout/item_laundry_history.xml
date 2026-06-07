@@ -17,21 +17,44 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <CheckBox
+                android:id="@+id/cbHistorySelect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:buttonTint="#1976D2"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/tvHistoryDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/cbHistorySelect"
                 android:text="2026.05.25 19:50"
                 android:textColor="#888888"
                 android:textSize="13sp" />
 
             <TextView
-                android:id="@+id/tvHistoryWasher"
+                android:id="@+id/btnMore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:padding="8dp"
+                android:text="⋮"
+                android:textColor="#333333"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvHistoryWasher"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@id/btnMore"
+                android:layout_marginEnd="8dp"
                 android:text="LG F21VDW (드럼)"
                 android:textColor="#555555"
                 android:textSize="13sp"

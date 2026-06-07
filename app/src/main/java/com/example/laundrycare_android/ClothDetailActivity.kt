@@ -2,7 +2,8 @@ package com.example.laundrycare_android
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.*
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -28,7 +29,6 @@ class ClothDetailActivity : AppCompatActivity() {
         btnOptionsMenu.setOnClickListener { showBottomSheet() }
     }
 
-    // 🌟 핵심: 수정 화면에서 '저장'을 누르고 뒤로 돌아왔을 때, 최신 데이터를 DB에서 즉시 다시 불러옵니다!
     override fun onResume() {
         super.onResume()
         if (docId.isNotEmpty()) {
@@ -51,24 +51,36 @@ class ClothDetailActivity : AppCompatActivity() {
                     val laundryTip = document.getString("laundryTip") ?: "AI 분석 결과를 확인하세요."
                     val imageUrl = document.getString("imageUrl") ?: ""
 
-                    // 2.jpg 화면에 뿌려질 텍스트 단 하나도 빠짐없이 완벽 조립
+                    // 등록 날짜 파싱 (YYYY-MM-DD -> YYYY년 MM월 DD일)
+                    val dateRaw = document.getString("date") ?: "미입력"
+                    val displayDate = if (dateRaw.length >= 10) {
+                        val y = dateRaw.substring(0, 4)
+                        val m = dateRaw.substring(5, 7)
+                        val d = dateRaw.substring(8, 10)
+                        "${y}년 ${m}월 ${d}일"
+                    } else {
+                        dateRaw
+                    }
+
+                    // 🌟 trimMargin("|") 적용: 각 줄 앞에 |를 붙이면 들여쓰기 상관없이 깔끔하게 출력됩니다.
                     val detailText = """
-                        [ 옷 기본 정보 ]
-                        계절: $season
-                        분류: $main ($sub)
-                        색상: $color
-                        사이즈: $size
-                        소재: $material
-                        
-                        [ 세탁 주의사항 ]
-                        $warnings
-                        
-                        [ 관리 주의사항 ]
-                        $careSteps
-                        
-                        [ AI 요약 팁 ]
-                        $laundryTip
-                    """.trimIndent()
+                        |[ 옷 기본 정보 ]
+                        |등록일: $displayDate
+                        |계절: $season
+                        |분류: $main ($sub)
+                        |색상: $color
+                        |사이즈: $size
+                        |소재: $material
+                        |
+                        |[ 세탁 주의사항 ]
+                        |$warnings
+                        |
+                        |[ 관리 주의사항 ]
+                        |$careSteps
+                        |
+                        |[ AI 요약 팁 ]
+                        |$laundryTip
+                    """.trimMargin("|")
 
                     tvDetailContent.text = detailText
 
@@ -84,7 +96,6 @@ class ClothDetailActivity : AppCompatActivity() {
         val dialog = BottomSheetDialog(this)
         dialog.setContentView(view)
 
-        // 🌟 수정 버튼을 누르면 팝업창 대신 '새로운 넓은 수정 화면'으로 넘어갑니다.
         view.findViewById<TextView>(R.id.tvEdit).setOnClickListener {
             dialog.dismiss()
             val intent = Intent(this, ClothEditActivity::class.java)

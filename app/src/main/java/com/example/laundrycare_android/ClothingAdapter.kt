@@ -1,19 +1,29 @@
 package com.example.laundrycare_android
 
+import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.CheckBox
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.firestore.FirebaseFirestore
 
-class ClothingAdapter(private val clothingList: List<ClothingItem>) : RecyclerView.Adapter<ClothingAdapter.ClothingViewHolder>() {
+class ClothingAdapter(
+    private val clothingList: List<ClothingItem>,
+    private val onSelectionModeChanged: (Boolean) -> Unit
+) : RecyclerView.Adapter<ClothingAdapter.ClothingViewHolder>() {
+
+    var isSelectionMode = false
+    private var isAllSelected = false
 
     class ClothingViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val cbSelect: CheckBox = view.findViewById(R.id.cbClothSelect)
         val ivClothPhoto: ImageView = view.findViewById(R.id.ivClothPhoto)
         val tvCategory: TextView = view.findViewById(R.id.tvCategory)
         val tvMaterial: TextView = view.findViewById(R.id.tvMaterial)
@@ -29,19 +39,47 @@ class ClothingAdapter(private val clothingList: List<ClothingItem>) : RecyclerVi
         val item = clothingList[position]
         holder.tvCategory.text = "${item.mainCategory} (${item.subCategory})"
         holder.tvMaterial.text = item.material
-        if (item.imageUrl.isNotEmpty()) Glide.with(holder.itemView.context).load(item.imageUrl).centerCrop().into(holder.ivClothPhoto)
+
+        if (item.imageUrl.isNotEmpty()) {
+            Glide.with(holder.itemView.context).load(item.imageUrl).centerCrop().into(holder.ivClothPhoto)
+        }
+
+        holder.cbSelect.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+        holder.cbSelect.isChecked = item.isSelected
+        holder.btnItemOptions.visibility = if (isSelectionMode) View.GONE else View.VISIBLE
+
+        // 🌟🌟 문제 해결: 체크박스 네모 칸을 직접 터치했을 때도 상태를 저장하도록 추가 🌟🌟
+        holder.cbSelect.setOnClickListener {
+            item.isSelected = holder.cbSelect.isChecked
+        }
+
+        holder.itemView.setOnLongClickListener {
+            if (!isSelectionMode) {
+                isSelectionMode = true
+                item.isSelected = true
+                onSelectionModeChanged(true)
+                notifyDataSetChanged()
+            }
+            true
+        }
 
         holder.itemView.setOnClickListener {
-            val context = holder.itemView.context
-            context.startActivity(Intent(context, ClothDetailActivity::class.java).apply {
-                putExtra("docId", item.id); putExtra("imageUrl", item.imageUrl)
-                putExtra("season", item.season); putExtra("mainCategory", item.mainCategory)
-                putExtra("subCategory", item.subCategory); putExtra("material", item.material)
-                putExtra("laundryTip", item.laundryTip)
-
-                // 🌟 추가됨: SeasonFragment에서 가져온 warnings 데이터를 상세 화면으로 전달!
-                putExtra("warnings", item.warnings)
-            })
+            if (isSelectionMode) {
+                item.isSelected = !item.isSelected
+                holder.cbSelect.isChecked = item.isSelected
+            } else {
+                val context = holder.itemView.context
+                context.startActivity(Intent(context, ClothDetailActivity::class.java).apply {
+                    putExtra("docId", item.id)
+                    putExtra("imageUrl", item.imageUrl)
+                    putExtra("season", item.season)
+                    putExtra("mainCategory", item.mainCategory)
+                    putExtra("subCategory", item.subCategory)
+                    putExtra("material", item.material)
+                    putExtra("laundryTip", item.laundryTip)
+                    putExtra("warnings", item.warnings)
+                })
+            }
         }
 
         holder.btnItemOptions.setOnClickListener {
@@ -49,62 +87,43 @@ class ClothingAdapter(private val clothingList: List<ClothingItem>) : RecyclerVi
         }
     }
 
-    private fun showBottomSheet(context: android.content.Context, item: ClothingItem) {
+    fun selectAll() {
+        isAllSelected = !isAllSelected
+        clothingList.forEach { it.isSelected = isAllSelected }
+        notifyDataSetChanged()
+    }
+
+    fun exitSelectionMode() {
+        if (!isSelectionMode) return
+        isSelectionMode = false
+        isAllSelected = false
+        clothingList.forEach { it.isSelected = false }
+        onSelectionModeChanged(false)
+        notifyDataSetChanged()
+    }
+
+    private fun showBottomSheet(context: Context, item: ClothingItem) {
         val dialog = BottomSheetDialog(context)
         val view = LayoutInflater.from(context).inflate(R.layout.layout_bottom_sheet, null)
         dialog.setContentView(view)
 
         view.findViewById<TextView>(R.id.tvEdit).setOnClickListener {
             dialog.dismiss()
-            showEditDialog(context, item)
+            val intent = Intent(context, ClothEditActivity::class.java)
+            intent.putExtra("docId", item.id)
+            context.startActivity(intent)
         }
+
         view.findViewById<TextView>(R.id.tvDelete).setOnClickListener {
             dialog.dismiss()
-            FirebaseFirestore.getInstance().collection("clothes").document(item.id).delete()
+            AlertDialog.Builder(context).setTitle("삭제").setMessage("정말 삭제하시겠습니까?")
+                .setPositiveButton("삭제") { _, _ ->
+                    FirebaseFirestore.getInstance().collection("clothes").document(item.id).delete()
+                }.setNegativeButton("취소", null).show()
         }
+
         view.findViewById<TextView>(R.id.tvCancel).setOnClickListener { dialog.dismiss() }
         dialog.show()
-    }
-
-    private fun showEditDialog(context: android.content.Context, item: ClothingItem) {
-        val layout = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 30, 50, 10) }
-
-        val subCategoryMap = mapOf(
-            "상의" to arrayOf("반팔", "긴팔", "아우터"),
-            "하의" to arrayOf("반바지", "긴바지", "치마"),
-            "고급" to arrayOf("명품", "기능성"),
-            "기타" to arrayOf("양말", "속옷")
-        )
-
-        val spinnerSeason = Spinner(context).apply { adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, arrayOf("봄", "여름", "가을", "겨울")) }
-        spinnerSeason.setSelection((spinnerSeason.adapter as ArrayAdapter<String>).getPosition(item.season))
-
-        val spinnerMain = Spinner(context).apply { adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, subCategoryMap.keys.toTypedArray()) }
-        spinnerMain.setSelection((spinnerMain.adapter as ArrayAdapter<String>).getPosition(item.mainCategory))
-
-        val spinnerSub = Spinner(context)
-
-        spinnerMain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                val selectedMain = spinnerMain.selectedItem.toString()
-                val subAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, subCategoryMap[selectedMain]!!)
-                spinnerSub.adapter = subAdapter
-                if (selectedMain == item.mainCategory) spinnerSub.setSelection(subAdapter.getPosition(item.subCategory))
-            }
-            override fun onNothingSelected(p0: AdapterView<*>?) {}
-        }
-
-        layout.addView(TextView(context).apply { text = "계절" }); layout.addView(spinnerSeason)
-        layout.addView(TextView(context).apply { text = "대분류" }); layout.addView(spinnerMain)
-        layout.addView(TextView(context).apply { text = "소분류" }); layout.addView(spinnerSub)
-
-        AlertDialog.Builder(context).setTitle("정보 수정").setView(layout)
-            .setPositiveButton("저장") { _, _ ->
-                FirebaseFirestore.getInstance().collection("clothes").document(item.id)
-                    .update("season", spinnerSeason.selectedItem.toString(),
-                        "mainCategory", spinnerMain.selectedItem.toString(),
-                        "subCategory", spinnerSub.selectedItem.toString())
-            }.show()
     }
 
     override fun getItemCount() = clothingList.size

@@ -8,5 +8,6 @@ data class ClothingItem(
     val subCategory: String,   // 소분류 (반팔, 긴팔, 아우터 등)
     val material: String,
     val laundryTip: String,
-    val warnings: String = ""
+    val warnings: String = "",
+    var isSelected: Boolean = false // 🌟 다중 선택을 위한 필수 속성 추가 완료
 )

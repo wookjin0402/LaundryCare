@@ -19,6 +19,14 @@
         android:background="#FFFFFF"
         android:gravity="center_vertical">
 
+        <CheckBox
+            android:id="@+id/cbWasherSelect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:buttonTint="#1976D2"
+            android:visibility="gone" />
+
         <androidx.cardview.widget.CardView
             android:layout_width="50dp"
             android:layout_height="50dp"

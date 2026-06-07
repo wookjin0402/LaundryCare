@@ -4,6 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,6 +26,14 @@ class SeasonFragment : Fragment() {
     private var currentSubCategory: String = "전체"
     private var firestoreListener: ListenerRegistration? = null
 
+    // 🌟 다중 선택 모드 UI 요소
+    private lateinit var layoutSelectionMode: LinearLayout
+    private lateinit var btnSelectAll: Button
+    private lateinit var btnDeleteSelected: Button
+
+    // 🌟 시스템 뒤로가기 콜백
+    private lateinit var backPressedCallback: OnBackPressedCallback
+
     companion object {
         fun newInstance(categoryName: String): SeasonFragment {
             val fragment = SeasonFragment()
@@ -34,23 +46,89 @@ class SeasonFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         currentTabCategory = arguments?.getString("SEASON") ?: "전체"
-        return inflater.inflate(R.layout.fragment_season, container, false)
+        val originalRoot = inflater.inflate(R.layout.fragment_season, container, false)
+
+        // 🌟 겹침 방지: 수직으로 쌓아 리스트를 밀어내는 레이아웃 생성
+        val wrapperLayout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            setBackgroundColor(android.graphics.Color.parseColor("#F5F5F5"))
+        }
+
+        // 🌟 상단 메뉴 바 세팅
+        layoutSelectionMode = LinearLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
+            setPadding(32, 24, 32, 24)
+            setBackgroundColor(android.graphics.Color.parseColor("#FFFFFF"))
+            visibility = View.GONE
+            elevation = 10f
+        }
+
+        btnSelectAll = Button(requireContext()).apply {
+            text = "전체 선택"
+            textSize = 14f
+            backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#1976D2"))
+            setTextColor(android.graphics.Color.WHITE)
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                marginEnd = 16
+            }
+            setOnClickListener { adapter.selectAll() }
+        }
+
+        btnDeleteSelected = Button(requireContext()).apply {
+            text = "선택 삭제"
+            textSize = 14f
+            backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#D32F2F"))
+            setTextColor(android.graphics.Color.WHITE)
+            setOnClickListener { deleteSelectedItems() }
+        }
+
+        layoutSelectionMode.addView(btnSelectAll)
+        layoutSelectionMode.addView(btnDeleteSelected)
+
+        // 🌟 순서대로 배치 (메뉴 바 먼저, 그 다음 원래 리스트 화면)
+        wrapperLayout.addView(layoutSelectionMode)
+        wrapperLayout.addView(originalRoot, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            0,
+            1f // 남은 화면 공간 꽉 채우기
+        ))
+
+        return wrapperLayout
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // 🌟 시스템 뒤로가기 가로채기 등록
+        backPressedCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                adapter.exitSelectionMode()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backPressedCallback)
+
         rvSeasonClothing = view.findViewById(R.id.rvSeasonClothing)
         rvSeasonClothing.layoutManager = LinearLayoutManager(requireContext())
-        adapter = ClothingAdapter(clothingList)
+
+        // 🌟 수정된 어댑터 연결 (콜백 연동)
+        adapter = ClothingAdapter(clothingList) { isSelectionMode ->
+            layoutSelectionMode.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+            backPressedCallback.isEnabled = isSelectionMode
+        }
         rvSeasonClothing.adapter = adapter
 
+        // --- 기존 조원분이 만드신 칩 로직 그대로 유지 ---
         val chipGroupCategory = view.findViewById<ChipGroup>(R.id.chipGroupCategory)
         val chipGroupSubCategory = view.findViewById<ChipGroup>(R.id.chipGroupSubCategory)
 
-        // 화면 안의 불필요한 대분류 칩 숨김 처리
         chipGroupCategory.visibility = View.GONE
 
-        // 소분류 칩들 연결
         val subChips = mapOf(
             "상의" to listOf(view.findViewById<Chip>(R.id.chipTopShort), view.findViewById<Chip>(R.id.chipTopLong), view.findViewById<Chip>(R.id.chipOuter)),
             "하의" to listOf(view.findViewById<Chip>(R.id.chipBottomShort), view.findViewById<Chip>(R.id.chipBottomLong), view.findViewById<Chip>(R.id.chipSkirt)),
@@ -96,6 +174,31 @@ class SeasonFragment : Fragment() {
         updateClothesList()
     }
 
+    // 🌟 다중 선택 삭제 로직
+    private fun deleteSelectedItems() {
+        val selectedItems = clothingList.filter { it.isSelected }
+        if (selectedItems.isEmpty()) {
+            Toast.makeText(requireContext(), "삭제할 항목을 선택해주세요.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val db = FirebaseFirestore.getInstance()
+        val batch = db.batch()
+
+        for (item in selectedItems) {
+            val docRef = db.collection("clothes").document(item.id)
+            batch.delete(docRef)
+        }
+
+        batch.commit().addOnSuccessListener {
+            Toast.makeText(requireContext(), "${selectedItems.size}개 삭제 완료", Toast.LENGTH_SHORT).show()
+            adapter.exitSelectionMode()
+            updateClothesList()
+        }.addOnFailureListener {
+            Toast.makeText(requireContext(), "삭제 실패", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun updateClothesList() {
         val db = FirebaseFirestore.getInstance()
         firestoreListener?.remove()
@@ -117,11 +220,7 @@ class SeasonFragment : Fragment() {
                     }
 
                     if (isMatch) {
-                        // 🌟 주의사항(warnings) 데이터를 Firestore에서 읽어옵니다.
                         val warnings = doc.getString("warnings") ?: ""
-
-                        // 🌟 ClothingItem 생성자에 warnings를 추가로 넘겨줍니다.
-                        // (경고: ClothingItem 데이터 클래스와 어댑터 파일도 이에 맞게 수정되어 있어야 화면에 뜹니다!)
                         clothingList.add(ClothingItem(
                             doc.id,
                             doc.getString("imageUrl") ?: "",
@@ -130,11 +229,13 @@ class SeasonFragment : Fragment() {
                             subCat,
                             doc.getString("material") ?: "",
                             doc.getString("laundryTip") ?: "",
-                            warnings // 🌟 여기에 추가되었습니다.
+                            warnings
                         ))
                     }
                 }
             }
+            // 🌟 데이터 새로고침 시 다중 선택 모드도 안전하게 초기화
+            adapter.exitSelectionMode()
             adapter.notifyDataSetChanged()
         }
     }

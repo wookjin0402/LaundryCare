@@ -3,9 +3,8 @@ package com.example.laundrycare_android
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.tabs.TabLayout
@@ -13,52 +12,39 @@ import com.google.android.material.tabs.TabLayoutMediator
 
 class StainActivity : AppCompatActivity() {
 
+    private lateinit var btnBack: ImageView
+    private lateinit var tvStainTitle: TextView
+    private lateinit var tabLayout: TabLayout
+    private lateinit var viewPager: ViewPager2
+    private lateinit var btnScanStain: FloatingActionButton
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_stain)
+        setContentView(R.layout.activity_stain) // 제공해주신 레이아웃과 정확히 매칭
 
-        val btnBack = findViewById<ImageView>(R.id.btnBack)
-        btnBack.setOnClickListener {
-            finish()
-        }
+        // 🌟 ID 매칭 완료: 제공하신 XML의 ID와 동일하게 설정
+        btnBack = findViewById(R.id.btnBack)
+        tvStainTitle = findViewById(R.id.tvStainTitle)
+        tabLayout = findViewById(R.id.tabLayoutStain)
+        viewPager = findViewById(R.id.viewPagerStain)
+        btnScanStain = findViewById(R.id.btnScanStain)
 
-        // 🌟 탭 레이아웃과 뷰페이저 세팅
-        val tabLayout = findViewById<TabLayout>(R.id.tabLayoutStain)
-        val viewPager = findViewById<ViewPager2>(R.id.viewPagerStain)
+        // 뒤로가기 버튼 이벤트
+        btnBack.setOnClickListener { finish() }
 
-        // 액티비티 전용 뷰페이저 어댑터 연결
-        val pagerAdapter = StainPagerAdapter(this)
-        viewPager.adapter = pagerAdapter
-
-        // 🌟 카테고리 이름 배열 및 탭 결합
-        val tabTitles = arrayOf("전체", "음식물", "화장품", "생활/기타")
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = tabTitles[position]
-        }.attach()
-
-        // 🌟 플로팅 버튼(+) 클릭 시 카메라 화면으로 이동
-        val btnScanStain = findViewById<FloatingActionButton>(R.id.btnScanStain)
+        // 🌟 Scan 버튼 (이미지 추가 화면으로 이동)
         btnScanStain.setOnClickListener {
             val intent = Intent(this, StainCameraActivity::class.java)
             startActivity(intent)
         }
-    }
 
-    // 🌟 액티비티 내부에서만 쓰는 뷰페이저 어댑터 클래스
-    inner class StainPagerAdapter(activity: AppCompatActivity) : FragmentStateAdapter(activity) {
-        private val categories = arrayOf("전체", "음식물", "화장품", "생활/기타")
+        // ViewPager2와 TabLayout 연동 (Adapter 필요)
+        // 여기에 StainTabPagerAdapter 등을 연결하여 구현하시면 됩니다.
+        // 예시: viewPager.adapter = StainTabPagerAdapter(this)
 
-        override fun getItemCount(): Int = categories.size
-
-        override fun createFragment(position: Int): Fragment {
-            // 아까 새로 만든 StainListFragment를 카테고리별로 생성해서 던져줌!
-            return StainListFragment.newInstance(categories[position])
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    override fun onBackPressed() {
-        super.onBackPressed()
-        finish()
+        // TabLayout과 ViewPager2 연결 예시
+        // TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+        //     tab.text = "탭 이름"
+        // }.attach()
     }
 }

@@ -64,10 +64,58 @@
                 android:backgroundTint="#FFFFFF" />
         </FrameLayout>
 
-        <EditText android:id="@+id/etScanMainCat" android:layout_width="match_parent" android:layout_height="50dp" android:background="@android:drawable/editbox_background" android:hint="대분류 (예: 상의)" android:padding="12dp" android:layout_marginBottom="12dp" />
-        <EditText android:id="@+id/etScanSubCat" android:layout_width="match_parent" android:layout_height="50dp" android:background="@android:drawable/editbox_background" android:hint="소분류 (예: 반팔티)" android:padding="12dp" android:layout_marginBottom="12dp" />
-        <EditText android:id="@+id/etScanColor" android:layout_width="match_parent" android:layout_height="50dp" android:background="@android:drawable/editbox_background" android:hint="색상 (예: 흰색)" android:padding="12dp" android:layout_marginBottom="12dp" />
-        <EditText android:id="@+id/etScanMaterial" android:layout_width="match_parent" android:layout_height="50dp" android:background="@android:drawable/editbox_background" android:hint="소재 (예: 면)" android:padding="12dp" android:layout_marginBottom="24dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="옷 카테고리 (대분류)"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp"/>
+        <Spinner
+            android:id="@+id/spinnerMainCat"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="12dp"
+            android:background="@android:drawable/btn_dropdown" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="상세 종류 (소분류)"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp"/>
+        <Spinner
+            android:id="@+id/spinnerSubCat"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="16dp"
+            android:background="@android:drawable/btn_dropdown" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="색상 및 소재 정보"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp"/>
+        <EditText
+            android:id="@+id/etScanColor"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@android:drawable/editbox_background"
+            android:hint="AI가 색상을 분석합니다"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etScanMaterial"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@android:drawable/editbox_background"
+            android:hint="라벨 텍스트를 통해 소재를 분석합니다"
+            android:padding="12dp"
+            android:layout_marginBottom="24dp" />
 
         <ProgressBar
             android:id="@+id/pbScanLoading"
@@ -85,5 +133,6 @@
             android:text="옷장에 최종 등록하기"
             android:textSize="16sp"
             android:textStyle="bold" />
+
     </LinearLayout>
 </ScrollView>

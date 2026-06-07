@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
-    <!-- 좌측 상단 로고 -->
     <TextView
         android:id="@+id/tvLogo"
         android:layout_width="wrap_content"
@@ -19,7 +18,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- 🌟 우측 상단 햄버거 메뉴 (마이페이지) 터치 효과 추가 완료 -->
     <TextView
         android:id="@+id/btnCategoryMenu"
         android:layout_width="wrap_content"
@@ -34,185 +32,237 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 날씨 정보 카드 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardWeather"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="8dp"
-        app:layout_constraintTop_toBottomOf="@id/tvLogo">
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/btnCategoryMenu"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#E3F2FD"
-            android:padding="20dp">
+            android:paddingBottom="40dp">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardWeather"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="10dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="#E3F2FD"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:id="@+id/tvWeatherTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="날씨 정보를 불러오는 중..."
+                        android:textColor="#1976D2"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvRecommend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="위치 권한을 허용해주세요."
+                        android:textColor="#333333"
+                        android:textSize="15sp"
+                        android:layout_marginTop="10dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
             <TextView
-                android:id="@+id/tvWeatherTitle"
+                android:id="@+id/tvDashboardTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="날씨 정보를 불러오는 중..."
-                android:textColor="#1976D2"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvRecommend"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="위치 권한을 허용해주세요."
+                android:layout_marginTop="30dp"
+                android:layout_marginStart="20dp"
+                android:text="나의 세탁 현황"
+                android:textSize="20sp"
+                android:textStyle="bold"
                 android:textColor="#333333"
-                android:textSize="15sp"
-                android:layout_marginTop="10dp" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+                app:layout_constraintTop_toBottomOf="@id/cardWeather"
+                app:layout_constraintStart_toStartOf="parent"/>
 
-    <!-- 대시보드 제목 -->
-    <TextView
-        android:id="@+id/tvDashboardTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:layout_marginStart="20dp"
-        android:text="나의 세탁 현황"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#333333"
-        app:layout_constraintTop_toBottomOf="@id/cardWeather"
-        app:layout_constraintStart_toStartOf="parent"/>
+            <LinearLayout
+                android:id="@+id/layoutDashboard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="4"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/tvDashboardTitle">
 
-    <!-- 🌟 1x4 가로형 대시보드 레이아웃 -->
-    <LinearLayout
-        android:id="@+id/layoutDashboard"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="4"
-        android:baselineAligned="false"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvDashboardTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/tabCloset"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#E3F2FD"
+                    android:clickable="true"
+                    android:foreground="?attr/selectableItemBackground">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingVertical="16dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="등록 의류" android:textSize="12sp" android:textColor="#555555"/>
+                        <TextView android:id="@+id/tvClothesCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="-벌" android:textSize="16sp" android:textStyle="bold" android:textColor="#1976D2"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-        <!-- 1. 등록 의류 -->
-        <LinearLayout
-            android:id="@+id/tabCloset"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            android:background="@drawable/bg_rounded_white"
-            android:elevation="2dp"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingVertical="16dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="등록 의류"
-                android:textSize="12sp"
-                android:textColor="#888888"/>
-            <TextView
-                android:id="@+id/tvClothesCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="-벌"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#1976D2"/>
-        </LinearLayout>
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/tabWasher"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="4dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#E8F5E9"
+                    android:clickable="true"
+                    android:foreground="?attr/selectableItemBackground">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingVertical="16dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="세탁기" android:textSize="12sp" android:textColor="#555555"/>
+                        <TextView android:id="@+id/tvWashersCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="-대" android:textSize="16sp" android:textStyle="bold" android:textColor="#388E3C"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-        <!-- 2. 세탁기 -->
-        <LinearLayout
-            android:id="@+id/tabWasher"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="4dp"
-            android:background="@drawable/bg_rounded_white"
-            android:elevation="2dp"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingVertical="16dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="세탁기"
-                android:textSize="12sp"
-                android:textColor="#888888"/>
-            <TextView
-                android:id="@+id/tvWashersCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="-대"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#388E3C"/>
-        </LinearLayout>
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/tabStain"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="4dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#FFF9C4"
+                    android:clickable="true"
+                    android:foreground="?attr/selectableItemBackground">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingVertical="16dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="얼룩" android:textSize="12sp" android:textColor="#555555"/>
+                        <TextView android:id="@+id/tvStainsCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="-개" android:textSize="16sp" android:textStyle="bold" android:textColor="#F57F17"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-        <!-- 3. 얼룩 -->
-        <LinearLayout
-            android:id="@+id/tabStain"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="4dp"
-            android:background="@drawable/bg_rounded_white"
-            android:elevation="2dp"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingVertical="16dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="얼룩"
-                android:textSize="12sp"
-                android:textColor="#888888"/>
-            <TextView
-                android:id="@+id/tvStainsCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="-개"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#FBC02D"/>
-        </LinearLayout>
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/tabHistory"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#F3E5F5"
+                    android:clickable="true"
+                    android:foreground="?attr/selectableItemBackground">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:paddingVertical="16dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="세탁 기록" android:textSize="12sp" android:textColor="#555555"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="바로가기" android:textSize="14sp" android:textStyle="bold" android:textColor="#7B1FA2"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
 
-        <!-- 4. 세탁 기록 -->
-        <LinearLayout
-            android:id="@+id/tabHistory"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:background="@drawable/bg_rounded_white"
-            android:elevation="2dp"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingVertical="16dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="세탁 기록"
-                android:textSize="12sp"
-                android:textColor="#888888"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="바로가기"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#333333"/>
-        </LinearLayout>
-    </LinearLayout>
+            <LinearLayout
+                android:id="@+id/layoutMainActions"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="30dp"
+                android:orientation="horizontal"
+                android:weightSum="2"
+                app:layout_constraintTop_toBottomOf="@id/layoutDashboard">
 
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/btnGoLaundry"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#2979FF"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="16dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="세탁 하러가기" android:textSize="20sp" android:textStyle="bold" android:textColor="#FFFFFF"/>
+                        <ImageView
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_alignParentBottom="true"
+                            android:layout_alignParentEnd="true"
+                            android:src="@drawable/ic_washer"
+                            android:elevation="10dp"
+                            android:scaleType="fitCenter"/>
+                    </RelativeLayout>
+                </androidx.cardview.widget.CardView>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical"
+                    android:weightSum="2">
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/btnRegisterCloth"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:layout_marginBottom="8dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="4dp"
+                        android:clickable="true">
+                        <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="옷 등록하기" android:textStyle="bold" android:textSize="14sp" />
+                            <ImageView
+                                android:layout_width="60dp"
+                                android:layout_height="60dp"
+                                android:layout_alignParentBottom="true"
+                                android:layout_alignParentEnd="true"
+                                android:src="@drawable/ic_shirt"
+                                android:elevation="10dp"
+                                android:scaleType="fitCenter"/>
+                        </RelativeLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/btnEraseStain"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:layout_marginTop="8dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="4dp"
+                        android:clickable="true">
+                        <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="얼룩 지우기" android:textStyle="bold" android:textSize="14sp" />
+                            <ImageView
+                                android:layout_width="60dp"
+                                android:layout_height="60dp"
+                                android:layout_alignParentBottom="true"
+                                android:layout_alignParentEnd="true"
+                                android:src="@drawable/ic_stain"
+                                android:elevation="10dp"
+                                android:scaleType="fitCenter"/>
+                        </RelativeLayout>
+                    </androidx.cardview.widget.CardView>
+                </LinearLayout>
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

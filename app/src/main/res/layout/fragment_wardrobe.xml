@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
-
+    android:background="#F5F5F5">
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="0dp"
@@ -14,6 +13,7 @@
         android:textStyle="bold"
         android:textColor="#333333"
         android:gravity="center"
+        android:background="@android:color/transparent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -24,6 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="0dp"
         app:tabMode="scrollable"
+        android:background="#FFFFFF"
         app:layout_constraintTop_toBottomOf="@id/tvTitle" />
 
     <androidx.viewpager2.widget.ViewPager2

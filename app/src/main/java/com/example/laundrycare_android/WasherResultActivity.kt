@@ -15,7 +15,7 @@ import java.io.File
 class WasherResultActivity : AppCompatActivity() {
 
     private var currentImageUrl = ""
-    private var aiPredictedType = "" // AI가 예측한 세탁기 형태 (드럼 또는 통돌이)
+    private var aiPredictedType = ""
 
     private lateinit var spinnerWasherType: Spinner
     private lateinit var etWasherBrand: EditText
@@ -35,7 +35,6 @@ class WasherResultActivity : AppCompatActivity() {
 
         btnBack.setOnClickListener { finish() }
 
-        // 1. 촬영한 세탁기 이미지 로드
         val washerImagePath = intent.getStringExtra("washer_image_path")
         if (!washerImagePath.isNullOrEmpty()) {
             val imgFile = File(washerImagePath)
@@ -45,11 +44,9 @@ class WasherResultActivity : AppCompatActivity() {
             }
         }
 
-        // 2. 스피너 아이템 세팅 (드럼 / 통돌이)
         val washerTypes = arrayOf("드럼", "통돌이")
         spinnerWasherType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, washerTypes)
 
-        // 3. AI 분석 JSON 데이터 파싱
         val jsonString = intent.getStringExtra("ai_washer_data") ?: ""
         if (jsonString.isNotEmpty()) {
             try {
@@ -57,12 +54,10 @@ class WasherResultActivity : AppCompatActivity() {
                 val washerInfo = jsonObject.optJSONObject("washer")
 
                 if (washerInfo != null) {
-                    // AI 분석 결과 추출 (예: "드럼" 또는 "통돌이")
                     aiPredictedType = washerInfo.optString("type", "드럼")
                     val detectedBrand = washerInfo.optString("brand", "")
                     val detectedModel = washerInfo.optString("model", "")
 
-                    // 추출된 브랜드 및 모델명을 입력창에 설정
                     etWasherBrand.setText(detectedBrand)
                     etWasherModel.setText(detectedModel)
                 }
@@ -71,12 +66,10 @@ class WasherResultActivity : AppCompatActivity() {
             }
         }
 
-        // 4. AI가 판단한 세탁기 형태를 스피너 초기값으로 자동 매칭
         if (aiPredictedType.isNotEmpty()) {
             setSpinnerToValue(spinnerWasherType, aiPredictedType)
         }
 
-        // 5. 등록 완료 버튼 클릭 시 Firestore에 저장
         btnSave.setOnClickListener {
             btnSave.isEnabled = false
             btnSave.text = "등록 중..."
@@ -85,14 +78,12 @@ class WasherResultActivity : AppCompatActivity() {
             val storageRef = FirebaseStorage.getInstance().reference
 
             if (currentImageUrl.isNotEmpty()) {
-                // 이미지 파일 업로드
                 val fileUri = Uri.fromFile(File(currentImageUrl))
                 val imageRef = storageRef.child("washer_images/${System.currentTimeMillis()}_washer.jpg")
 
                 imageRef.putFile(fileUri).addOnSuccessListener {
                     imageRef.downloadUrl.addOnSuccessListener { uri ->
 
-                        // 사용자가 최종 확인/수정한 데이터 바구니 생성
                         val washerData = hashMapOf(
                             "type" to spinnerWasherType.selectedItem.toString(),
                             "brand" to etWasherBrand.text.toString(),
@@ -101,12 +92,12 @@ class WasherResultActivity : AppCompatActivity() {
                             "timestamp" to System.currentTimeMillis()
                         )
 
-                        // Firestore 'washers' 컬렉션에 추가
                         db.collection("washers").add(washerData)
                             .addOnSuccessListener {
                                 Toast.makeText(this, "세탁기 등록 성공!", Toast.LENGTH_SHORT).show()
-                                val intent = Intent(this, MainActivity::class.java).apply {
-                                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                // 🌟 수정됨: MainActivity가 아닌 세탁 탭(LaundryActivity)으로 복귀
+                                val intent = Intent(this, LaundryActivity::class.java).apply {
+                                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                                 }
                                 startActivity(intent)
                                 finish()
@@ -130,9 +121,6 @@ class WasherResultActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * 스피너 아이템 매칭 함수
-     */
     private fun setSpinnerToValue(spinner: Spinner, value: String)  {
         val adapter = spinner.adapter
         for (i in 0 until adapter.count) {

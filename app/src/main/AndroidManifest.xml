@@ -56,8 +56,13 @@
         <activity android:name=".WasherResultActivity" android:exported="false" />
         <activity android:name=".LaundryHistoryActivity" android:exported="false" />
 
+        <activity android:name=".LaundryHistoryDetailActivity" android:exported="false" />
+
         <activity android:name=".WasherListActivity" android:exported="false" />
         <activity android:name=".WasherDetailActivity" android:exported="false" />
+        <activity android:name=".WasherEditActivity" android:exported="false" />
+
+        <activity android:name=".StainEditActivity" android:exported="false" />
 
         <activity android:name=".LaundryResultActivity" android:exported="false" />
         <activity android:name=".ClothEditActivity" android:exported="false" />

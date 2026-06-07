@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- 🌟 첫 번째 줄: 대분류 (상의, 하의, 고급, 기타) -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -14,7 +13,8 @@
         android:paddingHorizontal="16dp"
         android:paddingTop="8dp"
         android:paddingBottom="4dp"
-        android:background="#FFFFFF">
+        android:background="#FFFFFF"
+        android:visibility="gone">
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroupCategory"
@@ -32,15 +32,15 @@
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
-    <!-- 🌟 두 번째 줄: 소분류 (반팔, 긴팔, 아우터 등 10개) -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:scrollbars="none"
         android:paddingHorizontal="16dp"
         android:paddingTop="4dp"
-        android:paddingBottom="8dp"
-        android:background="#FFFFFF">
+        android:paddingBottom="0dp"
+        android:background="#FFFFFF"
+        android:visibility="gone">
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroupSubCategory"
@@ -50,28 +50,20 @@
             app:singleSelection="true"
             app:selectionRequired="true">
 
-            <!-- 상의 하위 -->
             <com.google.android.material.chip.Chip android:id="@+id/chipTopShort" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="반팔" style="@style/Widget.MaterialComponents.Chip.Choice" />
             <com.google.android.material.chip.Chip android:id="@+id/chipTopLong" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="긴팔" style="@style/Widget.MaterialComponents.Chip.Choice" />
             <com.google.android.material.chip.Chip android:id="@+id/chipOuter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="아우터" style="@style/Widget.MaterialComponents.Chip.Choice" />
-
-            <!-- 하의 하위 -->
             <com.google.android.material.chip.Chip android:id="@+id/chipBottomShort" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="반바지" style="@style/Widget.MaterialComponents.Chip.Choice" android:visibility="gone"/>
             <com.google.android.material.chip.Chip android:id="@+id/chipBottomLong" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="긴바지" style="@style/Widget.MaterialComponents.Chip.Choice" android:visibility="gone"/>
             <com.google.android.material.chip.Chip android:id="@+id/chipSkirt" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="치마" style="@style/Widget.MaterialComponents.Chip.Choice" android:visibility="gone"/>
-
-            <!-- 고급 하위 -->
             <com.google.android.material.chip.Chip android:id="@+id/chipPremiumLuxury" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="명품" style="@style/Widget.MaterialComponents.Chip.Choice" android:visibility="gone"/>
             <com.google.android.material.chip.Chip android:id="@+id/chipPremiumFunc" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="기능성" style="@style/Widget.MaterialComponents.Chip.Choice" android:visibility="gone"/>
-
-            <!-- 기타 하위 -->
             <com.google.android.material.chip.Chip android:id="@+id/chipEtcSocks" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="양말" style="@style/Widget.MaterialComponents.Chip.Choice" android:visibility="gone"/>
             <com.google.android.material.chip.Chip android:id="@+id/chipEtcUnderwear" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="속옷" style="@style/Widget.MaterialComponents.Chip.Choice" android:visibility="gone"/>
 
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
-    <!-- 조원분이 만든 옷 리스트 도화지 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSeasonClothing"
         android:layout_width="match_parent"

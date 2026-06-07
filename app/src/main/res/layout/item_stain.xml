@@ -19,6 +19,14 @@
         android:background="#FFFFFF"
         android:gravity="center_vertical">
 
+        <CheckBox
+            android:id="@+id/cbStainSelect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:buttonTint="#1976D2"
+            android:visibility="gone" />
+
         <ImageView
             android:id="@+id/ivItemStainThumb"
             android:layout_width="60dp"
