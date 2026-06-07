@@ -13,7 +13,7 @@ clothes_ai = YOLO("models/clothes_model.pt")
 label_ai = YOLO("models/laundry_model.pt")     
 main_ai = YOLO("models/laundry.pt")            
 stain_ai = YOLO("models/stain_model.pt")        
-washer_ai = YOLO("models/washer_model.pt")     # 🌟 새로 추가된 세탁기 모델
+washer_ai = YOLO("models/washer_model.pt")     
 print("로딩 완료!")
 
 # ---------------------------------------------------------
@@ -47,7 +47,6 @@ CLOTHES_CLASSES = [
 
 STAIN_CLASSES = ["Stain"]
 
-# 🌟 사진(Colab)에서 확인된 세탁기 클래스들
 WASHER_CLASSES = ["Drum_washer", "Top_washer", "Washing-machine"]
 
 CLASS_MAP = {
@@ -86,21 +85,67 @@ CLASS_MAP = {
     "wash_60_very_delicate": "물세탁(60도, 매우 약하게)", "wash_70": "물세탁(70도)",
     "wash_95": "물세탁(95도)", "wash_95_delicate": "물세탁(95도, 약하게)",
     "wash_95_very_delicate": "물세탁(95도, 매우 약하게)", "wet_clean": "웻클리닝 가능",
-    "wet_clean_delicate": "웻클리닝(약하게)", "wet_clean_very_delicate": "웻클리닝(매우 약하게)",
+    "wet_clean_delicate": "웻클리닝(약하게)", "wet_clean_very_delicate": "웻클리닝(매 약하게)",
     
     # [옷 종류 매핑]
-    "Dress": "원피스", "Hoodie": "후드티", "Pants": "바지", "Shirt": "셔츠",
+    "Dress": "원피스", "Hoodie": "후드티", "Pants": "긴바지", "Shirt": "셔츠",
     "Short": "반바지", "Skirt": "치마", "Sweater": "스웨터", "T-shirt": "반팔티셔츠",
     "Outer": "아우터", "LongT-shirt": "긴팔티셔츠",
 
     # [얼룩 번역]
     "Stain": "얼룩",
     
-    # 🌟 [세탁기 모델 번역 추가]
+    # [세탁기 모델 번역 추가]
     "Drum_washer": "드럼 세탁기",
     "Top_washer": "통돌이 세탁기",
     "Washing-machine": "세탁기(미분류)"
 }
+
+# 🌟 대분류 매핑 (긴바지 추가)
+CATEGORY_MAP = {
+    "반팔티셔츠": "상의", "긴팔티셔츠": "상의", "스웨터": "상의", 
+    "셔츠": "상의", "후드티": "상의", "아우터": "상의",
+    "바지": "하의", "청바지": "하의", "긴바지": "하의", "반바지": "하의", 
+    "치마": "하의", "원피스": "하의"
+}
+
+# ---------------------------------------------------------
+# 🌟 의류 색상 추출 함수 (초록색 포함) 🌟
+# ---------------------------------------------------------
+def get_clothing_color(cropped_img):
+    if cropped_img is None or cropped_img.size == 0:
+        return "알 수 없음"
+    
+    # 연산 속도 향상을 위해 100x100으로 이미지 리사이즈
+    h, w = cropped_img.shape[:2]
+    if h > 200 or w > 200:
+        cropped_img = cv2.resize(cropped_img, (100, 100), interpolation=cv2.INTER_AREA)
+        
+    hsv = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2HSV)
+    
+    # 초록색을 포함한 주요 색상들의 HSV 범위 정의
+    COLOR_RANGES = {
+        "흰색": (np.array([0, 0, 180]), np.array([180, 30, 255])),
+        "검은색": (np.array([0, 0, 0]), np.array([180, 255, 50])),
+        "회색": (np.array([0, 0, 50]), np.array([180, 30, 179])),
+        "빨강": (np.array([0, 50, 50]), np.array([10, 255, 255])),
+        "노랑": (np.array([11, 50, 50]), np.array([35, 255, 255])),
+        "초록": (np.array([36, 50, 50]), np.array([85, 255, 255])),  
+        "파랑": (np.array([86, 50, 50]), np.array([130, 255, 255])),
+        "보라": (np.array([131, 50, 50]), np.array([170, 255, 255]))
+    }
+    
+    color_counts = {}
+    for color_name, (lower, upper) in COLOR_RANGES.items():
+        mask = cv2.inRange(hsv, lower, upper)
+        color_counts[color_name] = cv2.countNonZero(mask)
+        
+    max_color = max(color_counts, key=color_counts.get)
+    
+    if color_counts[max_color] < 20:
+        return "알 수 없음"
+        
+    return max_color
 
 # ---------------------------------------------------------
 # 3. 통합 분석 API (의류 및 라벨용)
@@ -150,11 +195,20 @@ async def analyze_image(file: UploadFile = File(...)):
                 continue
             
             seen_names.add(korean_name)
-            detected_items.append({
+            
+            item_data = {
                 "name": korean_name, 
                 "confidence": round(confidence, 2),
-                "box": box.xyxy[0].tolist() 
-            })
+                "box": box.xyxy[0].tolist(),
+                "main_category": CATEGORY_MAP.get(korean_name, "미분류") # 🌟 대분류 필드 추가
+            }
+            
+            if scan_type == "CLOSET_DIET":
+                x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+                cropped_cloth = img[y1:y2, x1:x2]
+                item_data["color"] = get_clothing_color(cropped_cloth)
+                
+            detected_items.append(item_data)
             
     return {
         "status": "success",
@@ -181,12 +235,19 @@ async def analyze_stain(file: UploadFile = File(...)):
             raw_class_name = stain_ai.names[int(box.cls)]
             confidence = float(box.conf)
             korean_name = CLASS_MAP.get(raw_class_name, raw_class_name)
-            box_coords = box.xyxy[0].tolist()
+            
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            box_dict = {
+                "x": int(x1),
+                "y": int(y1),
+                "w": int(x2 - x1),
+                "h": int(y2 - y1) 
+            }
             
             detected_items.append({
-                "name": korean_name, 
+                "class": korean_name,            
                 "confidence": round(confidence, 2),
-                "box": box_coords 
+                "box": box_dict                  
             })
             
     if len(detected_items) == 0:
@@ -194,18 +255,18 @@ async def analyze_stain(file: UploadFile = File(...)):
             "status": "fail", 
             "scan_type": "STAIN_CARE", 
             "message": "얼룩을 발견하지 못했습니다. 다시 촬영해주세요.", 
-            "data": []
+            "results": [] 
         }
             
     return {
         "status": "success",
         "scan_type": "STAIN_CARE",
         "message": f"{len(detected_items)}개의 얼룩 위치를 발견했습니다. 어떤 얼룩인지 선택해주세요!",
-        "data": detected_items
+        "results": detected_items 
     }
 
 # ---------------------------------------------------------
-# 🌟 5. 새로운 세탁기 스캔 전용 API 🌟
+# 5. 세탁기 스캔 전용 API
 # ---------------------------------------------------------
 @app.post("/analyze/washer")
 async def analyze_washer(file: UploadFile = File(...)):
@@ -213,7 +274,6 @@ async def analyze_washer(file: UploadFile = File(...)):
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
-    # 세탁기는 형태가 크고 뚜렷하므로 신뢰도(conf)를 0.5 정도로 높게 주어 오작동을 막습니다.
     results = washer_ai(img, conf=0.5, iou=0.45) 
     
     detected_items = []
@@ -226,7 +286,6 @@ async def analyze_washer(file: UploadFile = File(...)):
             korean_name = CLASS_MAP.get(raw_class_name, raw_class_name)
             box_coords = box.xyxy[0].tolist()
             
-            # 세탁기는 화면에 1대만 나오는 것이 정상이므로 같은 종류가 중복 탐지되는 것을 막아줍니다.
             if korean_name in seen_names:
                 continue
             
@@ -237,7 +296,6 @@ async def analyze_washer(file: UploadFile = File(...)):
                 "box": box_coords 
             })
             
-    # 세탁기를 하나도 못 찾았을 경우
     if len(detected_items) == 0:
         return {
             "status": "fail", 
@@ -246,7 +304,6 @@ async def analyze_washer(file: UploadFile = File(...)):
             "data": []
         }
             
-    # 프론트엔드로 전송
     return {
         "status": "success",
         "scan_type": "WASHER_CARE",
