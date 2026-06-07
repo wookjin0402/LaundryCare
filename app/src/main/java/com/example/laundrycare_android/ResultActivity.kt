@@ -8,10 +8,14 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import org.json.JSONObject
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ResultActivity : AppCompatActivity() {
 
@@ -22,11 +26,14 @@ class ResultActivity : AppCompatActivity() {
     private var aiPredictedMain = ""
     private var aiPredictedSub = ""
     private var aiPredictedColor = ""
+    private var aiPredictedMaterial = ""
 
     private lateinit var spinnerSeason: Spinner
     private lateinit var spinnerMain: Spinner
     private lateinit var spinnerSub: Spinner
     private lateinit var etColor: EditText
+
+    private val myUid get() = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
     private val subCategoryMap = mapOf(
         "상의" to arrayOf("반팔", "긴팔", "아우터"),
@@ -55,20 +62,18 @@ class ResultActivity : AppCompatActivity() {
         val etSize = findViewById<EditText>(R.id.etSize)
         val etMaterial = findViewById<EditText>(R.id.etMaterial)
 
+        // 🌟 강제 초기화: XML에 하드코딩된 텍스트를 시작하자마자 강제로 지워버립니다.
+        etColor.setText("")
+
         btnBack.setOnClickListener { finish() }
 
-        // 1. 이미지 로드 (null 방어 추가)
         val clothImagePath = intent.getStringExtra("cloth_image_path")
         if (!clothImagePath.isNullOrEmpty()) {
             val imgFile = File(clothImagePath)
             if (imgFile.exists()) {
                 Glide.with(this).load(imgFile).centerCrop().into(ivResultPhoto)
                 currentImageUrl = clothImagePath
-            } else {
-                Toast.makeText(this, "이미지 파일을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
             }
-        } else {
-            Toast.makeText(this, "전달된 이미지 경로가 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
         val seasons = arrayOf("봄", "여름", "가을", "겨울")
@@ -77,24 +82,33 @@ class ResultActivity : AppCompatActivity() {
         val mainCategories = subCategoryMap.keys.toTypedArray()
         spinnerMain.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, mainCategories)
 
-        // 3. AI JSON 데이터 파싱 (안전장치 추가)
         val jsonString = intent.getStringExtra("ai_json_data") ?: ""
-        Log.d("ResultActivity", "수신된 JSON: $jsonString") // 확인용 로그 추가
+        Log.d("ResultActivity", "수신된 JSON: $jsonString")
 
         if (jsonString.isNotEmpty()) {
             try {
                 val jsonObject = JSONObject(jsonString)
-                // 서버가 'guide'로 안 감싸고 바로 보냈을 경우를 대비한 유연한 파싱
                 val guide = jsonObject.optJSONObject("guide") ?: jsonObject
 
                 tvGuideTitle.text = guide.optString("title", "의류 분석 결과")
                 parsedLaundryTip = guide.optString("summary", "AI 분석 결과를 확인하세요.")
 
-                // 🌟 수정된 부분: guide 내부가 아닌 jsonObject(루트)에서 카테고리 정보 파싱
                 aiPredictedSeason = jsonObject.optString("season", "")
                 aiPredictedMain = jsonObject.optString("mainCategory", "")
                 aiPredictedSub = jsonObject.optString("subCategory", "")
                 aiPredictedColor = jsonObject.optString("color", "")
+
+                // 🌟 소재 배열 추출 (수정된 로직)
+                val materialsArray = jsonObject.optJSONArray("extracted_materials")
+                if (materialsArray != null && materialsArray.length() > 0) {
+                    val materialList = mutableListOf<String>()
+                    for (i in 0 until materialsArray.length()) {
+                        materialList.add(materialsArray.getString(i))
+                    }
+                    aiPredictedMaterial = materialList.joinToString(", ")
+                } else {
+                    aiPredictedMaterial = ""
+                }
 
                 val tagsArray = guide.optJSONArray("raw_tags")
                 var tagsText = ""
@@ -132,19 +146,27 @@ class ResultActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 Log.e("ResultActivity", "JSON 파싱 에러: ${e.message}")
-                Toast.makeText(this, "데이터 분석 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
-                // 파싱 에러가 나도 빈 텍스트로 기본 세팅되게 함
             }
-        } else {
-            Toast.makeText(this, "AI 분석 데이터를 받지 못했습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        // 4. 스피너 초기화
         if (aiPredictedSeason.isNotEmpty()) setSpinnerToValue(spinnerSeason, aiPredictedSeason)
         if (aiPredictedMain.isNotEmpty()) setSpinnerToValue(spinnerMain, aiPredictedMain)
-        if (aiPredictedColor.isNotEmpty()) etColor.setText(aiPredictedColor)
 
-        // 5. 스피너 연동
+        // 🌟 색상 입력: JSON에서 받은 값이 있으면 채우고, 없으면 힌트를 띄움
+        if (aiPredictedColor.isNotEmpty() && aiPredictedColor != "null") {
+            etColor.setText(aiPredictedColor)
+        } else {
+            etColor.hint = "색상을 입력하세요"
+        }
+
+        // 🌟 소재 입력: 백엔드가 빈 깡통 [] 을 보내면 "인식 실패"라고 힌트를 띄움
+        if (aiPredictedMaterial.isNotEmpty() && aiPredictedMaterial != "null") {
+            etMaterial.setText(aiPredictedMaterial)
+        } else {
+            etMaterial.setText("")
+            etMaterial.hint = "소재 인식 실패 (백엔드 데이터 확인 필요)"
+        }
+
         spinnerMain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
                 val selectedMain = spinnerMain.selectedItem.toString()
@@ -160,15 +182,11 @@ class ResultActivity : AppCompatActivity() {
             override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
-        // 6. 저장 로직 (빈 데이터 컷팅 및 에러가 적은 전통적 방식)
         btnSave.setOnClickListener {
-            // [방어 1] 이미지가 없으면 컷
             if (currentImageUrl.isEmpty()) {
                 Toast.makeText(this, "저장할 이미지 파일이 없습니다.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
-            // [방어 2] 메인 카테고리가 비어있거나 '분석 실패'면 유령 데이터 방지를 위해 컷
             if (spinnerMain.selectedItem == null || spinnerMain.selectedItem.toString().isEmpty()) {
                 Toast.makeText(this, "카테고리가 선택되지 않아 저장할 수 없습니다.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -180,7 +198,6 @@ class ResultActivity : AppCompatActivity() {
             val db = FirebaseFirestore.getInstance()
             val storageRef = FirebaseStorage.getInstance().reference
 
-            // get()으로 전체 문서를 가져와서 갯수 세기
             db.collection("clothes").get()
                 .addOnSuccessListener { snapshot ->
                     if (snapshot.size() >= 100) {
@@ -195,8 +212,12 @@ class ResultActivity : AppCompatActivity() {
 
                     imageRef.putFile(fileUri).addOnSuccessListener {
                         imageRef.downloadUrl.addOnSuccessListener { uri ->
+                            val currentTimeMillis = System.currentTimeMillis()
+                            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
+                            val currentDate = dateFormat.format(Date(currentTimeMillis))
 
                             val clothData = hashMapOf(
+                                "uid" to myUid,
                                 "season" to (spinnerSeason.selectedItem?.toString() ?: ""),
                                 "mainCategory" to spinnerMain.selectedItem.toString(),
                                 "subCategory" to (spinnerSub.selectedItem?.toString() ?: ""),
@@ -207,27 +228,27 @@ class ResultActivity : AppCompatActivity() {
                                 "warnings" to tvWarnings.text.toString(),
                                 "careSteps" to tvCareSteps.text.toString(),
                                 "imageUrl" to uri.toString(),
-                                "timestamp" to System.currentTimeMillis()
+                                "timestamp" to currentTimeMillis,
+                                "date" to currentDate
                             )
 
-                            db.collection("clothes").add(clothData).addOnSuccessListener {
-                                Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show()
-                                val intent = Intent(this, MainActivity::class.java).apply {
-                                    putExtra("navigate_to", "closet")
-                                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            db.collection("clothes").add(clothData)
+                                .addOnSuccessListener {
+                                    Toast.makeText(this, "저장 완료!", Toast.LENGTH_SHORT).show()
+                                    val intent = Intent(this, MainActivity::class.java).apply {
+                                        putExtra("navigate_to", "closet")
+                                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    }
+                                    startActivity(intent)
+                                    finish()
                                 }
-                                startActivity(intent)
-                                finish()
-                            }
                         }
-                    }.addOnFailureListener { e ->
-                        Log.e("ResultActivity", "Storage 업로드 에러: ${e.message}")
+                    }.addOnFailureListener {
                         btnSave.isEnabled = true
                         btnSave.text = "이대로 옷장에 저장하기"
                         Toast.makeText(this, "사진 업로드에 실패했습니다.", Toast.LENGTH_SHORT).show()
                     }
-                }.addOnFailureListener { e ->
-                    Log.e("ResultActivity", "Firestore 읽기 에러: ${e.message}")
+                }.addOnFailureListener {
                     btnSave.isEnabled = true
                     btnSave.text = "이대로 옷장에 저장하기"
                     Toast.makeText(this, "서버와 연결할 수 없습니다.", Toast.LENGTH_SHORT).show()
@@ -237,10 +258,12 @@ class ResultActivity : AppCompatActivity() {
 
     private fun setSpinnerToValue(spinner: Spinner, value: String) {
         val adapter = spinner.adapter
-        for (i in 0 until adapter.count) {
-            if (adapter.getItem(i).toString() == value) {
-                spinner.setSelection(i)
-                break
+        if (adapter != null) {
+            for (i in 0 until adapter.count) {
+                if (adapter.getItem(i).toString() == value) {
+                    spinner.setSelection(i)
+                    break
+                }
             }
         }
     }

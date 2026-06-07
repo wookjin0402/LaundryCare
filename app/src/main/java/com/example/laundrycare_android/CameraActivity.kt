@@ -5,9 +5,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.graphics.Matrix
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -55,10 +58,22 @@ class CameraActivity : AppCompatActivity() {
         else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
     }
 
+    // 🌟 오류 해결: 갤러리에서 가져온 사진(URI)을 Bitmap 데이터로 변환하여 메모리에 안전하게 저장합니다!
     private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             ivCapturedImage.setImageURI(uri)
-            showCapturedState()
+            try {
+                currentCapturedBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri))
+                } else {
+                    @Suppress("DEPRECATION")
+                    MediaStore.Images.Media.getBitmap(contentResolver, uri)
+                }
+                showCapturedState()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this, "갤러리 사진을 불러오는 데 실패했습니다.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -247,7 +262,6 @@ class CameraActivity : AppCompatActivity() {
             return
         }
 
-        // 🌟 타임아웃 30초 설정 적용
         val client = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -256,10 +270,8 @@ class CameraActivity : AppCompatActivity() {
 
         val requestBodyBuilder = MultipartBody.Builder().setType(MultipartBody.FORM)
 
-        // 1. 전체 사진 전송
         requestBodyBuilder.addFormDataPart("clothImage", "cloth_main.jpg", RequestBody.create("image/jpeg".toMediaTypeOrNull(), clothFile))
 
-        // 2. 모든 라벨 사진을 각각 전송
         labelBitmaps.forEachIndexed { index, bitmap ->
             val labelFile = File(cacheDir, "label_$index.jpg")
             try {
@@ -271,7 +283,6 @@ class CameraActivity : AppCompatActivity() {
             } catch (e: Exception) { e.printStackTrace() }
         }
 
-        // 3. 포스트맨 누락 데이터 추가 세팅
         requestBodyBuilder.addFormDataPart("uid", "test_user_uid")
         requestBodyBuilder.addFormDataPart("lat", "37.5665")
         requestBodyBuilder.addFormDataPart("lon", "126.9780")
@@ -284,7 +295,6 @@ class CameraActivity : AppCompatActivity() {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                // 🌟 수정됨: 안드로이드 시스템이 던지는 진짜 에러 메시지를 낚아채서 화면에 띄웁니다.
                 val realError = e.message ?: "알 수 없는 에러"
                 Log.e("CameraError", "통신 실패 진짜 원인: $realError")
                 runOnUiThread {
@@ -302,7 +312,6 @@ class CameraActivity : AppCompatActivity() {
                         startActivity(intent)
                         finish()
                     } else {
-                        // 🌟 수정됨: 백엔드 서버가 거절한 '진짜 이유(HTTP 에러 코드와 메시지)'를 화면에 강제로 띄웁니다!
                         showRetryDialog("서버 에러코드: ${response.code}\n서버 응답: $responseData")
                     }
                 }

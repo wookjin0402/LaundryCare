@@ -3,10 +3,10 @@ package com.example.laundrycare_android
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth // 🌟 실제 로그인 유저 인증 임포트
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import org.json.JSONObject
@@ -20,6 +20,9 @@ class WasherResultActivity : AppCompatActivity() {
     private lateinit var spinnerWasherType: Spinner
     private lateinit var etWasherBrand: EditText
     private lateinit var etWasherModel: EditText
+
+    // 🌟 현재 로그인한 실제 유저의 고유 UID를 실시간으로 가져옵니다!
+    private val myUid get() = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,16 +54,28 @@ class WasherResultActivity : AppCompatActivity() {
         if (jsonString.isNotEmpty()) {
             try {
                 val jsonObject = JSONObject(jsonString)
-                val washerInfo = jsonObject.optJSONObject("washer")
 
-                if (washerInfo != null) {
-                    aiPredictedType = washerInfo.optString("type", "드럼")
-                    val detectedBrand = washerInfo.optString("brand", "")
-                    val detectedModel = washerInfo.optString("model", "")
+                val extractedWasherType = jsonObject.optString("extracted_washer_type", "")
+                val extractedBrand = jsonObject.optString("extracted_brand", "")
 
-                    etWasherBrand.setText(detectedBrand)
-                    etWasherModel.setText(detectedModel)
+                if (extractedWasherType.contains("드럼")) {
+                    aiPredictedType = "드럼"
+                } else if (extractedWasherType.contains("통돌이")) {
+                    aiPredictedType = "통돌이"
                 }
+
+                if (extractedBrand.isNotEmpty()) {
+                    etWasherBrand.setText(extractedBrand)
+                }
+
+                val washerInfo = jsonObject.optJSONObject("washer")
+                if (washerInfo != null) {
+                    val detectedModel = washerInfo.optString("model", "")
+                    if (detectedModel.isNotEmpty()) {
+                        etWasherModel.setText(detectedModel)
+                    }
+                }
+
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -92,10 +107,10 @@ class WasherResultActivity : AppCompatActivity() {
                             "timestamp" to System.currentTimeMillis()
                         )
 
-                        db.collection("washers").add(washerData)
+                        // 🌟 수정: '모두의 창고'가 아닌 '내 개인 창고'에 세탁기 저장
+                        db.collection("users").document(myUid).collection("washers").add(washerData)
                             .addOnSuccessListener {
                                 Toast.makeText(this, "세탁기 등록 성공!", Toast.LENGTH_SHORT).show()
-                                // 🌟 수정됨: MainActivity가 아닌 세탁 탭(LaundryActivity)으로 복귀
                                 val intent = Intent(this, LaundryActivity::class.java).apply {
                                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                                 }

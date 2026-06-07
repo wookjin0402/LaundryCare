@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class LaundryActivity : AppCompatActivity() {
@@ -20,25 +19,11 @@ class LaundryActivity : AppCompatActivity() {
             finish()
         }
 
-        // 기존 조원분 로직 버튼들
-        val btnLaundryBatch = findViewById<LinearLayout>(R.id.btnLaundryBatch)
         val btnTimeRecommend = findViewById<LinearLayout>(R.id.btnTimeRecommend)
-        // 🌟 btnCourseGuide는 XML에서 삭제했으므로 여기서도 제거
-
-        // 내 세탁기 관리 버튼
         val btnManageWasher = findViewById<LinearLayout>(R.id.btnManageWasher)
-
-        // 🌟 새롭게 추가할 2개의 버튼 찾아오기
         val btnOpenMultiSelect = findViewById<Button>(R.id.btnOpenMultiSelect)
         val btnLaundryHistory = findViewById<LinearLayout>(R.id.btnLaundryHistory)
 
-        // 1. 세탁 묶음 자동 분류
-        btnLaundryBatch.setOnClickListener {
-            val intent = Intent(this, ClothMultiSelectActivity::class.java)
-            startActivity(intent)
-        }
-
-        // 2. 세탁 및 건조 시점 추천
         btnTimeRecommend.setOnClickListener {
             val conditionList = arrayOf("땀을 많이 흘렸어요", "커피/음식물 얼룩이 묻었어요", "잠깐 입어서 깨끗해요")
 
@@ -63,21 +48,16 @@ class LaundryActivity : AppCompatActivity() {
                 .show()
         }
 
-        // 🌟 3. [삭제됨] 기기 맞춤 세탁 코스 가이드 로직 삭제
-
-        // 4. 내 세탁기 관리 버튼 클릭 이벤트
         btnManageWasher.setOnClickListener {
             val intent = Intent(this, WasherListActivity::class.java)
             startActivity(intent)
         }
 
-        // 🌟 5. [추가] 오늘 빨래할 옷 바구니에 담기
         btnOpenMultiSelect.setOnClickListener {
             val intent = Intent(this, ClothMultiSelectActivity::class.java)
             startActivity(intent)
         }
 
-        // 🌟 6. [추가] 나의 세탁 기록 히스토리
         btnLaundryHistory.setOnClickListener {
             val intent = Intent(this, LaundryHistoryActivity::class.java)
             startActivity(intent)

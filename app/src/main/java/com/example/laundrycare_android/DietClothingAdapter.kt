@@ -46,13 +46,14 @@ class DietClothingAdapter(
         holder.itemView.setOnClickListener { view ->
             val intent = Intent(view.context, ClothDetailActivity::class.java)
             intent.putExtra("docId", item.id)
+            // 🌟 이 부분 추가 (이게 신호등입니다. 옷장 탭에서는 이 코드가 없으니 신호가 안 감)
+            intent.putExtra("IS_FROM_DIET", true)
             view.context.startActivity(intent)
         }
 
         holder.btnMore.setOnClickListener { view ->
             val popup = PopupMenu(view.context, view)
             popup.menu.add("기간 연장 (1년 유지)")
-            // 🌟 "버리기"로 텍스트 직관적 변경
             popup.menu.add("버리기 (옷장에서도 완전 삭제)")
 
             popup.setOnMenuItemClickListener { menuItem ->

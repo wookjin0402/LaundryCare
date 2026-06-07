@@ -11,9 +11,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth // 🌟 실제 로그인 유저 인증 임포트
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
-// 🌟 WasherData에 isSelected 속성 완벽 추가
 data class WasherData(
     val documentId: String = "",
     val type: String = "",
@@ -33,14 +34,15 @@ class WasherListActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val washerList = mutableListOf<WasherData>()
 
-    // 🌟 어댑터를 전역 변수로 선언
     private lateinit var adapter: WasherAdapter
 
-    // 🌟 다중 선택 바 및 뒤로가기 콜백
     private lateinit var layoutSelectionMode: LinearLayout
     private lateinit var btnSelectAll: Button
     private lateinit var btnDeleteSelected: Button
     private lateinit var backPressedCallback: OnBackPressedCallback
+
+    // 🌟 현재 로그인한 실제 유저의 고유 UID를 실시간으로 가져옵니다!
+    private val myUid get() = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,14 +53,12 @@ class WasherListActivity : AppCompatActivity() {
         btnAddWasher = findViewById(R.id.btnAddWasher)
         btnWasherListBack = findViewById(R.id.btnWasherListBack)
 
-        // 🌟 새로 추가한 UI 연결
         layoutSelectionMode = findViewById(R.id.layoutSelectionMode)
         btnSelectAll = findViewById(R.id.btnSelectAll)
         btnDeleteSelected = findViewById(R.id.btnDeleteSelected)
 
         rvWasherList.layoutManager = LinearLayoutManager(this)
 
-        // 🌟 시스템 뒤로가기 가로채기 등록 (액티비티 전용)
         backPressedCallback = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
                 adapter.exitSelectionMode()
@@ -76,7 +76,6 @@ class WasherListActivity : AppCompatActivity() {
         btnSelectAll.setOnClickListener { adapter.selectAll() }
         btnDeleteSelected.setOnClickListener { deleteSelectedItems() }
 
-        // 어댑터 초기 세팅 (데이터를 불러오기 전 빈 리스트로 연결)
         adapter = WasherAdapter(
             washerList,
             onItemClick = { washer ->
@@ -102,7 +101,6 @@ class WasherListActivity : AppCompatActivity() {
         fetchWashersFromFirebase()
     }
 
-    // 🌟 다중 선택 삭제 로직 추가
     private fun deleteSelectedItems() {
         val selectedItems = washerList.filter { it.isSelected }
         if (selectedItems.isEmpty()) {
@@ -112,7 +110,8 @@ class WasherListActivity : AppCompatActivity() {
 
         val batch = db.batch()
         for (item in selectedItems) {
-            val docRef = db.collection("washers").document(item.documentId)
+            // 🌟 수정: '모두의 창고'가 아닌 '내 개인 창고'에서 삭제
+            val docRef = db.collection("users").document(myUid).collection("washers").document(item.documentId)
             batch.delete(docRef)
         }
 
@@ -126,7 +125,10 @@ class WasherListActivity : AppCompatActivity() {
     }
 
     private fun fetchWashersFromFirebase() {
-        db.collection("washers").get()
+        // 🌟 수정: '모두의 창고'가 아닌 '내 개인 창고'에서 데이터 가져오기
+        db.collection("users").document(myUid).collection("washers")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .get()
             .addOnSuccessListener { snapshot ->
                 washerList.clear()
 
@@ -179,7 +181,8 @@ class WasherListActivity : AppCompatActivity() {
     }
 
     private fun deleteWasher(documentId: String) {
-        db.collection("washers").document(documentId).delete()
+        // 🌟 수정: 단일 삭제도 개인 창고에서
+        db.collection("users").document(myUid).collection("washers").document(documentId).delete()
             .addOnSuccessListener {
                 Toast.makeText(this, "세탁기가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
                 fetchWashersFromFirebase()
@@ -190,7 +193,6 @@ class WasherListActivity : AppCompatActivity() {
     }
 }
 
-// 🌟 황금 패턴(선택, 체크박스 버그 수정)이 완벽하게 이식된 어댑터
 class WasherAdapter(
     private val washers: List<WasherData>,
     private val onItemClick: (WasherData) -> Unit,
@@ -202,7 +204,7 @@ class WasherAdapter(
     private var isAllSelected = false
 
     class WasherViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val cbSelect: CheckBox = view.findViewById(R.id.cbWasherSelect) // 🌟 체크박스 연결
+        val cbSelect: CheckBox = view.findViewById(R.id.cbWasherSelect)
         val tvName: TextView = view.findViewById(R.id.tvItemWasherName)
         val tvType: TextView = view.findViewById(R.id.tvItemWasherType)
         val btnMore: TextView = view.findViewById(R.id.btnWasherMore)
@@ -227,17 +229,14 @@ class WasherAdapter(
             holder.ivThumb.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"))
         }
 
-        // 🌟 UI 상태 적용
         holder.cbSelect.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
         holder.cbSelect.isChecked = washer.isSelected
         holder.btnMore.visibility = if (isSelectionMode) View.GONE else View.VISIBLE
 
-        // 🌟 체크박스 삼키기 버그 방지
         holder.cbSelect.setOnClickListener {
             washer.isSelected = holder.cbSelect.isChecked
         }
 
-        // 🌟 길게 누르기: 선택 모드 진입
         holder.itemView.setOnLongClickListener {
             if (!isSelectionMode) {
                 isSelectionMode = true
@@ -248,7 +247,6 @@ class WasherAdapter(
             true
         }
 
-        // 🌟 짧게 누르기: 모드에 따라 분기
         holder.itemView.setOnClickListener {
             if (isSelectionMode) {
                 washer.isSelected = !washer.isSelected

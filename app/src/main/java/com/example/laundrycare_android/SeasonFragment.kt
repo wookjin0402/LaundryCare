@@ -15,6 +15,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 
 class SeasonFragment : Fragment() {
 
@@ -26,12 +27,9 @@ class SeasonFragment : Fragment() {
     private var currentSubCategory: String = "전체"
     private var firestoreListener: ListenerRegistration? = null
 
-    // 🌟 다중 선택 모드 UI 요소
     private lateinit var layoutSelectionMode: LinearLayout
     private lateinit var btnSelectAll: Button
     private lateinit var btnDeleteSelected: Button
-
-    // 🌟 시스템 뒤로가기 콜백
     private lateinit var backPressedCallback: OnBackPressedCallback
 
     companion object {
@@ -48,14 +46,12 @@ class SeasonFragment : Fragment() {
         currentTabCategory = arguments?.getString("SEASON") ?: "전체"
         val originalRoot = inflater.inflate(R.layout.fragment_season, container, false)
 
-        // 🌟 겹침 방지: 수직으로 쌓아 리스트를 밀어내는 레이아웃 생성
         val wrapperLayout = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             setBackgroundColor(android.graphics.Color.parseColor("#F5F5F5"))
         }
 
-        // 🌟 상단 메뉴 바 세팅
         layoutSelectionMode = LinearLayout(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -91,12 +87,11 @@ class SeasonFragment : Fragment() {
         layoutSelectionMode.addView(btnSelectAll)
         layoutSelectionMode.addView(btnDeleteSelected)
 
-        // 🌟 순서대로 배치 (메뉴 바 먼저, 그 다음 원래 리스트 화면)
         wrapperLayout.addView(layoutSelectionMode)
         wrapperLayout.addView(originalRoot, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             0,
-            1f // 남은 화면 공간 꽉 채우기
+            1f
         ))
 
         return wrapperLayout
@@ -105,7 +100,6 @@ class SeasonFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 🌟 시스템 뒤로가기 가로채기 등록
         backPressedCallback = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
                 adapter.exitSelectionMode()
@@ -116,14 +110,12 @@ class SeasonFragment : Fragment() {
         rvSeasonClothing = view.findViewById(R.id.rvSeasonClothing)
         rvSeasonClothing.layoutManager = LinearLayoutManager(requireContext())
 
-        // 🌟 수정된 어댑터 연결 (콜백 연동)
         adapter = ClothingAdapter(clothingList) { isSelectionMode ->
             layoutSelectionMode.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
             backPressedCallback.isEnabled = isSelectionMode
         }
         rvSeasonClothing.adapter = adapter
 
-        // --- 기존 조원분이 만드신 칩 로직 그대로 유지 ---
         val chipGroupCategory = view.findViewById<ChipGroup>(R.id.chipGroupCategory)
         val chipGroupSubCategory = view.findViewById<ChipGroup>(R.id.chipGroupSubCategory)
 
@@ -174,7 +166,6 @@ class SeasonFragment : Fragment() {
         updateClothesList()
     }
 
-    // 🌟 다중 선택 삭제 로직
     private fun deleteSelectedItems() {
         val selectedItems = clothingList.filter { it.isSelected }
         if (selectedItems.isEmpty()) {
@@ -186,6 +177,7 @@ class SeasonFragment : Fragment() {
         val batch = db.batch()
 
         for (item in selectedItems) {
+            // 원본 경로로 복구
             val docRef = db.collection("clothes").document(item.id)
             batch.delete(docRef)
         }
@@ -203,41 +195,43 @@ class SeasonFragment : Fragment() {
         val db = FirebaseFirestore.getInstance()
         firestoreListener?.remove()
 
-        firestoreListener = db.collection("clothes").addSnapshotListener { snapshots, e ->
-            if (e != null) return@addSnapshotListener
-            clothingList.clear()
+        // 원본 경로로 복구
+        firestoreListener = db.collection("clothes")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) return@addSnapshotListener
+                clothingList.clear()
 
-            snapshots?.let {
-                for (doc in it.documents) {
-                    val season = doc.getString("season") ?: "여름"
-                    val mainCat = doc.getString("mainCategory") ?: "상의"
-                    val subCat = doc.getString("subCategory") ?: "반팔"
+                snapshots?.let {
+                    for (doc in it.documents) {
+                        val season = doc.getString("season") ?: "여름"
+                        val mainCat = doc.getString("mainCategory") ?: "상의"
+                        val subCat = doc.getString("subCategory") ?: "반팔"
 
-                    val isMatch = if (currentTabCategory == "전체") {
-                        true
-                    } else {
-                        mainCat == currentTabCategory && subCat == currentSubCategory
-                    }
+                        val isMatch = if (currentTabCategory == "전체") {
+                            true
+                        } else {
+                            mainCat == currentTabCategory && subCat == currentSubCategory
+                        }
 
-                    if (isMatch) {
-                        val warnings = doc.getString("warnings") ?: ""
-                        clothingList.add(ClothingItem(
-                            doc.id,
-                            doc.getString("imageUrl") ?: "",
-                            season,
-                            mainCat,
-                            subCat,
-                            doc.getString("material") ?: "",
-                            doc.getString("laundryTip") ?: "",
-                            warnings
-                        ))
+                        if (isMatch) {
+                            val warnings = doc.getString("warnings") ?: ""
+                            clothingList.add(ClothingItem(
+                                doc.id,
+                                doc.getString("imageUrl") ?: "",
+                                season,
+                                mainCat,
+                                subCat,
+                                doc.getString("material") ?: "",
+                                doc.getString("laundryTip") ?: "",
+                                warnings
+                            ))
+                        }
                     }
                 }
+                adapter.exitSelectionMode()
+                adapter.notifyDataSetChanged()
             }
-            // 🌟 데이터 새로고침 시 다중 선택 모드도 안전하게 초기화
-            adapter.exitSelectionMode()
-            adapter.notifyDataSetChanged()
-        }
     }
 
     override fun onDestroyView() {

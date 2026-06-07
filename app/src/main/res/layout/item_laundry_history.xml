@@ -15,51 +15,58 @@
         android:padding="16dp"
         android:background="#FFFFFF">
 
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical">
+            android:layout_height="wrap_content">
 
             <CheckBox
                 android:id="@+id/cbHistorySelect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
                 android:buttonTint="#1976D2"
-                android:visibility="gone" />
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
             <TextView
                 android:id="@+id/tvHistoryDate"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/cbHistorySelect"
+                android:layout_marginStart="8dp"
                 android:text="2026.05.25 19:50"
                 android:textColor="#888888"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                app:layout_constraintStart_toEndOf="@id/cbHistorySelect"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvHistoryWasher"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="LG F21VDW (드럼)"
+                android:textColor="#555555"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="end"
+                app:layout_constraintStart_toEndOf="@id/tvHistoryDate"
+                app:layout_constraintEnd_toStartOf="@id/btnMore"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/btnMore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
                 android:padding="8dp"
                 android:text="⋮"
                 android:textColor="#333333"
                 android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
-            <TextView
-                android:id="@+id/tvHistoryWasher"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toStartOf="@id/btnMore"
-                android:layout_marginEnd="8dp"
-                android:text="LG F21VDW (드럼)"
-                android:textColor="#555555"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-        </RelativeLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <View
             android:layout_width="match_parent"

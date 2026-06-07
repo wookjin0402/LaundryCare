@@ -4,9 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#F5F5F5">
-    <!-- 🌟 전체 배경색 통일 및 바깥쪽 패딩 제거하여 타이틀을 최상단으로 올림 -->
 
-    <!-- 🌟 수정된 헤더: 얼룩/옷장 탭과 동일하게 투명 배경 및 60dp 고정 -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="60dp"
@@ -17,7 +15,6 @@
         android:background="@android:color/transparent"
         android:gravity="center" />
 
-    <!-- 🌟 기존 24dp 여백을 내용물 그룹에만 따로 적용하여 내부 디자인 유지 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -25,7 +22,6 @@
         android:paddingHorizontal="24dp"
         android:paddingBottom="24dp">
 
-        <!-- 상단 세탁 지수 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -66,7 +62,6 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 세탁 코스 가이드 버튼 -->
         <Button
             android:id="@+id/btnOpenMultiSelect"
             android:layout_width="match_parent"
@@ -88,50 +83,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- 1. 자동 분류 -->
-                <LinearLayout
-                    android:id="@+id/btnLaundryBatch"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:background="#FFFFFF"
-                    android:padding="20dp"
-                    android:elevation="2dp"
-                    android:layout_marginBottom="16dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical">
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🧺 세탁 묶음 자동 분류"
-                            android:textStyle="bold"
-                            android:textColor="#333333"
-                            android:textSize="16sp" />
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="어떤 옷을 같이 빨아도 되는지 알려드려요"
-                            android:textColor="#888888"
-                            android:textSize="13sp"
-                            android:layout_marginTop="6dp" />
-                    </LinearLayout>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="〉"
-                        android:textColor="#CCCCCC"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
-                </LinearLayout>
-
-                <!-- 2. 시점 추천 -->
                 <LinearLayout
                     android:id="@+id/btnTimeRecommend"
                     android:layout_width="match_parent"
@@ -168,7 +119,6 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="〉" android:textColor="#CCCCCC" android:textSize="18sp" android:textStyle="bold"/>
                 </LinearLayout>
 
-                <!-- 4. 히스토리 -->
                 <LinearLayout
                     android:id="@+id/btnLaundryHistory"
                     android:layout_width="match_parent"
@@ -205,7 +155,6 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="〉" android:textColor="#CCCCCC" android:textSize="18sp" android:textStyle="bold"/>
                 </LinearLayout>
 
-                <!-- 5. 내 세탁기 관리 -->
                 <LinearLayout
                     android:id="@+id/btnManageWasher"
                     android:layout_width="match_parent"

@@ -1,13 +1,12 @@
 package com.example.laundrycare_android
 
-import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.firestore.FirebaseFirestore
 
 class StainDetailActivity : AppCompatActivity() {
@@ -27,7 +26,7 @@ class StainDetailActivity : AppCompatActivity() {
         documentId = intent.getStringExtra("documentId")
 
         val btnBack = findViewById<ImageView>(R.id.btnStainDetailBack)
-        val btnOptionsMenu = findViewById<TextView>(R.id.btnOptionsMenu) // 🌟 '⋮' 버튼 연결
+        val btnOptionsMenu = findViewById<TextView>(R.id.btnOptionsMenu)
 
         tvCategory = findViewById(R.id.tvStainCategory)
         tvDate = findViewById(R.id.tvStainDetailDate)
@@ -36,10 +35,8 @@ class StainDetailActivity : AppCompatActivity() {
 
         btnBack.setOnClickListener { finish() }
 
-        // 🌟 상단 '⋮' 버튼 터치 시 바텀시트 띄우기
-        btnOptionsMenu.setOnClickListener {
-            showBottomSheet()
-        }
+        // 🌟 최적화 완료: '수정'과 '삭제' 기능이 모두 필요 없어졌으므로 더보기(⋮) 버튼을 아예 숨겨버립니다.
+        btnOptionsMenu.visibility = View.GONE
     }
 
     override fun onResume() {
@@ -74,33 +71,6 @@ class StainDetailActivity : AppCompatActivity() {
             .addOnFailureListener {
                 Toast.makeText(this, "서버 연결 실패", Toast.LENGTH_SHORT).show()
             }
-    }
-
-    private fun showBottomSheet() {
-        val view = layoutInflater.inflate(R.layout.layout_bottom_sheet, null)
-        val dialog = BottomSheetDialog(this)
-        dialog.setContentView(view)
-
-        // 🌟 수정 누르기 -> Edit 화면으로 이동
-        view.findViewById<TextView>(R.id.tvEdit).setOnClickListener {
-            dialog.dismiss()
-            val intent = Intent(this, StainEditActivity::class.java)
-            intent.putExtra("documentId", documentId)
-            startActivity(intent)
-        }
-
-        // 🌟 삭제 누르기
-        view.findViewById<TextView>(R.id.tvDelete).setOnClickListener {
-            db.collection("stains").document(documentId!!).delete()
-                .addOnSuccessListener {
-                    Toast.makeText(this, "얼룩 정보가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                    dialog.dismiss()
-                    finish()
-                }
-        }
-
-        view.findViewById<TextView>(R.id.tvCancel).setOnClickListener { dialog.dismiss() }
-        dialog.show()
     }
 
     private fun getStainCareGuide(type: String): String {

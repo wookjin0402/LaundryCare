@@ -32,6 +32,12 @@ class WardrobeDietActivity : AppCompatActivity(), DietClothingAdapter.OnMenuClic
         loadDietClothes()
     }
 
+    // 🌟 추가: 상세 화면에서 삭제하고 돌아올 때마다 데이터를 다시 불러와 리스트를 갱신합니다.
+    override fun onResume() {
+        super.onResume()
+        loadDietClothes()
+    }
+
     private fun loadDietClothes() {
         val tvDietSummary = findViewById<TextView>(R.id.tvDietSummary)
 

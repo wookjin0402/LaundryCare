@@ -2,7 +2,7 @@ package com.example.laundrycare_android
 
 import android.os.Bundle
 import android.text.InputType
-import android.util.Patterns // 이메일 형식 검사 도구 추가
+import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -32,7 +32,6 @@ class SignUpActivity : AppCompatActivity() {
         val btnTogglePass = findViewById<Button>(R.id.btnTogglePass)
         val btnTogglePassConfirm = findViewById<Button>(R.id.btnTogglePassConfirm)
 
-        // 비밀번호 표시/숨김 버튼
         btnTogglePass.setOnClickListener {
             isPassVisible = !isPassVisible
             etPass.inputType = if (isPassVisible) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
@@ -40,7 +39,6 @@ class SignUpActivity : AppCompatActivity() {
             etPass.setSelection(etPass.text.length)
         }
 
-        // 비밀번호 확인 표시/숨김 버튼
         btnTogglePassConfirm.setOnClickListener {
             isPassConfirmVisible = !isPassConfirmVisible
             etPassConfirm.inputType = if (isPassConfirmVisible) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
@@ -48,30 +46,25 @@ class SignUpActivity : AppCompatActivity() {
             etPassConfirm.setSelection(etPassConfirm.text.length)
         }
 
-        // 1. [인증] 버튼 로직
         btnVerify.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val pass = etPass.text.toString().trim()
 
-            // 1) 이메일 빈칸 및 형식 검사
             if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 Toast.makeText(this, "이메일 형식에 맞게 입력해주십시오.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 2) 파이어베이스 계정 생성 필수 조건인 비밀번호 검사
             val checkResult = checkPasswordValid(pass)
             if (checkResult != "통과") {
                 Toast.makeText(this, checkResult, Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
-            // 3) 파이어베이스에 계정 생성 및 메일 발송
             auth.createUserWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     auth.currentUser?.sendEmailVerification()?.addOnCompleteListener { emailTask ->
                         if (emailTask.isSuccessful) {
-                            // 요청하신 팝업 문구
                             Toast.makeText(this, "인증메일이 오는데 1~2분 정도 소요될 수 있습니다.", Toast.LENGTH_LONG).show()
                         }
                     }
@@ -81,34 +74,28 @@ class SignUpActivity : AppCompatActivity() {
             }
         }
 
-        // 2. 최종 [확인] 버튼 로직
         btnComplete.setOnClickListener {
             val pass = etPass.text.toString().trim()
             val passConfirm = etPassConfirm.text.toString().trim()
 
-            // 1) 비밀번호 형식 최종 재검사 (인증 후 지웠거나 수정했을 경우 대비)
             val checkResult = checkPasswordValid(pass)
             if (checkResult != "통과") {
                 Toast.makeText(this, checkResult, Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
-            // 2) 비밀번호 일치 확인
             if (pass != passConfirm) {
                 Toast.makeText(this, "비밀번호가 서로 일치하지 않습니다.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 3) 이메일 인증 여부 확인
             val user = auth.currentUser
             if (user != null) {
                 user.reload().addOnCompleteListener {
                     if (user.isEmailVerified) {
-                        // 요청하신 팝업 문구
                         Toast.makeText(this, "인증이 완료되었습니다.", Toast.LENGTH_SHORT).show()
                         finish()
                     } else {
-                        // 요청하신 팝업 문구
                         Toast.makeText(this, "이메일 인증을 하지 않으면 계정을 생성할 수 없습니다.", Toast.LENGTH_LONG).show()
                     }
                 }

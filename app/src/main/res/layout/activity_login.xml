@@ -45,6 +45,16 @@
         android:padding="12dp"
         android:layout_marginBottom="12dp"/>
 
+    <!-- 🌟 추가됨: 비밀번호 찾기 버튼 (아래 회원가입 버튼과 디자인 동일) -->
+    <Button
+        android:id="@+id/btnFindPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="비밀번호 찾기"
+        android:backgroundTint="#888888"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp" />
+
     <Button
         android:id="@+id/btnGoToSignup"
         android:layout_width="match_parent"

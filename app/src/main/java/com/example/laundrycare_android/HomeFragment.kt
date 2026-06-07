@@ -70,19 +70,18 @@ class HomeFragment : Fragment() {
         }
 
         // 2. 3단 메인 버튼 클릭 리스너
-        // 🌟 확실하게 수정: 세탁 하러가기 버튼 클릭 시 '세탁 코스 가이드(ClothMultiSelectActivity)'로 즉시 이동!
         view.findViewById<CardView>(R.id.btnGoLaundry).setOnClickListener {
             val intent = Intent(requireContext(), ClothMultiSelectActivity::class.java)
             intent.putExtra("mode", "batch")
             startActivity(intent)
         }
 
-        // 🌟 옷 등록하기
+        // 🌟 수정됨: 옷 등록하기 클릭 시 CameraActivity로 직접 이동!
         view.findViewById<CardView>(R.id.btnRegisterCloth).setOnClickListener {
-            startActivity(Intent(requireContext(), ScanActivity::class.java))
+            startActivity(Intent(requireContext(), CameraActivity::class.java))
         }
 
-        // 🌟 얼룩 지우기
+        // 🌟 얼룩 지우기 (기존 유지)
         view.findViewById<CardView>(R.id.btnEraseStain).setOnClickListener {
             startActivity(Intent(requireContext(), StainActivity::class.java))
         }

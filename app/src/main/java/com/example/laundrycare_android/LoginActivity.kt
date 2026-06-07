@@ -20,18 +20,17 @@ class LoginActivity : AppCompatActivity() {
         val auth = com.google.firebase.ktx.Firebase.auth
 
         // 🌟 [자동 로그인 체크] 🌟
-        // 앱이 켜질 때 이미 로그인된 유저가 있다면? 바로 메인 화면으로 패스!
         if (auth.currentUser != null) {
-            // 👇 여기를 CameraActivity에서 MainActivity로 바꿨습니다!
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
-            finish() // 로그인 화면은 꺼버리기
-            return // 아래 코드들 실행 안 하고 여기서 끝냄
+            finish()
+            return
         }
 
         // 1. 버튼들 찾아오기
-        val btnLogin = findViewById<Button>(R.id.btnLogin) // 로그인 버튼
-        val btnGoToSignup = findViewById<Button>(R.id.btnGoToSignup) // 회원가입 이동 버튼
+        val btnLogin = findViewById<Button>(R.id.btnLogin)
+        val btnFindPassword = findViewById<Button>(R.id.btnFindPassword) // 🌟 추가됨
+        val btnGoToSignup = findViewById<Button>(R.id.btnGoToSignup)
         val etEmail = findViewById<EditText>(R.id.etEmail)
         val etPassword = findViewById<EditText>(R.id.etPassword)
 
@@ -45,11 +44,16 @@ class LoginActivity : AppCompatActivity() {
                     if (task.isSuccessful) {
                         val user = auth.currentUser
                         if (user != null) {
-                            Toast.makeText(this, "로그인 성공!", Toast.LENGTH_SHORT).show()
-                            // 👇 여기도 CameraActivity에서 MainActivity로 바꿨습니다!
-                            val intent = Intent(this, MainActivity::class.java)
-                            startActivity(intent)
-                            finish()
+                            // 🌟 추가됨: 이메일 인증을 완료한 유저만 로그인 허용
+                            if (user.isEmailVerified) {
+                                Toast.makeText(this, "로그인 성공!", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(this, MainActivity::class.java)
+                                startActivity(intent)
+                                finish()
+                            } else {
+                                Toast.makeText(this, "이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.", Toast.LENGTH_LONG).show()
+                                auth.signOut() // 인증 안됐으면 즉시 로그아웃 시켜서 앱 진입 차단
+                            }
                         }
                     } else {
                         Toast.makeText(this, "로그인 실패: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
@@ -58,6 +62,12 @@ class LoginActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "이메일과 비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        // 🌟 추가됨: [비밀번호 찾기 버튼] 눌렀을 때의 동작
+        btnFindPassword.setOnClickListener {
+            val intent = Intent(this, FindPasswordActivity::class.java)
+            startActivity(intent)
         }
 
         // 3. [회원가입 버튼] 눌렀을 때의 동작

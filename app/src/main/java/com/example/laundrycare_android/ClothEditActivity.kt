@@ -27,7 +27,6 @@ class ClothEditActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 🌟 1번 사진(ResultActivity)의 넓은 화면 레이아웃을 그대로 재활용!
         setContentView(R.layout.activity_result)
 
         docId = intent.getStringExtra("docId") ?: ""
@@ -39,7 +38,7 @@ class ClothEditActivity : AppCompatActivity() {
 
         val btnBack = findViewById<ImageView>(R.id.btnBack)
         val btnSave = findViewById<Button>(R.id.btnSave)
-        btnSave.text = "수정 내용 저장하기" // 버튼 이름 변경
+        btnSave.text = "수정 내용 저장하기"
 
         spinnerSeason = findViewById(R.id.spinnerSeason)
         spinnerMain = findViewById(R.id.spinnerMain)
@@ -56,10 +55,8 @@ class ClothEditActivity : AppCompatActivity() {
 
         btnBack.setOnClickListener { finish() }
 
-        // 1. 파이어베이스에서 기존 데이터 불러와서 화면에 채워 넣기
         loadExistingData()
 
-        // 2. 수정된 데이터 파이어베이스에 덮어쓰기 (Update)
         btnSave.setOnClickListener {
             btnSave.isEnabled = false
             btnSave.text = "업데이트 중..."
@@ -77,7 +74,7 @@ class ClothEditActivity : AppCompatActivity() {
                 .update(updatedData)
                 .addOnSuccessListener {
                     Toast.makeText(this, "수정이 완료되었습니다!", Toast.LENGTH_SHORT).show()
-                    finish() // 수정 완료 후 이전 상세 화면으로 돌아감
+                    finish()
                 }
                 .addOnFailureListener {
                     Toast.makeText(this, "수정 실패", Toast.LENGTH_SHORT).show()
@@ -91,35 +88,49 @@ class ClothEditActivity : AppCompatActivity() {
         FirebaseFirestore.getInstance().collection("clothes").document(docId).get()
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
-                    // 스피너 값 세팅
-                    setSpinnerToValue(spinnerSeason, document.getString("season") ?: "")
-                    setSpinnerToValue(spinnerMain, document.getString("mainCategory") ?: "")
 
-                    // 대분류가 선택된 후 소분류 어댑터 세팅 및 값 지정
+                    val currentMain = document.getString("mainCategory") ?: "상의"
                     val currentSub = document.getString("subCategory") ?: ""
+
+                    // 🌟 1. 자동 이벤트에 의존하지 않고, 처음부터 소분류 목록을 강제로 만들어서 채워 넣습니다. (먹통 해결)
+                    val initialSubCategories = subCategoryMap[currentMain] ?: arrayOf("기타")
+                    spinnerSub.adapter = ArrayAdapter(this@ClothEditActivity, android.R.layout.simple_spinner_dropdown_item, initialSubCategories)
+
+                    // 🌟 2. DB에서 가져온 값으로 모든 스피너의 초기 세팅을 완료합니다.
+                    setSpinnerToValue(spinnerSeason, document.getString("season") ?: "")
+                    setSpinnerToValue(spinnerMain, currentMain)
+                    setSpinnerToValue(spinnerSub, currentSub)
+
+                    // 🌟 3. 초기 세팅이 완전히 끝난 '이후'에 리스너를 달아서, 유저가 직접 바꿀 때만 동작하게 합니다.
+                    var lastMain = currentMain
                     spinnerMain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                         override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
                             val selectedMain = spinnerMain.selectedItem.toString()
-                            val subCategories = subCategoryMap[selectedMain] ?: arrayOf("기타")
-                            spinnerSub.adapter = ArrayAdapter(this@ClothEditActivity, android.R.layout.simple_spinner_dropdown_item, subCategories)
-                            setSpinnerToValue(spinnerSub, currentSub)
+                            // 진짜로 다른 대분류를 터치해서 바꿨을 때만 소분류 갈아끼우기
+                            if (selectedMain != lastMain) {
+                                lastMain = selectedMain
+                                val newSubCategories = subCategoryMap[selectedMain] ?: arrayOf("기타")
+                                spinnerSub.adapter = ArrayAdapter(this@ClothEditActivity, android.R.layout.simple_spinner_dropdown_item, newSubCategories)
+                                // 대분류가 바뀌면 소분류는 첫 번째 항목으로 초기화
+                                spinnerSub.setSelection(0)
+                            }
                         }
                         override fun onNothingSelected(p0: AdapterView<*>?) {}
                     }
 
-                    // 수기 입력 칸 세팅
+                    // 텍스트 필드 세팅
                     etColor.setText(document.getString("color") ?: "")
                     etSize.setText(document.getString("size") ?: "")
                     etMaterial.setText(document.getString("material") ?: "")
 
-                    // 상단 이미지 및 AI 주의사항 텍스트 그대로 불러오기 (수정 불가/열람용)
+                    // 이미지 및 주의사항 세팅
                     val ivResultPhoto = findViewById<ImageView>(R.id.ivResultPhoto)
                     Glide.with(this).load(document.getString("imageUrl") ?: "").centerCrop().into(ivResultPhoto)
 
                     findViewById<TextView>(R.id.tvGuideTitle).text = "의류 정보 수정"
                     findViewById<TextView>(R.id.tvWarnings).text = document.getString("warnings") ?: "특이사항 없음"
                     findViewById<TextView>(R.id.tvCareSteps).text = document.getString("careSteps") ?: "관리 정보 없음"
-                    findViewById<TextView>(R.id.tvRawTags).visibility = View.GONE // 태그는 안 보여줘도 무방함
+                    findViewById<TextView>(R.id.tvRawTags).visibility = View.GONE
                 }
             }
     }

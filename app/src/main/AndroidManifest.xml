@@ -67,6 +67,9 @@
         <activity android:name=".LaundryResultActivity" android:exported="false" />
         <activity android:name=".ClothEditActivity" android:exported="false" />
 
+        <!-- 🌟 추가됨: 비밀번호 찾기 화면 액티비티 등록 -->
+        <activity android:name=".FindPasswordActivity" android:exported="false" />
+
         <activity
             android:name=".LoginActivity"
             android:exported="true">

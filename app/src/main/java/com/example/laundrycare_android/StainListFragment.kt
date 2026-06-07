@@ -162,26 +162,18 @@ class StainListFragment : Fragment() {
         }
     }
 
+    // 🌟 수정: 팝업 메뉴에서 '수정하기' 옵션을 완벽히 날려버렸습니다.
     private fun showPopupMenu(view: View, item: StainItem) {
         val popup = PopupMenu(requireContext(), view)
-        popup.menu.add(0, 0, 0, "수정하기")
-        popup.menu.add(0, 1, 1, "삭제하기")
+        popup.menu.add(0, 0, 0, "삭제하기") // 오직 삭제 기능만 제공
 
         popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                0 -> {
-                    val intent = Intent(requireContext(), StainEditActivity::class.java).apply {
-                        putExtra("documentId", item.id)
-                    }
-                    startActivity(intent)
-                    true
-                }
-                1 -> {
-                    FirebaseFirestore.getInstance().collection("stains").document(item.id).delete()
-                        .addOnSuccessListener { loadStainData(category) }
-                    true
-                }
-                else -> false
+            if (menuItem.itemId == 0) {
+                FirebaseFirestore.getInstance().collection("stains").document(item.id).delete()
+                    .addOnSuccessListener { loadStainData(category) }
+                true
+            } else {
+                false
             }
         }
         popup.show()
@@ -216,7 +208,6 @@ class StainListFragment : Fragment() {
     }
 }
 
-// 🌟 여기 StainAdapter가 들어있습니다.
 class StainAdapter(
     private val stainList: List<StainItem>,
     private val onMoreClick: (View, StainItem) -> Unit,
@@ -254,7 +245,6 @@ class StainAdapter(
         holder.cbSelect.isChecked = item.isSelected
         holder.btnItemOptions.visibility = if (isSelectionMode) View.GONE else View.VISIBLE
 
-        // 🌟🌟 문제 해결: 체크박스 네모 칸 터치 인식 추가 🌟🌟
         holder.cbSelect.setOnClickListener {
             item.isSelected = holder.cbSelect.isChecked
         }

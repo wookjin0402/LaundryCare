@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "143797239952",
-    "project_id": "laundrycare-64cab",
-    "storage_bucket": "laundrycare-64cab.firebasestorage.app"
+    "project_number": "986796906467",
+    "project_id": "laundrycare-492817",
+    "storage_bucket": "laundrycare-492817.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:143797239952:android:5ef48d756bc2f8490e9815",
+        "mobilesdk_app_id": "1:986796906467:android:98dc62b8eb603c05e232d6",
         "android_client_info": {
           "package_name": "com.example.laundrycare_android"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDa_osRg9uNp6nfuikVtBguqeOtx6MVG8g"
+          "current_key": "AIzaSyDTO73GHF66YN_kKyKbNpJvcEXQGD3w6b0"
         }
       ],
       "services": {

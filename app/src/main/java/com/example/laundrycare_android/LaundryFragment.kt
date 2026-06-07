@@ -18,7 +18,7 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
             startActivity(Intent(requireContext(), WasherListActivity::class.java))
         }
 
-        // 2. 세탁 코스 가이드 (기본 묶음 분류 모드)
+        // 2. 세탁 코스 가이드
         view.findViewById<Button>(R.id.btnOpenMultiSelect)?.setOnClickListener {
             val intent = Intent(requireContext(), ClothMultiSelectActivity::class.java)
             intent.putExtra("mode", "batch")
@@ -30,14 +30,7 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
             startActivity(Intent(requireContext(), LaundryHistoryActivity::class.java))
         }
 
-        // 4. 세탁 묶음 자동 분류 (기본 묶음 분류 모드)
-        view.findViewById<LinearLayout>(R.id.btnLaundryBatch)?.setOnClickListener {
-            val intent = Intent(requireContext(), ClothMultiSelectActivity::class.java)
-            intent.putExtra("mode", "batch")
-            startActivity(intent)
-        }
-
-        // 🌟 5. 세탁 및 건조 시점 추천 (추천 모드로 옷 선택창 바로 열기 + 날씨/습도 데이터 전달)
+        // 4. 세탁 및 건조 시점 추천
         view.findViewById<LinearLayout>(R.id.btnTimeRecommend)?.setOnClickListener {
             val intent = Intent(requireContext(), ClothMultiSelectActivity::class.java)
             intent.putExtra("mode", "recommend")
@@ -50,10 +43,8 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
         }
     }
 
-    // 🌟 탭이 화면에 보일 때마다 최신 날씨(습도 포함)로 업데이트
     override fun onResume() {
         super.onResume()
-
         val tvLaundryIndexTitle = view?.findViewById<TextView>(R.id.tvLaundryIndexTitle)
         val tvLaundryIndexDesc = view?.findViewById<TextView>(R.id.tvLaundryIndexDesc)
         val mainActivity = activity as? MainActivity
