@@ -53,13 +53,16 @@ class DietClothingAdapter(
 
         holder.btnMore.setOnClickListener { view ->
             val popup = PopupMenu(view.context, view)
-            popup.menu.add("기간 연장 (1년 유지)")
-            popup.menu.add("버리기 (옷장에서도 완전 삭제)")
+
+            // 🌟 핵심 수정: 글자 매칭 대신 안전한 ID(0, 1)를 부여합니다.
+            popup.menu.add(0, 0, 0, "기간 연장 (1년 유지)")
+            popup.menu.add(0, 1, 1, "버리기 (옷장에서도 완전 삭제)")
 
             popup.setOnMenuItemClickListener { menuItem ->
-                when (menuItem.title) {
-                    "기간 연장 (1년 유지)" -> onMenuClickListener.onExtend(item, position)
-                    "버리기 (옷장에서도 완전 삭제)" -> onMenuClickListener.onDelete(item, position)
+                // 🌟 핵심 수정: 글자가 아닌 ID로 동작을 구분합니다.
+                when (menuItem.itemId) {
+                    0 -> onMenuClickListener.onExtend(item, position)
+                    1 -> onMenuClickListener.onDelete(item, position)
                 }
                 true
             }

@@ -2,6 +2,8 @@ package com.example.laundrycare_android
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +14,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.json.JSONArray
@@ -61,13 +62,12 @@ class LaundryResultActivity : AppCompatActivity() {
     private fun analyzeLaundryCourseRealAPI(washerType: String, brand: String, model: String, clothIds: List<String>) {
         pbFinalLoading.visibility = View.VISIBLE
         btnFinishLaundry.visibility = View.GONE
-        cardWarning.visibility = View.GONE
         tvFinalCourse.text = "서버 AI 분석 중..."
 
         val jsonBody = JSONObject().apply {
             put("uid", myUid)
             put("washer_type", washerType)
-            put("brand", brand)
+            put("brand", brand.uppercase())
             put("model", model)
             put("cloth_ids", JSONArray(clothIds))
         }.toString()
@@ -112,37 +112,61 @@ class LaundryResultActivity : AppCompatActivity() {
 
     private fun saveLaundryHistoryAndFinish() {
         btnFinishLaundry.isEnabled = false
-        val washerInfo = "${intent.getStringExtra("brand")} ${intent.getStringExtra("model")}".trim()
-        val clothesImages = intent.getStringArrayListExtra("selected_cloth_images") ?: arrayListOf()
 
-        val db = FirebaseFirestore.getInstance()
-        val historyData = hashMapOf(
-            "timestamp" to System.currentTimeMillis(),
-            "washer_info" to washerInfo,
-            "recommended_course" to tvFinalCourse.text.toString(),
-            "warning_msg" to if(cardWarning.visibility == View.VISIBLE) tvWarningDesc.text.toString() else "경고 없음",
-            "clothes_images" to clothesImages
-        )
+        val brand = intent.getStringExtra("brand") ?: "기본"
+        val model = intent.getStringExtra("model") ?: ""
+        val washerType = intent.getStringExtra("washer_type") ?: "세탁기"
+        val selectedClothIds = intent.getStringArrayListExtra("selected_cloth_ids") ?: arrayListOf()
+        val formattedWasherName = "${brand.uppercase()} $model ($washerType)".trim()
+        val courseUsed = tvFinalCourse.text.toString()
 
-        db.collection("users").document(myUid).collection("laundry_history").add(historyData)
-            .addOnSuccessListener {
-                Toast.makeText(this, "세탁 기록이 저장되었습니다.", Toast.LENGTH_SHORT).show()
+        // 🌟 최종 수정 완료된 JSON 구성
+        val jsonBody = JSONObject().apply {
+            put("uid", myUid)
+            put("clothIds", JSONArray(selectedClothIds))
+            put("washerName", formattedWasherName)
+            put("courseUsed", courseUsed)
+        }.toString()
 
-                // 🌟 핵심 수정: MainActivity를 띄우면서 "laundry" 프래그먼트를 열도록 지시!
-                val intent = Intent(this, MainActivity::class.java)
-                intent.putExtra("navigate_to_fragment", "laundry") // 메인 액티비티가 이 값을 받고 세탁 탭으로 이동시켜줌
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                startActivity(intent)
-                finish()
+        Log.d("DEBUG_WASHER_SAVE", "백엔드 전송 데이터: $jsonBody")
+
+        val request = Request.Builder()
+            .url("$BASE_URL/api/clothes/wash-complete")
+            .post(RequestBody.create("application/json".toMediaTypeOrNull(), jsonBody))
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    btnFinishLaundry.isEnabled = true
+                    Toast.makeText(this@LaundryResultActivity, "연결 실패", Toast.LENGTH_SHORT).show()
+                }
             }
-            .addOnFailureListener {
-                btnFinishLaundry.isEnabled = true
-                Toast.makeText(this, "세탁 기록 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
+
+            override fun onResponse(call: Call, response: Response) {
+                runOnUiThread {
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@LaundryResultActivity, "세탁 기록 저장 성공!", Toast.LENGTH_SHORT).show()
+
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            val mainIntent = Intent(this@LaundryResultActivity, MainActivity::class.java)
+                            mainIntent.putExtra("navigate_to_fragment", "laundry")
+                            mainIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                            startActivity(mainIntent)
+                            finish()
+                        }, 500)
+                    } else {
+                        btnFinishLaundry.isEnabled = true
+                        val responseData = response.body?.string()
+                        Log.e("DEBUG_WASHER_SAVE", "서버 응답 에러: $responseData")
+                        Toast.makeText(this@LaundryResultActivity, "저장 실패(Code: ${response.code})", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
+        })
     }
 }
 
-// 어댑터 클래스
 class LaundryClothesAdapter(private val images: List<String>) : RecyclerView.Adapter<LaundryClothesAdapter.ViewHolder>() {
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) { val ivThumb: ImageView = view.findViewById(android.R.id.icon) }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

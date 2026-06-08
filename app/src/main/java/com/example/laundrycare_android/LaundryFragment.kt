@@ -22,6 +22,12 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
         view.findViewById<Button>(R.id.btnOpenMultiSelect)?.setOnClickListener {
             val intent = Intent(requireContext(), ClothMultiSelectActivity::class.java)
             intent.putExtra("mode", "batch")
+
+            // 🌟 날씨 정보 동기화 후 전달
+            val mainActivity = activity as? MainActivity
+            val weatherGuide = mainActivity?.sharedWeatherRecommend ?: "날씨 정보를 불러오는 중입니다..."
+            intent.putExtra("weatherGuide", weatherGuide)
+
             startActivity(intent)
         }
 
@@ -30,13 +36,13 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
             startActivity(Intent(requireContext(), LaundryHistoryActivity::class.java))
         }
 
-        // 4. 세탁 및 건조 시점 추천
+        // 4. 세탁 및 건조 시점 추천 (🌟 원상 복구: 옷 고르는 화면으로 정상 이동 및 날씨 데이터 전달)
         view.findViewById<LinearLayout>(R.id.btnTimeRecommend)?.setOnClickListener {
             val intent = Intent(requireContext(), ClothMultiSelectActivity::class.java)
             intent.putExtra("mode", "recommend")
 
             val mainActivity = activity as? MainActivity
-            val weatherGuide = mainActivity?.sharedWeatherRecommend ?: "날씨 데이터를 불러오는 중입니다..."
+            val weatherGuide = mainActivity?.sharedWeatherRecommend ?: "날씨 정보를 불러오는 중입니다..."
             intent.putExtra("weatherGuide", weatherGuide)
 
             startActivity(intent)
@@ -45,11 +51,16 @@ class LaundryFragment : Fragment(R.layout.fragment_laundry) {
 
     override fun onResume() {
         super.onResume()
+        updateWeatherUI()
+    }
+
+    private fun updateWeatherUI() {
         val tvLaundryIndexTitle = view?.findViewById<TextView>(R.id.tvLaundryIndexTitle)
         val tvLaundryIndexDesc = view?.findViewById<TextView>(R.id.tvLaundryIndexDesc)
         val mainActivity = activity as? MainActivity
 
-        val weatherGuide = mainActivity?.sharedWeatherRecommend ?: "날씨 데이터를 불러오는 중입니다..."
+        // MainActivity에 저장된 최신 날씨 정보를 가져옵니다.
+        val weatherGuide = mainActivity?.sharedWeatherRecommend ?: "날씨 정보를 불러오는 중입니다..."
 
         tvLaundryIndexTitle?.text = "오늘의 세탁 지수"
         tvLaundryIndexDesc?.text = weatherGuide

@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
-import com.google.firebase.auth.FirebaseAuth // 🌟 실제 로그인 유저 인증 임포트
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import org.json.JSONObject
@@ -21,8 +21,8 @@ class WasherResultActivity : AppCompatActivity() {
     private lateinit var etWasherBrand: EditText
     private lateinit var etWasherModel: EditText
 
-    // 🌟 현재 로그인한 실제 유저의 고유 UID를 실시간으로 가져옵니다!
-    private val myUid get() = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
+    // 🌟 수정: 이전 액티비티에서 넘겨준 uid를 최우선으로 받고, 없으면 FirebaseAuth에서 가져옵니다.
+    private val myUid get() = intent.getStringExtra("uid") ?: FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,33 +97,52 @@ class WasherResultActivity : AppCompatActivity() {
                 val imageRef = storageRef.child("washer_images/${System.currentTimeMillis()}_washer.jpg")
 
                 imageRef.putFile(fileUri).addOnSuccessListener {
+                    if (isFinishing || isDestroyed) return@addOnSuccessListener
+
                     imageRef.downloadUrl.addOnSuccessListener { uri ->
+                        if (isFinishing || isDestroyed) return@addOnSuccessListener
+
+                        // 🌟 수정: 백엔드 팀원 요청에 맞게 텍스트 규격화 (대문자/풀네임)
+                        val rawType = spinnerWasherType.selectedItem.toString()
+                        val rawBrand = etWasherBrand.text.toString()
+                        val rawModel = etWasherModel.text.toString()
+
+                        val formattedType = WasherMapper.toServerWasherType(rawType)
+                        val formattedBrand = WasherMapper.toServerBrand(rawBrand)
 
                         val washerData = hashMapOf(
-                            "type" to spinnerWasherType.selectedItem.toString(),
-                            "brand" to etWasherBrand.text.toString(),
-                            "model" to etWasherModel.text.toString(),
+                            "uid" to myUid, // 필수 추가 파라미터
+                            "type" to formattedType, // 예: "드럼 세탁기"
+                            "brand" to formattedBrand, // 예: "LG"
+                            "model" to rawModel,
                             "imageUrl" to uri.toString(),
                             "timestamp" to System.currentTimeMillis()
                         )
 
-                        // 🌟 수정: '모두의 창고'가 아닌 '내 개인 창고'에 세탁기 저장
+                        // 🌟 핵심 수정: 유저 아이디(uid) 밑으로 완벽하게 묶어서 저장되도록 경로 변경
                         db.collection("users").document(myUid).collection("washers").add(washerData)
                             .addOnSuccessListener {
-                                Toast.makeText(this, "세탁기 등록 성공!", Toast.LENGTH_SHORT).show()
-                                val intent = Intent(this, LaundryActivity::class.java).apply {
-                                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                if (!isFinishing && !isDestroyed) {
+                                    Toast.makeText(this, "세탁기 등록 성공!", Toast.LENGTH_SHORT).show()
+
+                                    // 메인 화면(MainActivity) 세탁 탭으로 이동
+                                    val intent = Intent(this, MainActivity::class.java).apply {
+                                        putExtra("navigate_to_fragment", "laundry")
+                                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                    }
+                                    startActivity(intent)
+                                    finish()
                                 }
-                                startActivity(intent)
-                                finish()
                             }
                             .addOnFailureListener {
+                                if (isFinishing || isDestroyed) return@addOnFailureListener
                                 btnSave.isEnabled = true
                                 btnSave.text = "세탁기 등록 완료"
                                 Toast.makeText(this, "DB 저장 실패", Toast.LENGTH_SHORT).show()
                             }
                     }
                 }.addOnFailureListener {
+                    if (isFinishing || isDestroyed) return@addOnFailureListener
                     btnSave.isEnabled = true
                     btnSave.text = "세탁기 등록 완료"
                     Toast.makeText(this, "이미지 업로드 실패", Toast.LENGTH_SHORT).show()

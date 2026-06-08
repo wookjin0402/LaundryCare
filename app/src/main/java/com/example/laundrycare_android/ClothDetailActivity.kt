@@ -20,7 +20,7 @@ class ClothDetailActivity : AppCompatActivity() {
     private lateinit var docId: String
     private lateinit var tvDetailContent: TextView
     private lateinit var ivClothPhoto: ImageView
-    private lateinit var btnDiscard: Button // 🌟 버리기 버튼 추가
+    private lateinit var btnDiscard: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,45 +30,27 @@ class ClothDetailActivity : AppCompatActivity() {
         tvDetailContent = findViewById(R.id.tvDetailContent)
         val btnBack = findViewById<ImageView>(R.id.btnBack)
         val btnOptionsMenu = findViewById<TextView>(R.id.btnOptionsMenu)
-        btnDiscard = findViewById(R.id.btnDiscard) // 🌟 XML에 추가한 버튼 ID와 일치해야 함
+        btnDiscard = findViewById(R.id.btnDiscard)
 
         docId = intent.getStringExtra("docId") ?: ""
 
         // 🌟 '옷장 다이어트'에서 넘어왔는지 확인
         val isFromDiet = intent.getBooleanExtra("IS_FROM_DIET", false)
 
-        // 🌟 다이어트에서 온 경우에만 버튼 활성화
+        // 🌟 다이어트에서 온 경우에만 전용 버리기 버튼 활성화
         if (isFromDiet) {
             btnDiscard.visibility = View.VISIBLE
             btnDiscard.setOnClickListener {
-                showDiscardPopup()
+                showDeleteConfirmation(isFromDiet) // 통합 팝업 로직 호출
             }
         } else {
             btnDiscard.visibility = View.GONE
         }
 
         btnBack.setOnClickListener { finish() }
-        btnOptionsMenu.setOnClickListener { showBottomSheet() }
-    }
 
-    // 🌟 삭제 및 추천 팝업 로직
-    private fun showDiscardPopup() {
-        AlertDialog.Builder(this)
-            .setTitle("의류 버리기")
-            .setMessage("정말 삭제하시겠습니까?")
-            .setPositiveButton("삭제") { _, _ ->
-                FirebaseFirestore.getInstance().collection("clothes").document(docId).delete()
-                    .addOnSuccessListener {
-                        // 🌟 삭제 후 추천 팝업 띄우기
-                        AlertDialog.Builder(this)
-                            .setTitle("알림")
-                            .setMessage("가까운 의류 수거함에 버리거나 중고거래를 추천드려요!")
-                            .setPositiveButton("확인") { _, _ -> finish() }
-                            .show()
-                    }
-            }
-            .setNegativeButton("취소", null)
-            .show()
+        // 🌟 우측 상단 ... 메뉴 클릭
+        btnOptionsMenu.setOnClickListener { showBottomSheet(isFromDiet) }
     }
 
     override fun onResume() {
@@ -76,6 +58,37 @@ class ClothDetailActivity : AppCompatActivity() {
         if (docId.isNotEmpty()) {
             fetchClothDataFromDB()
         }
+    }
+
+    // 🌟 핵심 수정: 1차(삭제 확인) 및 2차(수거함 추천) 팝업 통합 함수
+    private fun showDeleteConfirmation(isFromDiet: Boolean) {
+        AlertDialog.Builder(this@ClothDetailActivity)
+            .setTitle("의류 삭제")
+            .setMessage("이 의류를 정말 삭제하시겠습니까?\n(옷장 데이터에서 완전히 지워집니다.)")
+            .setPositiveButton("삭제") { _, _ ->
+
+                FirebaseFirestore.getInstance().collection("clothes").document(docId).delete()
+                    .addOnSuccessListener {
+                        if (isFromDiet) {
+                            // 🌟 옷장 다이어트 탭에서 삭제한 경우: 2차 팝업(수거함/중고거래 추천) 띄우기
+                            AlertDialog.Builder(this@ClothDetailActivity)
+                                .setTitle("옷 비우기 완료")
+                                .setMessage("옷장 다이어트에 성공하셨네요!\n가까운 의류 수거함에 버리시거나 중고거래를 추천드려요!")
+                                .setCancelable(false) // 바깥 터치로 꺼지는 것 방지
+                                .setPositiveButton("확인") { _, _ -> finish() }
+                                .show()
+                        } else {
+                            // 🌟 일반 옷장에서 삭제한 경우: 토스트 메시지 띄우고 바로 종료
+                            Toast.makeText(this@ClothDetailActivity, "삭제가 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                            finish()
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this@ClothDetailActivity, "삭제에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .setNegativeButton("취소", null)
+            .show()
     }
 
     private fun fetchClothDataFromDB() {
@@ -141,7 +154,7 @@ class ClothDetailActivity : AppCompatActivity() {
             }
     }
 
-    private fun showBottomSheet() {
+    private fun showBottomSheet(isFromDiet: Boolean) {
         val view = layoutInflater.inflate(R.layout.layout_bottom_sheet, null)
         val dialog = BottomSheetDialog(this)
         dialog.setContentView(view)
@@ -154,9 +167,10 @@ class ClothDetailActivity : AppCompatActivity() {
         }
 
         view.findViewById<TextView>(R.id.tvDelete).setOnClickListener {
-            FirebaseFirestore.getInstance().collection("clothes").document(docId).delete()
-                .addOnSuccessListener { finish() }
+            dialog.dismiss() // 🌟 핵심 수정: 바텀시트를 먼저 닫고 팝업을 띄워야 안전합니다.
+            showDeleteConfirmation(isFromDiet) // 🌟 조용히 삭제되던 로직을 통합 팝업 로직으로 변경!
         }
+
         view.findViewById<TextView>(R.id.tvCancel).setOnClickListener { dialog.dismiss() }
         dialog.show()
     }

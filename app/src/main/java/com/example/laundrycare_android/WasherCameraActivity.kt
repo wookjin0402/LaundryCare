@@ -1,6 +1,8 @@
 package com.example.laundrycare_android
 
+import android.Manifest // 🌟 임포트 추가
 import android.content.Intent
+import android.content.pm.PackageManager // 🌟 임포트 추가
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -17,6 +19,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth // 🌟 UID 처리를 위한 Firebase 임포트 추가
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
@@ -27,21 +30,26 @@ class WasherCameraActivity : AppCompatActivity() {
     private lateinit var viewFinder: PreviewView
     private lateinit var loadingLayout: LinearLayout
     private lateinit var btnCapture: Button
-
-    // 뒤로 가기 버튼 변수 타입 수정 (Button -> ImageView)
     private lateinit var btnCameraBack: ImageView
 
     private var imageCapture: ImageCapture? = null
-    // PPT 핵심: 비동기 처리를 위한 Worker Thread (워커 스레드)
     private lateinit var cameraExecutor: ExecutorService
 
-    // 🌟 갤러리에서 사진을 골라오는 런처 추가
+    // 🌟 추가: 세탁기 등록용 비동기식 시스템 권한 수신 장치 구현
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            startCamera()
+        } else {
+            Toast.makeText(this, "카메라 권한 승인이 필요합니다.", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+    }
+
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             loadingLayout.visibility = View.VISIBLE
             btnCapture.isEnabled = false
 
-            // URI를 실제 파일로 복사해서 절대 경로를 만듦 (사진 찍은 것과 동일한 로직을 타기 위해)
             val file = File(cacheDir, "gallery_washer_${System.currentTimeMillis()}.jpg")
             try {
                 val inputStream = contentResolver.openInputStream(uri)
@@ -50,7 +58,6 @@ class WasherCameraActivity : AppCompatActivity() {
                 inputStream?.close()
                 outputStream.close()
 
-                // 복사한 파일 경로로 AI 분석(시뮬레이션) 시작
                 simulateAiAnalysis(file.absolutePath)
             } catch (e: Exception) {
                 loadingLayout.visibility = View.GONE
@@ -67,31 +74,34 @@ class WasherCameraActivity : AppCompatActivity() {
         viewFinder = findViewById(R.id.viewFinderWasher)
         loadingLayout = findViewById(R.id.loadingLayoutWasher)
         btnCapture = findViewById(R.id.btnCaptureWasher)
-
-        // 뒤로 가기 버튼 아이디 연결
         btnCameraBack = findViewById(R.id.btnCameraBack)
 
-        // 🌟 갤러리 버튼 아이디 연결 (XML에 작성하신 아이디 확인 필요. 예: btnSelectPhoto)
         val btnSelectPhoto = findViewById<Button>(R.id.btnSelectPhoto)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        // 카메라 실행 (권한은 이미 매니페스트에 있으므로 바로 실행)
-        startCamera()
+        // 🌟 수정: 무방비 노출 상태의 즉시 호출을 중단하고 검증 절차 도입
+        checkCameraPermission()
 
-        // 촬영 버튼 동작
         btnCapture.setOnClickListener {
             takePhotoAndAnalyze()
         }
 
-        // 🌟 갤러리 버튼 클릭 시 동작 (갤러리 런처 실행)
         btnSelectPhoto?.setOnClickListener {
             galleryLauncher.launch("image/*")
         }
 
-        // 뒤로 가기 버튼 클릭 시 동작 (현재 화면 닫기)
         btnCameraBack.setOnClickListener {
             finish()
+        }
+    }
+
+    // 🌟 추가: 권한을 정중히 검증하는 중앙 제어 체계 마련
+    private fun checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCamera()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -119,15 +129,12 @@ class WasherCameraActivity : AppCompatActivity() {
     private fun takePhotoAndAnalyze() {
         val imageCapture = imageCapture ?: return
 
-        // 파일 저장 경로 설정
         val photoFile = File(externalMediaDirs.firstOrNull(), "washer_${System.currentTimeMillis()}.jpg")
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-        // 1. 촬영 버튼을 누르면 즉시 로딩 화면을 띄움 (메인 스레드 UI 업데이트)
         loadingLayout.visibility = View.VISIBLE
         btnCapture.isEnabled = false
 
-        // 2. 비동기 백그라운드 촬영 시작
         imageCapture.takePicture(
             outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
@@ -138,20 +145,15 @@ class WasherCameraActivity : AppCompatActivity() {
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     val imagePath = photoFile.absolutePath
-
-                    // 3. AI 서버와 비동기 통신 시뮬레이션
                     simulateAiAnalysis(imagePath)
                 }
             })
     }
 
-    // 서버와 통신하는 척 2초 정도 기다린 후(비동기) 결과 화면으로 넘겨주는 함수
     private fun simulateAiAnalysis(imagePath: String) {
         cameraExecutor.execute {
-            // 백그라운드 스레드에서 AI 통신 중... (ANR 방지)
             Thread.sleep(2000)
 
-            // AI 서버가 "통돌이"라고 판단해서 내려줬다고 가정하는 가짜 JSON 데이터
             val aiResultJson = """
                 {
                     "washer": {
@@ -162,14 +164,17 @@ class WasherCameraActivity : AppCompatActivity() {
                 }
             """.trimIndent()
 
-            // 분석이 끝나면 결과 화면으로 데이터 전달 (메인 스레드로 돌아옴)
+            // 🌟 수정: UID를 추출하여 다음 결과 화면으로 안전하게 전달
+            val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: "test_uid"
+
             runOnUiThread {
                 val intent = Intent(this@WasherCameraActivity, WasherResultActivity::class.java).apply {
                     putExtra("washer_image_path", imagePath)
                     putExtra("ai_washer_data", aiResultJson)
+                    putExtra("uid", currentUid) // 🌟 UID 전달 완료
                 }
                 startActivity(intent)
-                finish() // 카메라 화면 닫기
+                finish()
             }
         }
     }

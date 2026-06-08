@@ -24,6 +24,7 @@ class SeasonFragment : Fragment() {
     private lateinit var adapter: ClothingAdapter
     private val clothingList = mutableListOf<ClothingItem>()
 
+    // 🌟 기본값을 "전체"로 설정
     private var currentSubCategory: String = "전체"
     private var firestoreListener: ListenerRegistration? = null
 
@@ -136,18 +137,19 @@ class SeasonFragment : Fragment() {
             subChips.values.flatten().forEach { it.visibility = View.GONE }
             subChips[currentTabCategory]?.forEach { it.visibility = View.VISIBLE }
 
-            val firstChipId = subChips[currentTabCategory]?.firstOrNull()?.id
-            if (firstChipId != null) {
-                chipGroupSubCategory.check(firstChipId)
-                currentSubCategory = getSubCategoryName(firstChipId)
-            }
+            // 🌟 결정적 원인 제거: 강제로 첫 번째 소분류(반팔/반바지)를 선택하던 코드를 없애고 '전체'로 둡니다!
+            chipGroupSubCategory.clearCheck()
+            currentSubCategory = "전체"
         }
 
         chipGroupSubCategory.setOnCheckedStateChangeListener { _, checkedIds ->
             if (checkedIds.isNotEmpty()) {
                 currentSubCategory = getSubCategoryName(checkedIds[0])
-                updateClothesList()
+            } else {
+                // 🌟 사용자가 칩 선택을 해제하면, 다시 해당 탭의 '전체 옷'을 보여줍니다.
+                currentSubCategory = "전체"
             }
+            updateClothesList()
         }
     }
 
@@ -177,7 +179,6 @@ class SeasonFragment : Fragment() {
         val batch = db.batch()
 
         for (item in selectedItems) {
-            // 원본 경로로 복구
             val docRef = db.collection("clothes").document(item.id)
             batch.delete(docRef)
         }
@@ -195,7 +196,6 @@ class SeasonFragment : Fragment() {
         val db = FirebaseFirestore.getInstance()
         firestoreListener?.remove()
 
-        // 원본 경로로 복구
         firestoreListener = db.collection("clothes")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
@@ -205,13 +205,23 @@ class SeasonFragment : Fragment() {
                 snapshots?.let {
                     for (doc in it.documents) {
                         val season = doc.getString("season") ?: "여름"
-                        val mainCat = doc.getString("mainCategory") ?: "상의"
-                        val subCat = doc.getString("subCategory") ?: "반팔"
+                        val dbMain = doc.getString("mainCategory") ?: doc.getString("category") ?: "상의"
+                        val dbSub = doc.getString("subCategory") ?: doc.getString("category") ?: "반팔"
 
+                        // 옷의 대분류와 소분류를 합친 정보
+                        val fullCategoryText = "$dbMain $dbSub"
+
+                        // 🌟 개선된 필터링 로직!
                         val isMatch = if (currentTabCategory == "전체") {
-                            true
+                            true // '전체' 탭이면 무조건 통과
                         } else {
-                            mainCat == currentTabCategory && subCat == currentSubCategory
+                            if (currentSubCategory == "전체") {
+                                // 소분류 칩을 아무것도 안 눌렀을 때: 대분류(예: 상의) 글자만 들어가면 모두 통과!
+                                fullCategoryText.contains(currentTabCategory)
+                            } else {
+                                // 소분류 칩(예: 반팔)을 눌렀을 때: 둘 다 포함되어야 통과!
+                                fullCategoryText.contains(currentTabCategory) && fullCategoryText.contains(currentSubCategory)
+                            }
                         }
 
                         if (isMatch) {
@@ -220,8 +230,8 @@ class SeasonFragment : Fragment() {
                                 doc.id,
                                 doc.getString("imageUrl") ?: "",
                                 season,
-                                mainCat,
-                                subCat,
+                                dbMain,
+                                dbSub,
                                 doc.getString("material") ?: "",
                                 doc.getString("laundryTip") ?: "",
                                 warnings

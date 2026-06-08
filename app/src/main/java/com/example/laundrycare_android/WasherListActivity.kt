@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.firebase.auth.FirebaseAuth // 🌟 실제 로그인 유저 인증 임포트
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
@@ -41,7 +41,7 @@ class WasherListActivity : AppCompatActivity() {
     private lateinit var btnDeleteSelected: Button
     private lateinit var backPressedCallback: OnBackPressedCallback
 
-    // 🌟 현재 로그인한 실제 유저의 고유 UID를 실시간으로 가져옵니다!
+    // 🌟 UID 가져오기 (이제 리스트 불러오기와 삭제에 핵심으로 사용됩니다)
     private val myUid get() = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,7 +110,7 @@ class WasherListActivity : AppCompatActivity() {
 
         val batch = db.batch()
         for (item in selectedItems) {
-            // 🌟 수정: '모두의 창고'가 아닌 '내 개인 창고'에서 삭제
+            // 🌟 핵심 수정: 유저의 개인 폴더(users/uid/washers)에서 정확히 삭제하도록 경로 변경
             val docRef = db.collection("users").document(myUid).collection("washers").document(item.documentId)
             batch.delete(docRef)
         }
@@ -125,7 +125,7 @@ class WasherListActivity : AppCompatActivity() {
     }
 
     private fun fetchWashersFromFirebase() {
-        // 🌟 수정: '모두의 창고'가 아닌 '내 개인 창고'에서 데이터 가져오기
+        // 🌟 핵심 수정: 방금 등록한 세탁기를 제대로 불러오도록 유저 개인 폴더 경로로 변경
         db.collection("users").document(myUid).collection("washers")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
@@ -181,7 +181,7 @@ class WasherListActivity : AppCompatActivity() {
     }
 
     private fun deleteWasher(documentId: String) {
-        // 🌟 수정: 단일 삭제도 개인 창고에서
+        // 🌟 핵심 수정: 단일 삭제도 유저 개인 폴더 경로에서 수행
         db.collection("users").document(myUid).collection("washers").document(documentId).delete()
             .addOnSuccessListener {
                 Toast.makeText(this, "세탁기가 삭제되었습니다.", Toast.LENGTH_SHORT).show()

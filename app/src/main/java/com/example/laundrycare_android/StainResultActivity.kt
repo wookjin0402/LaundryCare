@@ -11,6 +11,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth // 🌟 UID 가져오기 위해 추가
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import okhttp3.*
@@ -35,6 +36,9 @@ class StainResultActivity : AppCompatActivity() {
     private var finalCareTip = ""
     private var selectedClothType = ""
 
+    // 🌟 추가: 전달받은 UID를 저장할 변수
+    private var myUid = ""
+
     private val client = OkHttpClient()
     private val BASE_URL = "http://34.64.101.110:3000"
 
@@ -52,6 +56,10 @@ class StainResultActivity : AppCompatActivity() {
         btnSaveStain = findViewById(R.id.btnSaveStain)
 
         currentImagePath = intent.getStringExtra("stain_image_path") ?: ""
+
+        // 🌟 수정: 이전 화면에서 보낸 UID 받기, 없으면 Firebase에서 직접 추출
+        myUid = intent.getStringExtra("uid") ?: FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
+
         if (currentImagePath.isNotEmpty()) {
             Glide.with(this).load(File(currentImagePath)).into(ivStainPhoto)
             analyzeStainImage()
@@ -65,8 +73,11 @@ class StainResultActivity : AppCompatActivity() {
 
     private fun analyzeStainImage() {
         val file = File(currentImagePath)
+
+        // 🌟 핵심 수정: 백엔드 요구사항에 맞춰 FormData에 uid 필수 추가
         val requestBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
+            .addFormDataPart("uid", myUid) // <-- 여기에 추가됨
             .addFormDataPart("stainImage", file.name, RequestBody.create("image/jpeg".toMediaTypeOrNull(), file))
             .build()
 

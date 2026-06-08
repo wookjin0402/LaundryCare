@@ -21,6 +21,7 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth // Firebase 사용 시 추가
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import java.io.File
@@ -36,11 +37,13 @@ class CameraActivity : AppCompatActivity() {
     private lateinit var ivCapturedImage: ImageView
     private lateinit var layoutGuide: View
     private lateinit var pbScanning: ProgressBar
-    private lateinit var btnTakePhoto: Button
-    private lateinit var btnSelectPhoto: Button
-    private lateinit var btnRetry: Button
-    private lateinit var btnStartAnalysis: Button
-    private lateinit var btnAddLabel: Button
+
+    private var btnTakePhoto: Button? = null
+    private var btnSelectPhoto: Button? = null
+    private var btnRetry: Button? = null
+    private var btnStartAnalysis: Button? = null
+    private var btnAddLabel: Button? = null
+
     private lateinit var btnCameraBack: ImageView
 
     private var imageCapture: ImageCapture? = null
@@ -54,11 +57,14 @@ class CameraActivity : AppCompatActivity() {
     private var savedClothFilePath: String = ""
 
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        if (isGranted) startCamera()
-        else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+        if (isGranted) {
+            startCamera()
+        } else {
+            Toast.makeText(this, "카메라 권한이 필요합니다. 설정에서 변경해 주세요.", Toast.LENGTH_SHORT).show()
+            finish()
+        }
     }
 
-    // 🌟 오류 해결: 갤러리에서 가져온 사진(URI)을 Bitmap 데이터로 변환하여 메모리에 안전하게 저장합니다!
     private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             ivCapturedImage.setImageURI(uri)
@@ -85,6 +91,7 @@ class CameraActivity : AppCompatActivity() {
         ivCapturedImage = findViewById(R.id.ivCapturedImage)
         layoutGuide = findViewById(R.id.layoutGuide)
         pbScanning = findViewById(R.id.pbScanning)
+
         btnTakePhoto = findViewById(R.id.btnTakePhoto)
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
         btnRetry = findViewById(R.id.btnRetry)
@@ -96,21 +103,17 @@ class CameraActivity : AppCompatActivity() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            startCamera()
-        } else {
-            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
+        checkCameraPermission()
 
-        btnSelectPhoto.setOnClickListener { getContent.launch("image/*") }
-        btnTakePhoto.setOnClickListener { takePhoto() }
+        btnSelectPhoto?.setOnClickListener { getContent.launch("image/*") }
+        btnTakePhoto?.setOnClickListener { takePhoto() }
 
-        btnRetry.setOnClickListener {
+        btnRetry?.setOnClickListener {
             currentCapturedBitmap = null
             resetToCameraState()
         }
 
-        btnAddLabel.setOnClickListener {
+        btnAddLabel?.setOnClickListener {
             currentCapturedBitmap?.let { labelBitmaps.add(it) }
             currentCapturedBitmap = null
             resetToCameraState()
@@ -119,7 +122,7 @@ class CameraActivity : AppCompatActivity() {
 
         resetToCameraState()
 
-        btnStartAnalysis.setOnClickListener {
+        btnStartAnalysis?.setOnClickListener {
             if (scanStep == 1) {
                 clothBitmap = currentCapturedBitmap
                 clothBitmap?.let { bmp ->
@@ -138,6 +141,14 @@ class CameraActivity : AppCompatActivity() {
                 currentCapturedBitmap?.let { labelBitmaps.add(it) }
                 sendImageToAI()
             }
+        }
+    }
+
+    private fun checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCamera()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -160,7 +171,7 @@ class CameraActivity : AppCompatActivity() {
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
         layoutGuide.visibility = View.INVISIBLE
-        btnTakePhoto.isEnabled = false
+        btnTakePhoto?.isEnabled = false
         pbScanning.visibility = View.VISIBLE
         btnCameraBack.visibility = View.GONE
 
@@ -180,7 +191,7 @@ class CameraActivity : AppCompatActivity() {
                 runOnUiThread {
                     ivCapturedImage.setImageBitmap(rotatedBitmap)
                     pbScanning.visibility = View.GONE
-                    btnTakePhoto.isEnabled = true
+                    btnTakePhoto?.isEnabled = true
                     showCapturedState()
                 }
                 image.close()
@@ -188,7 +199,7 @@ class CameraActivity : AppCompatActivity() {
             override fun onError(exc: ImageCaptureException) {
                 runOnUiThread {
                     pbScanning.visibility = View.GONE
-                    btnTakePhoto.isEnabled = true
+                    btnTakePhoto?.isEnabled = true
                     layoutGuide.visibility = View.VISIBLE
                     btnCameraBack.visibility = View.VISIBLE
                     Toast.makeText(baseContext, "사진 촬영 실패", Toast.LENGTH_SHORT).show()
@@ -203,22 +214,22 @@ class CameraActivity : AppCompatActivity() {
         layoutGuide.visibility = View.INVISIBLE
         btnCameraBack.visibility = View.VISIBLE
 
-        btnTakePhoto.visibility = View.GONE
-        btnSelectPhoto.visibility = View.GONE
+        btnTakePhoto?.visibility = View.GONE
+        btnSelectPhoto?.visibility = View.GONE
 
-        btnRetry.visibility = View.VISIBLE
-        btnStartAnalysis.visibility = View.VISIBLE
+        btnRetry?.visibility = View.VISIBLE
+        btnStartAnalysis?.visibility = View.VISIBLE
 
         if (scanStep == 1) {
-            btnAddLabel.visibility = View.GONE
-            btnStartAnalysis.text = "다음: 라벨 촬영하기"
+            btnAddLabel?.visibility = View.GONE
+            btnStartAnalysis?.text = "다음: 라벨 촬영하기"
         } else {
             if (labelBitmaps.size < 4) {
-                btnAddLabel.visibility = View.VISIBLE
-                btnStartAnalysis.text = "총 ${labelBitmaps.size + 1}장으로 분석 시작"
+                btnAddLabel?.visibility = View.VISIBLE
+                btnStartAnalysis?.text = "총 ${labelBitmaps.size + 1}장으로 분석 시작"
             } else {
-                btnAddLabel.visibility = View.GONE
-                btnStartAnalysis.text = "최대 5장 촬영 완료 - 분석 시작"
+                btnAddLabel?.visibility = View.GONE
+                btnStartAnalysis?.text = "최대 5장 촬영 완료 - 분석 시작"
                 Toast.makeText(this, "최대 5장까지 촬영할 수 있습니다.", Toast.LENGTH_SHORT).show()
             }
         }
@@ -230,19 +241,19 @@ class CameraActivity : AppCompatActivity() {
         layoutGuide.visibility = View.VISIBLE
         btnCameraBack.visibility = View.VISIBLE
 
-        btnTakePhoto.visibility = View.VISIBLE
-        btnSelectPhoto.visibility = View.VISIBLE
+        btnTakePhoto?.visibility = View.VISIBLE
+        btnSelectPhoto?.visibility = View.VISIBLE
 
-        btnRetry.visibility = View.GONE
-        btnAddLabel.visibility = View.GONE
-        btnStartAnalysis.visibility = View.GONE
+        btnRetry?.visibility = View.GONE
+        btnAddLabel?.visibility = View.GONE
+        btnStartAnalysis?.visibility = View.GONE
 
         val tvGuide = findViewById<TextView>(R.id.tvGuideMessage)
         if (scanStep == 1) {
             tvGuide.text = "옷의 전체적인 형태가 보이게 촬영해주세요 (1/2)"
         } else {
             tvGuide.text = "라벨의 모든 면을 촬영해주세요\n(최대 5장 / 현재 ${labelBitmaps.size}장 보관 중)"
-            if(labelBitmaps.isNotEmpty()) btnSelectPhoto.visibility = View.GONE
+            if(labelBitmaps.isNotEmpty()) btnSelectPhoto?.visibility = View.GONE
         }
     }
 
@@ -250,11 +261,11 @@ class CameraActivity : AppCompatActivity() {
         if (labelBitmaps.isEmpty()) return
 
         pbScanning.visibility = View.VISIBLE
-        btnStartAnalysis.isEnabled = false
-        btnRetry.isEnabled = false
-        btnAddLabel.isEnabled = false
+        btnStartAnalysis?.isEnabled = false
+        btnRetry?.isEnabled = false
+        btnAddLabel?.isEnabled = false
         btnCameraBack.visibility = View.GONE
-        btnStartAnalysis.text = "AI 종합 분석 중..."
+        btnStartAnalysis?.text = "AI 종합 분석 중..."
 
         val clothFile = File(savedClothFilePath)
         if (!clothFile.exists()) {
@@ -283,7 +294,20 @@ class CameraActivity : AppCompatActivity() {
             } catch (e: Exception) { e.printStackTrace() }
         }
 
-        requestBodyBuilder.addFormDataPart("uid", "test_user_uid")
+        // 🌟 [최종 수정] 3단계: UID 및 Mapper 적용
+        // 1. UID 가져오기 (Firebase Auth 사용 예시)
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: "test_uid"
+
+        // 2. 브랜드 및 타입 가져오기 (이 부분은 이전 화면에서 Intent로 받았거나 UI에서 가져오세요)
+        val uiBrand = "lg" // TODO: 실제 선택된 값을 가져오세요
+        val uiWasherType = "드럼" // TODO: 실제 선택된 값을 가져오세요
+
+        // 3. 서버 전송용 파라미터 구성
+        requestBodyBuilder.addFormDataPart("uid", currentUid)
+        requestBodyBuilder.addFormDataPart("brand", WasherMapper.toServerBrand(uiBrand))
+        requestBodyBuilder.addFormDataPart("washerType", WasherMapper.toServerWasherType(uiWasherType))
+        requestBodyBuilder.addFormDataPart("modelName", "test")
+
         requestBodyBuilder.addFormDataPart("lat", "37.5665")
         requestBodyBuilder.addFormDataPart("lon", "126.9780")
         requestBodyBuilder.addFormDataPart("category", "반팔")
@@ -321,9 +345,9 @@ class CameraActivity : AppCompatActivity() {
 
     private fun showRetryDialog(errorMessage: String) {
         pbScanning.visibility = View.GONE
-        btnStartAnalysis.isEnabled = true
-        btnRetry.isEnabled = true
-        btnAddLabel.isEnabled = true
+        btnStartAnalysis?.isEnabled = true
+        btnRetry?.isEnabled = true
+        btnAddLabel?.isEnabled = true
         btnCameraBack.visibility = View.VISIBLE
 
         AlertDialog.Builder(this)

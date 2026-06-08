@@ -1,20 +1,23 @@
 package com.example.laundrycare_android
 
+import android.Manifest // 🌟 임포트 추가
 import android.content.Intent
+import android.content.pm.PackageManager // 🌟 임포트 추가
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri // 🌟 갤러리 이미지 URI 처리를 위해 추가
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.*
-import androidx.activity.result.contract.ActivityResultContracts // 🌟 갤러리 런처 처리를 위해 추가
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth // 🌟 UID 처리를 위한 Firebase 임포트 추가
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
@@ -26,10 +29,18 @@ class StainCameraActivity : AppCompatActivity() {
     private lateinit var pbScanning: ProgressBar
     private var imageCapture: ImageCapture? = null
 
-    // 🌟 1. 갤러리에서 사진을 선택했을 때 결과를 받아오는 런처 설정
+    // 🌟 추가: 시스템과 통신하여 결과를 수신받는 비동기식 카메라 권한 팝업 런처
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            startCamera()
+        } else {
+            Toast.makeText(this, "카메라 권한이 거부되어 이전 화면으로 돌아갑니다.", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+    }
+
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
-            // 사진을 성공적으로 골라오면 화면에 띄우고 상태 변경
             ivCapturedImage.setImageURI(uri)
             showCapturedState()
         }
@@ -48,12 +59,21 @@ class StainCameraActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnStartAnalysis).setOnClickListener { sendImageToAI() }
         findViewById<Button>(R.id.btnRetry).setOnClickListener { resetToCameraState() }
 
-        // 🌟 2. 갤러리 버튼 클릭 이벤트 추가 (이 부분이 빠져 있었습니다!)
         findViewById<Button>(R.id.btnSelectPhoto).setOnClickListener {
             galleryLauncher.launch("image/*")
         }
 
-        startCamera()
+        // 🌟 수정: 묻지마 실행을 배제하고, 권한 유무 체크 로직으로 변경 호출
+        checkCameraPermission()
+    }
+
+    // 🌟 추가: 실행 전 정중하게 안전벨트 유무 파악
+    private fun checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCamera()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
 
     private fun takePhoto() {
@@ -99,8 +119,12 @@ class StainCameraActivity : AppCompatActivity() {
         val file = File(cacheDir, "stain_${System.currentTimeMillis()}.jpg")
         bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 100, FileOutputStream(file))
 
+        // 🌟 수정: UID를 추출하여 다음 결과 화면으로 안전하게 전달
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: "test_uid"
+
         val intent = Intent(this, StainResultActivity::class.java).apply {
             putExtra("stain_image_path", file.absolutePath)
+            putExtra("uid", currentUid) // 전달 완료
         }
         startActivity(intent)
         finish()
