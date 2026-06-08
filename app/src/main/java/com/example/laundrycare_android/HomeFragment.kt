@@ -35,6 +35,9 @@ class HomeFragment : Fragment() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
+    // 🌟 추가: 팝업창으로 넘겨줄 날씨 데이터를 임시로 담아둘 변수
+    private var currentWeatherGuide: String = "날씨 정보를 불러오는 중입니다..."
+
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -73,17 +76,19 @@ class HomeFragment : Fragment() {
         view.findViewById<CardView>(R.id.btnGoLaundry).setOnClickListener {
             val intent = Intent(requireContext(), ClothMultiSelectActivity::class.java)
             intent.putExtra("mode", "batch")
+            // 🌟 핵심 추가: 다음 화면으로 넘어갈 때 날씨 데이터를 꽉꽉 채워서 던져줍니다!
+            intent.putExtra("weatherGuide", currentWeatherGuide)
             startActivity(intent)
         }
 
-        // 🌟 수정됨: 옷 등록하기 클릭 시 CameraActivity로 직접 이동!
+        // 옷 등록하기 클릭 시 CameraActivity로 직접 이동!
         view.findViewById<CardView>(R.id.btnRegisterCloth).setOnClickListener {
             startActivity(Intent(requireContext(), CameraActivity::class.java))
         }
 
-        // 🌟 얼룩 지우기 (기존 유지)
+        // 얼룩 지우기 클릭 시 얼룩 탭이 아니라 바로 카메라(추가) 화면으로 직행!
         view.findViewById<CardView>(R.id.btnEraseStain).setOnClickListener {
-            startActivity(Intent(requireContext(), StainActivity::class.java))
+            startActivity(Intent(requireContext(), StainCameraActivity::class.java))
         }
 
         // 3. 대시보드 탭 클릭 리스너
@@ -192,6 +197,15 @@ class HomeFragment : Fragment() {
                         val homeScreenTitle = "현재 날씨: $cleanDescription (${formattedTemp}℃)"
                         val homeScreenDesc = "습도: $humidity% / 미세먼지: $dustStatus"
 
+                        // 🌟 추가: 백그라운드에서 날씨를 성공적으로 받아오면, 팝업창에 띄워줄 가이드 문장을 완성해 둡니다.
+                        val tip = when (cleanDescription) {
+                            "비" -> "비가 오고 습도가 높습니다. 실내 건조 시 제습기 사용을 강력히 권장합니다."
+                            "눈" -> "눈이 내리고 기온이 낮습니다. 실내 건조와 잦은 환기가 필요합니다."
+                            "흐림" -> "날씨가 흐리고 햇빛이 적습니다. 여건이 된다면 건조기 사용을 추천합니다."
+                            else -> "날씨가 맑습니다! 야외 자연 건조하기 아주 좋은 날씨입니다."
+                        }
+                        currentWeatherGuide = "현재 날씨: $cleanDescription (기온: ${formattedTemp}℃, 습도: $humidity%)\n👉 $tip"
+
                         activity?.runOnUiThread {
                             tvWeatherTitle.text = homeScreenTitle
                             tvRecommend.text = homeScreenDesc
@@ -206,5 +220,7 @@ class HomeFragment : Fragment() {
     private fun showFallbackWeather(reason: String) {
         tvWeatherTitle.text = "현재 날씨: 맑음 (22.0℃) [$reason]"
         tvRecommend.text = "습도: 50% / 미세먼지: 보통"
+        // 🌟 추가: GPS나 네트워크 문제로 날씨를 못 불러왔을 때 뜨는 기본 가이드 문장
+        currentWeatherGuide = "현재 날씨: 맑음 (기온: 22.0℃, 습도: 50%)\n👉 날씨가 맑습니다! 야외 자연 건조하기 아주 좋은 날씨입니다."
     }
 }

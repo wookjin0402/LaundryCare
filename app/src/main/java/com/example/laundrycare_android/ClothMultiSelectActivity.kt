@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth // 🌟 UID 가져오기 위해 추가
 import com.google.firebase.firestore.FirebaseFirestore
 
 data class SelectableCloth(
@@ -35,6 +36,9 @@ class ClothMultiSelectActivity : AppCompatActivity() {
 
     private val clothList = mutableListOf<SelectableCloth>()
     private lateinit var adapter: ClothSelectAdapter
+
+    // 🌟 내 고유 UID 가져오기
+    private val myUid get() = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +77,8 @@ class ClothMultiSelectActivity : AppCompatActivity() {
         pbLoading.visibility = View.VISIBLE
         val db = FirebaseFirestore.getInstance()
 
+        // 💡 참고: 옷장 데이터도 개인 창고(users/myUid/clothes)에 있다면 여기 경로도 나중에 맞춰주셔야 할 수 있습니다.
+        // 일단 현재 옷 목록은 잘 뜨는 것으로 보이니 기존 경로를 유지했습니다.
         db.collection("clothes").get()
             .addOnSuccessListener { documents ->
                 pbLoading.visibility = View.GONE
@@ -148,7 +154,6 @@ class ClothMultiSelectActivity : AppCompatActivity() {
             resultMessage += "⚠️ [상태 맞춤] 얼룩이 있는 의류가 포함되어 있습니다. 본 세탁 전 애벌빨래를 진행해 주세요.\n\n"
         }
 
-        // 🌟 HomeFragment에서 만들어서 LaundryFragment를 거쳐 넘어온 '최종 날씨 가이드'가 여기에 들어갑니다!
         val weatherGuide = intent.getStringExtra("weatherGuide") ?: "현재 날씨 기반 건조 팁을 확인 중입니다..."
         resultMessage += "💡 [오늘의 날씨 맞춤 건조 팁] 💡\n$weatherGuide"
 
@@ -179,17 +184,21 @@ class ClothMultiSelectActivity : AppCompatActivity() {
         Toast.makeText(this, "내 세탁기 목록을 불러오는 중...", Toast.LENGTH_SHORT).show()
         val db = FirebaseFirestore.getInstance()
 
-        db.collection("washers").get().addOnSuccessListener { snapshot ->
+        // 🌟 핵심 수정 포인트: '내 개인 창고'에서 세탁기 목록 가져오기
+        db.collection("users").document(myUid).collection("washers").get().addOnSuccessListener { snapshot ->
             val machineNames = mutableListOf<String>()
             val machineDocs = mutableListOf<Map<String, String>>()
 
             for (doc in snapshot.documents) {
-                val name = doc.getString("name") ?: "내 세탁기"
-                val brand = doc.getString("brand") ?: "LG"
-                val model = doc.getString("model") ?: "기본모델"
-                val type = doc.getString("type") ?: "드럼 세탁기"
+                // 🌟 DB에 저장된 필드명(brand, model, type)에 맞게 데이터 추출
+                val brand = doc.getString("brand") ?: "브랜드 미상"
+                val model = doc.getString("model") ?: ""
+                val type = doc.getString("type") ?: "세탁기"
 
-                machineNames.add("✅ $name ($brand $model)")
+                // 팝업에 보여질 예쁜 이름 만들기 (예: "✅ 삼성 그랑데 AI (드럼)")
+                val displayName = if (model.isNotEmpty()) "✅ $brand $model ($type)" else "✅ $brand ($type)"
+
+                machineNames.add(displayName)
                 machineDocs.add(mapOf("brand" to brand, "model" to model, "type" to type))
             }
 

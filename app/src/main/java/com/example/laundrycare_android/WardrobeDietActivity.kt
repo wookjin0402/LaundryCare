@@ -32,7 +32,6 @@ class WardrobeDietActivity : AppCompatActivity(), DietClothingAdapter.OnMenuClic
         loadDietClothes()
     }
 
-    // 🌟 추가: 상세 화면에서 삭제하고 돌아올 때마다 데이터를 다시 불러와 리스트를 갱신합니다.
     override fun onResume() {
         super.onResume()
         loadDietClothes()
@@ -41,16 +40,30 @@ class WardrobeDietActivity : AppCompatActivity(), DietClothingAdapter.OnMenuClic
     private fun loadDietClothes() {
         val tvDietSummary = findViewById<TextView>(R.id.tvDietSummary)
 
+        // 💡 참고: 만약 옷 데이터도 세탁기처럼 개인 창고(users/myUid/clothes)로 옮기셨다면
+        // 이 경로를 db.collection("users").document(myUid).collection("clothes") 로 바꿔주셔야 합니다!
         db.collection("clothes").get().addOnSuccessListener { snapshot ->
             dietClothingList.clear()
             val currentTime = System.currentTimeMillis()
-            val timeLimitInMillis = 365L * 24 * 60 * 60 * 1000
+            val timeLimitInMillis = 365L * 24 * 60 * 60 * 1000 // 1년을 밀리초로 환산
 
             for (doc in snapshot.documents) {
-                val createdAtTimestamp = doc.getTimestamp("createdAt")
-                val registeredTimeMillis = createdAtTimestamp?.toDate()?.time ?: currentTime
+                var registeredTimeMillis = currentTime // 기본값
 
-                // 숨김 검사 빼고 깔끔하게 1년 지난 옷만 필터링
+                // 🌟 핵심 수정: 데이터 타입이 무엇이든, 혹은 아예 없든 완벽하게 시간을 추적합니다.
+                if (doc.contains("createdAt")) {
+                    val rawValue = doc.get("createdAt")
+                    if (rawValue is com.google.firebase.Timestamp) {
+                        registeredTimeMillis = rawValue.toDate().time
+                    } else if (rawValue is Long) {
+                        registeredTimeMillis = rawValue // 숫자로 저장된 경우도 처리
+                    }
+                } else {
+                    // 'createdAt' 필드가 아예 없는 옛날 데이터라면? -> 아주 오래된 옷(0)으로 간주하여 리스트에 띄움!
+                    registeredTimeMillis = 0L
+                }
+
+                // 현재 시간과 등록 시간의 차이가 1년(timeLimitInMillis)보다 크면 리스트에 추가
                 if (currentTime - registeredTimeMillis > timeLimitInMillis) {
                     dietClothingList.add(ClothingItem(
                         doc.id,
@@ -84,13 +97,11 @@ class WardrobeDietActivity : AppCompatActivity(), DietClothingAdapter.OnMenuClic
             }
     }
 
-    // 🌟 완전 삭제(Delete) 로직 적용
     override fun onDelete(item: ClothingItem, position: Int) {
         AlertDialog.Builder(this)
             .setTitle("옷 버리기")
             .setMessage("이 의류를 정말 버리시겠습니까?\n(내 옷장 데이터에서도 완전히 삭제됩니다.)")
             .setPositiveButton("버리기") { _, _ ->
-                // update("isDietIgnored", true) 대신 delete() 사용!
                 db.collection("clothes").document(item.id)
                     .delete()
                     .addOnSuccessListener {

@@ -126,13 +126,23 @@ class LaundryResultActivity : AppCompatActivity() {
 
         db.collection("users").document(myUid).collection("laundry_history").add(historyData)
             .addOnSuccessListener {
-                startActivity(Intent(this, LaundryHistoryActivity::class.java))
+                Toast.makeText(this, "세탁 기록이 저장되었습니다.", Toast.LENGTH_SHORT).show()
+
+                // 🌟 핵심 수정: MainActivity를 띄우면서 "laundry" 프래그먼트를 열도록 지시!
+                val intent = Intent(this, MainActivity::class.java)
+                intent.putExtra("navigate_to_fragment", "laundry") // 메인 액티비티가 이 값을 받고 세탁 탭으로 이동시켜줌
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                startActivity(intent)
                 finish()
+            }
+            .addOnFailureListener {
+                btnFinishLaundry.isEnabled = true
+                Toast.makeText(this, "세탁 기록 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
             }
     }
 }
 
-// 어댑터 클래스 (이전과 동일)
+// 어댑터 클래스
 class LaundryClothesAdapter(private val images: List<String>) : RecyclerView.Adapter<LaundryClothesAdapter.ViewHolder>() {
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) { val ivThumb: ImageView = view.findViewById(android.R.id.icon) }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
