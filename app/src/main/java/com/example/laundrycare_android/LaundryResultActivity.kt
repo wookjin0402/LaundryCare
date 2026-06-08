@@ -120,10 +120,16 @@ class LaundryResultActivity : AppCompatActivity() {
         val formattedWasherName = "${brand.uppercase()} $model ($washerType)".trim()
         val courseUsed = tvFinalCourse.text.toString()
 
-        // 🌟 최종 수정 완료된 JSON 구성
+        // 🌟 명시적 JSONArray 생성 (데이터 타입 강제 보장)
+        val clothIdArray = JSONArray()
+        for (id in selectedClothIds) {
+            clothIdArray.put(id)
+        }
+
+        // 🌟 백엔드 팀원 요청 스펙에 맞춘 Flat Object 구성 (camelCase, 시간 제외)
         val jsonBody = JSONObject().apply {
             put("uid", myUid)
-            put("clothIds", JSONArray(selectedClothIds))
+            put("clothIds", clothIdArray)
             put("washerName", formattedWasherName)
             put("courseUsed", courseUsed)
         }.toString()
@@ -139,7 +145,7 @@ class LaundryResultActivity : AppCompatActivity() {
             override fun onFailure(call: Call, e: IOException) {
                 runOnUiThread {
                     btnFinishLaundry.isEnabled = true
-                    Toast.makeText(this@LaundryResultActivity, "연결 실패", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@LaundryResultActivity, "연결 실패: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -148,6 +154,7 @@ class LaundryResultActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         Toast.makeText(this@LaundryResultActivity, "세탁 기록 저장 성공!", Toast.LENGTH_SHORT).show()
 
+                        // 백엔드 팀원 요청: 0.5초 대기 후 이동
                         Handler(Looper.getMainLooper()).postDelayed({
                             val mainIntent = Intent(this@LaundryResultActivity, MainActivity::class.java)
                             mainIntent.putExtra("navigate_to_fragment", "laundry")
