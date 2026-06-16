@@ -8,10 +8,9 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.auth.FirebaseAuth // 🌟 실제 로그인 유저 인증 임포트
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import java.text.SimpleDateFormat
 import java.util.*
 
 data class LaundryHistoryItem(
@@ -32,7 +31,6 @@ class LaundryHistoryActivity : AppCompatActivity() {
     private lateinit var layoutSelectionMode: LinearLayout
     private lateinit var backPressedCallback: OnBackPressedCallback
 
-    // 🌟 현재 로그인한 실제 유저의 고유 UID를 실시간으로 가져옵니다!
     private val myUid get() = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,7 +65,6 @@ class LaundryHistoryActivity : AppCompatActivity() {
         val db = FirebaseFirestore.getInstance()
         val batch = db.batch()
         for (item in selected) {
-            // 🌟 수정: '모두의 창고'가 아닌 '내 개인 창고'에서 삭제
             val docRef = db.collection("users").document(myUid).collection("laundry_history").document(item.id)
             batch.delete(docRef)
         }
@@ -79,7 +76,6 @@ class LaundryHistoryActivity : AppCompatActivity() {
     }
 
     private fun fetchHistoryFromFirebase() {
-        // 🌟 수정: '모두의 창고'가 아닌 '내 개인 창고'에서 데이터 가져오기
         FirebaseFirestore.getInstance().collection("users").document(myUid).collection("laundry_history")
             .orderBy("timestamp", Query.Direction.DESCENDING).get().addOnSuccessListener { documents ->
                 historyList.clear()
@@ -102,17 +98,17 @@ class LaundryHistoryActivity : AppCompatActivity() {
         var isMode = false
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val cb: CheckBox = view.findViewById(R.id.cbHistorySelect)
-            val tvDate: TextView = view.findViewById(R.id.tvHistoryDate)
             val tvWasher: TextView = view.findViewById(R.id.tvHistoryWasher)
             val tvCourse: TextView = view.findViewById(R.id.tvHistoryCourse)
             val tvWarning: TextView = view.findViewById(R.id.tvHistoryWarning)
             val tvCount: TextView = view.findViewById(R.id.tvHistoryClothesCount)
-            val btnMore: TextView = view.findViewById(R.id.btnMore)
+            // 🌟 tvDate 및 btnMore 관련 코드 완벽히 삭제됨
         }
         override fun onCreateViewHolder(p: ViewGroup, v: Int) = ViewHolder(LayoutInflater.from(p.context).inflate(R.layout.item_laundry_history, p, false))
+
         override fun onBindViewHolder(h: ViewHolder, pos: Int) {
             val item = items[pos]
-            h.tvDate.text = SimpleDateFormat("yyyy.MM.dd HH:mm", Locale.KOREA).format(Date(item.timestamp))
+
             h.tvWasher.text = item.washerInfo
             h.tvCourse.text = item.recommendedCourse
             h.tvWarning.text = item.warningMsg
@@ -122,9 +118,9 @@ class LaundryHistoryActivity : AppCompatActivity() {
             h.cb.visibility = if(isMode) View.VISIBLE else View.GONE
             h.cb.isChecked = item.isSelected
             h.cb.setOnClickListener { item.isSelected = h.cb.isChecked }
+
             h.itemView.setOnLongClickListener { isMode=true; item.isSelected=true; onModeChanged(true); notifyDataSetChanged(); true }
-            h.itemView.setOnClickListener { if(isMode) { item.isSelected = !item.isSelected; h.cb.isChecked = item.isSelected } else { /* 상세이동 */ } }
-            h.btnMore.visibility = if(isMode) View.GONE else View.VISIBLE
+            h.itemView.setOnClickListener { if(isMode) { item.isSelected = !item.isSelected; h.cb.isChecked = item.isSelected } else { /* 상세이동 로직 등 */ } }
         }
         fun selectAll() { items.forEach { it.isSelected = true }; notifyDataSetChanged() }
         fun exitSelectionMode() { isMode=false; items.forEach { it.isSelected = false }; onModeChanged(false); notifyDataSetChanged() }
